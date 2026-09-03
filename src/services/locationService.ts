@@ -432,80 +432,8 @@ export function checkAreaServiceability(searchQuery: string): ServiceabilityResu
 // ----------------------------------------------------
 // DEFAULT INITIAL SAVED ADDRESSES
 // ----------------------------------------------------
-export const DEFAULT_SAVED_ADDRESSES: DeliveryAddress[] = [
-  {
-    id: 'addr-pg-1',
-    label: 'PG',
-    name: 'Aarav Patel',
-    fullName: 'Aarav Patel',
-    phone: '+91 98254 99120',
-    addressLine1: 'Room 402, Shivalik Elite Boys PG',
-    addressLine: 'Room 402, Shivalik Elite Boys PG, Near Swagat Flamingo',
-    addressLine2: 'Near Swagat Flamingo',
-    landmark: 'Behind Reliance Petrol Pump',
-    area: 'Kudasan',
-    sector: 'PDPU Knowledge Corridor',
-    city: 'Gandhinagar',
-    state: 'Gujarat',
-    pincode: '382421',
-    instructions: 'Leave at security desk if in lecture.',
-    instructionPreset: 'leave_at_security',
-    isDefault: true,
-    clusterId: 'cluster-a',
-    clusterName: 'Cluster A: Student & Tech Belt',
-    zoneId: 'zone_a_core',
-    deliveryFee: 0,
-    isServiceable: true
-  },
-  {
-    id: 'addr-office-2',
-    label: 'Office',
-    name: 'Aarav Patel',
-    fullName: 'Aarav Patel',
-    phone: '+91 98254 99120',
-    addressLine1: 'Desk 4B, 3rd Floor, Infocity Tower 2',
-    addressLine: 'Desk 4B, 3rd Floor, Infocity Tower 2',
-    addressLine2: 'Infocity Complex',
-    landmark: 'Opposite Infocity Club',
-    area: 'Infocity (Phase 1 & 2)',
-    sector: 'Infocity Tech Hub',
-    city: 'Gandhinagar',
-    state: 'Gujarat',
-    pincode: '382007',
-    instructions: 'Deliver at reception desk.',
-    instructionPreset: 'deliver_at_reception',
-    isDefault: false,
-    clusterId: 'cluster-a',
-    clusterName: 'Cluster A: Student & Tech Belt',
-    zoneId: 'zone_a_core',
-    deliveryFee: 0,
-    isServiceable: true
-  },
-  {
-    id: 'addr-home-3',
-    label: 'Home',
-    name: 'Jayendrasinh Parmar',
-    fullName: 'Jayendrasinh Parmar',
-    phone: '+91 98250 14820',
-    addressLine1: 'Flat 304, Green City Heights',
-    addressLine: 'Flat 304, Green City Heights, Sector 21',
-    addressLine2: 'Near Panchdev Temple Road',
-    landmark: 'Near Sector 21 Main Market',
-    area: 'Sector 21',
-    sector: 'Sector 21',
-    city: 'Gandhinagar',
-    state: 'Gujarat',
-    pincode: '382021',
-    instructions: 'Ring the bell twice.',
-    instructionPreset: 'ring_bell',
-    isDefault: false,
-    clusterId: 'cluster-d',
-    clusterName: 'Cluster D: Central Gandhinagar',
-    zoneId: 'zone_a_core',
-    deliveryFee: 0,
-    isServiceable: true
-  }
-];
+export const EMPTY_DELIVERY_ADDRESS: DeliveryAddress = {id:'',label:'Home',name:'',fullName:'',phone:'',addressLine1:'',addressLine:'',area:'',city:'',state:'',pincode:'',clusterId:'',isDefault:false,isServiceable:false};
+export const DEFAULT_SAVED_ADDRESSES: DeliveryAddress[] = [];
 
 // ----------------------------------------------------
 // LOCAL CACHE HELPERS
@@ -516,16 +444,7 @@ const STORAGE_KEYS = {
   WAITLIST: 'teffein_area_waitlist'
 };
 
-export function getCachedLocation(): DetectedLocation | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEYS.ACTIVE_LOCATION);
-    if (!raw) return null;
-    return JSON.parse(raw) as DetectedLocation;
-  } catch {
-    return null;
-  }
-}
+export function getCachedLocation(): DetectedLocation | null { return null; }
 
 export function setCachedLocation(loc: DetectedLocation): void {
   if (typeof window === 'undefined') return;
@@ -536,22 +455,12 @@ export function setCachedLocation(loc: DetectedLocation): void {
   }
 }
 
-export function getSavedAddresses(): DeliveryAddress[] {
-  if (typeof window === 'undefined') return DEFAULT_SAVED_ADDRESSES;
-  try {
-    const raw = localStorage.getItem(STORAGE_KEYS.SAVED_ADDRESSES);
-    if (!raw) return DEFAULT_SAVED_ADDRESSES;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) && parsed.length > 0 ? parsed : DEFAULT_SAVED_ADDRESSES;
-  } catch {
-    return DEFAULT_SAVED_ADDRESSES;
-  }
-}
+export function getSavedAddresses(): DeliveryAddress[] { return []; }
 
 export function getDefaultAddressId(): string {
   const addresses = getSavedAddresses();
   const def = addresses.find((a) => a.isDefault);
-  return def ? def.id : (addresses[0]?.id || 'addr-pg-1');
+  return def ? def.id : (addresses[0]?.id || '');
 }
 
 export function calculateDeliveryFeeForZone(zoneId?: string): number {
@@ -599,7 +508,7 @@ export function getInitialCentralLocationState(): import('../types').CentralLoca
     sector,
     pincode,
     formattedAddress: activeAddr?.addressLine1 || activeAddr?.addressLine || cachedLoc?.displayName || (area ? `${area}, ${city}` : 'Set delivery location'),
-    serviceable: activeAddr ? activeAddr.isServiceable : (cachedLoc ? cachedLoc.isServiceable : true),
+    serviceable: activeAddr ? activeAddr.isServiceable : (cachedLoc ? cachedLoc.isServiceable : false),
     deliveryZoneId: zoneId,
     deliveryFee,
     isAddressConfirmed: isConfirmed,
@@ -683,14 +592,7 @@ export function validateOrderPayload(orderData: {
 }
 
 
-export function saveAddressesToStorage(addresses: DeliveryAddress[]): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(STORAGE_KEYS.SAVED_ADDRESSES, JSON.stringify(addresses));
-  } catch (e) {
-    console.warn('Could not save addresses to localStorage', e);
-  }
-}
+export function saveAddressesToStorage(_addresses: DeliveryAddress[]): void { /* Addresses are loaded from the authenticated database only. */ }
 
 export function saveAreaWaitlistEntry(entry: Omit<AreaWaitlistEntry, 'id' | 'createdAt'>): AreaWaitlistEntry {
   const newEntry: AreaWaitlistEntry = {

@@ -35,49 +35,8 @@ export const Step2DailyMenu: React.FC<Step2DailyMenuProps> = ({
   const dateObj = new Date(selectedDate + 'T00:00:00');
   const dateDisplay = dateObj.toLocaleDateString('en-IN', { weekday: 'long', month: 'short', day: 'numeric' });
 
-  // Default fallback meals if database is connecting/loading
-  const displayMeals: DatabaseMeal[] = meals.length > 0 ? meals : [
-    {
-      id: 'meal-standard-thali',
-      name: 'Standard Gujarati Daily Thali',
-      description: 'Wholesome everyday home thali cooked in pure filtered groundnut oil with balanced spices.',
-      mealType: mealSlot,
-      dietType: 'standard_gujarati',
-      basePrice: 119,
-      isActive: true,
-      imageUrl: IMAGES.hero.mainThali
-    },
-    {
-      id: 'meal-kathiyawadi-thali',
-      name: 'Kathiyawadi Desi Thali',
-      description: 'Traditional Saurashtra flavours featuring Ringan Olo / Sev Tameta with hot phulkas and garlic chutney.',
-      mealType: mealSlot,
-      dietType: 'kathiyawadi',
-      basePrice: 129,
-      isActive: true,
-      imageUrl: IMAGES.hero.thaliSpread
-    },
-    {
-      id: 'meal-jain-thali',
-      name: 'Jain Satvik Pure Thali',
-      description: 'Prepared strictly without root vegetables (no onion, garlic, potato). Pure satvik kitchen prep.',
-      mealType: mealSlot,
-      dietType: 'jain_satvik',
-      basePrice: 119,
-      isActive: true,
-      imageUrl: IMAGES.dishes.kadhi
-    },
-    {
-      id: 'meal-fit-thali',
-      name: 'Low-Oil High-Fiber Fit Thali',
-      description: 'Extra portion of steamed sprouts sabji, multigrain rotis without ghee, and low-sodium dal.',
-      mealType: mealSlot,
-      dietType: 'low_oil_fit',
-      basePrice: 139,
-      isActive: true,
-      imageUrl: IMAGES.dishes.sabjiDry
-    }
-  ];
+  // Only meals in the published daily menu may be ordered.
+  const displayMeals = meals;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -117,8 +76,9 @@ export const Step2DailyMenu: React.FC<Step2DailyMenuProps> = ({
       ) : (
         /* Meals Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {displayMeals.length===0 && <p role="status" className="col-span-full rounded-xl bg-amber-50 p-5 text-amber-900">No menu has been published for this meal and date. Please choose another date.</p>}
           {displayMeals.map((meal) => {
-            const isSelected = selectedMealId === meal.id || (!selectedMealId && meal.id === displayMeals[0].id);
+            const isSelected = selectedMealId === meal.id;
             const imageSrc = meal.imageUrl || IMAGES.hero.mainThali;
 
             return (

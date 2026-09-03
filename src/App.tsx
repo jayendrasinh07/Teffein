@@ -48,9 +48,12 @@ import { DeliveryDashboard } from './pages/DeliveryDashboard';
 import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
 
 const MainContent: React.FC = () => {
-  const { activeTab, isLocationModalOpen, setIsLocationModalOpen } = useApp();
+  const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen } = useApp();
 
   const renderActivePage = () => {
+    const requiredRoles: Partial<Record<typeof activeTab,string[]>> = {admin_dashboard:['admin'],kitchen_dashboard:['kitchen','admin'],delivery_dashboard:['delivery','admin'],corporate_admin_dashboard:['corporate','admin']};
+    const allowed=requiredRoles[activeTab];
+    if(allowed&&(!currentUser||!userRolesList.some(role=>allowed.includes(role))))return <div className="p-10 text-center">Sign in with an authorized account to open this workspace.</div>;
     switch (activeTab) {
       case 'home':
         return <Home />;

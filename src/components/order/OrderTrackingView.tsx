@@ -65,18 +65,18 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
                 Active One-Time Order
               </span>
               <span className="text-xs font-mono font-bold text-stone-500">
-                #{order.id}
+                #{order.orderNumber || order.id}
               </span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-stone-900 mt-1 tracking-tight">
-              {isDelivered ? 'Meal Delivered! Enjoy your food.' : isOutForDelivery ? 'Out for Delivery' : isPreparing ? 'Meal is Being Prepared' : 'Order Confirmed'}
+              {order.orderStatus === 'CANCELLED' ? 'Order Cancelled' : isPacked && !isOutForDelivery ? 'Meal Ready for Dispatch' : isDelivered ? 'Meal Delivered! Enjoy your food.' : isOutForDelivery ? 'Out for Delivery' : isPreparing ? 'Meal is Being Prepared' : 'Order Confirmed'}
             </h2>
           </div>
 
           <div className="text-left sm:text-right">
             <span className="text-xs text-stone-500 block">Expected Arrival</span>
             <span className="text-sm sm:text-base font-black text-stone-900">
-              {order.deliverySlotLabel || '12:00 PM – 12:30 PM'}
+              {order.deliverySlotLabel}
             </span>
           </div>
         </div>
@@ -91,7 +91,7 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
               </div>
               <div>
                 <span className="text-xs font-black text-stone-900 block">Confirmed</span>
-                <span className="text-[10px] text-stone-500">Queue #28</span>
+                <span className="text-[10px] text-stone-500">Saved order</span>
               </div>
             </div>
 
@@ -177,13 +177,13 @@ export const OrderTrackingView: React.FC<OrderTrackingViewProps> = ({
 
             <div className="space-y-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-stone-500 block">
-                Kitchen Quality Log
+                Payment Status
               </span>
               <p className="text-stone-700">
-                Pure Filtered Groundnut Oil • Zero Reused Oil
+                {order.paymentStatus}
               </p>
               <p className="text-[#0D6E44] font-bold">
-                ✓ Sealed Steam Tray with Thermal Insulation
+                {order.notes || ""}
               </p>
             </div>
           </div>

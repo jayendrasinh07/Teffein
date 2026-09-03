@@ -119,8 +119,8 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
   const [houseNumber, setHouseNumber] = useState<string>('');
   const [building, setBuilding] = useState<string>('');
   const [landmark, setLandmark] = useState<string>('');
-  const [contactName, setContactName] = useState<string>(activeDeliveryAddress?.fullName || 'Jayendrasinh Parmar');
-  const [contactPhone, setContactPhone] = useState<string>(activeDeliveryAddress?.phone || '9825014820');
+  const [contactName, setContactName] = useState<string>(activeDeliveryAddress?.fullName || '');
+  const [contactPhone, setContactPhone] = useState<string>(activeDeliveryAddress?.phone || '');
   const [instructionPreset, setInstructionPreset] = useState<DeliveryInstructionPreset>('call_on_reach');
   const [customInstructions, setCustomInstructions] = useState<string>('');
   const [shouldSaveAddress, setShouldSaveAddress] = useState<boolean>(true);
@@ -511,7 +511,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
     setCurrentStep('serviceability_result');
   };
 
-  const handleFinalConfirmAndSave = () => {
+  const handleFinalConfirmAndSave = async () => {
     if (!resolvedAddress) return;
 
     if (!contactPhone.trim()) {
@@ -574,17 +574,10 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
       updatedAt: new Date().toISOString()
     };
 
-    if (shouldSaveAddress) {
-      saveDeliveryAddress(newDeliveryAddress);
-    } else {
-      selectDeliveryAddress(newDeliveryAddress);
-    }
-
-    showToast('Delivery Address Confirmed! ✓', `Delivering to ${newDeliveryAddress.label}: ${newDeliveryAddress.sector || newDeliveryAddress.area}`, 'success');
-
-    if (onAddressConfirmed) {
-      onAddressConfirmed(newDeliveryAddress);
-    }
+    try {
+      const saved=await saveDeliveryAddress(newDeliveryAddress);
+      if(onAddressConfirmed)onAddressConfirmed(saved);
+    }catch(error){showToast('Address not saved',(error as Error).message,'error');return;}
     onClose();
   };
 

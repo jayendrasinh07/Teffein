@@ -1,4 +1,4 @@
-export type UserRole = 'guest' | 'customer' | 'admin' | 'kitchen_lead' | 'corporate_manager';
+export type UserRole = 'guest' | 'customer' | 'admin' | 'kitchen_lead' | 'corporate_manager' | 'delivery_fleet' | 'corporate_lead';
 
 export type CustomerSegment = 'student' | 'worker' | 'corporate' | 'family' | 'individual';
 
@@ -220,7 +220,9 @@ export interface CustomerAddress {
   phone: string;
   houseNumber?: string;
   building?: string;
-  addressLine: string;
+  floor?: string;
+  street?: string;
+  addressLine?: string;
   addressLine1?: string;
   area: string;
   sector?: string;
@@ -261,6 +263,8 @@ export interface MealAddOn {
 }
 
 export interface OneTimeOrder {
+  orderNumber?: string;
+  notes?: string;
   id: string;
   userId: string;
   userName: string;
@@ -278,7 +282,7 @@ export interface OneTimeOrder {
   customizations: {
     spiceLevel: 'Regular' | 'Less Spicy';
     oilLevel: 'Standard' | 'Less Oil (Fit)';
-    dietVariant: 'Standard Gujarati' | 'Jain Satvik' | 'Kathiyawadi' | 'No Onion-Garlic';
+    dietVariant: string;
     rotiCount?: number;
     ricePortion?: string;
     extraDal?: boolean;
@@ -398,6 +402,8 @@ export interface DeliveryAddress {
   addressLine2?: string;
   houseNumber?: string;
   building?: string;
+  floor?: string;
+  street?: string;
   landmark?: string;
   area: string;
   sector?: string;
@@ -460,6 +466,8 @@ export interface DetectedLocation {
   formattedAddress?: string;
   houseNumber?: string;
   building?: string;
+  floor?: string;
+  street?: string;
   landmark?: string;
   sector?: string;
   area: string;
@@ -515,6 +523,8 @@ export interface CentralLocationState {
   pincode: string;
   houseNumber?: string;
   building?: string;
+  floor?: string;
+  street?: string;
   landmark?: string;
   formattedAddress: string;
   serviceable: boolean;

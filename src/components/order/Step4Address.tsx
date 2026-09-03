@@ -42,72 +42,28 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
 
   // New address form state
   const [newLabel, setNewLabel] = useState<AddressLabel>('Home');
-  const [newName, setNewName] = useState(selectedAddress.fullName || 'Aarav Patel');
-  const [newPhone, setNewPhone] = useState(selectedAddress.phone || '+91 98254 99120');
+  const [newName, setNewName] = useState(selectedAddress.fullName || '');
+  const [newPhone, setNewPhone] = useState(selectedAddress.phone || '');
   const [newHouseNumber, setNewHouseNumber] = useState('');
   const [newBuilding, setNewBuilding] = useState('');
-  const [newArea, setNewArea] = useState('Kudasan');
-  const [newPincode, setNewPincode] = useState('382421');
+  const [newArea, setNewArea] = useState('');
+  const [newPincode, setNewPincode] = useState('');
   const [newLandmark, setNewLandmark] = useState('');
   const [newInstructionPreset, setNewInstructionPreset] = useState<DeliveryInstructionPreset>('call_on_reach');
   const [newCustomInstruction, setNewCustomInstruction] = useState('');
   const [formError, setFormError] = useState('');
 
-  // Fallback saved addresses if user has not yet saved custom ones
-  const activeAddressList: CustomerAddress[] = savedAddresses.length > 0 ? savedAddresses : [
-    {
-      id: 'addr-kudasan-1',
-      label: 'Home',
-      fullName: 'Aarav Patel',
-      phone: '+91 98254 99120',
-      houseNumber: 'Flat 402, Block B',
-      building: 'Shivalik Heights',
-      addressLine: 'Flat 402, Block B, Shivalik Heights, Near Swagat Flamingo, Kudasan, Gandhinagar',
-      area: 'Kudasan',
-      sector: 'Kudasan',
-      landmark: 'Near Swagat Flamingo',
-      city: 'Gandhinagar',
-      state: 'Gujarat',
-      pincode: '382421',
-      clusterId: 'cluster-a',
-      clusterName: 'Cluster A (Knowledge Corridor)',
-      deliveryFee: 0,
-      isServiceable: true
-    },
-    {
-      id: 'addr-infocity-1',
-      label: 'Office',
-      fullName: 'Aarav Patel',
-      phone: '+91 98254 99120',
-      houseNumber: 'Desk 4B',
-      building: 'Infocity Tower 2, 3rd Floor',
-      addressLine: 'Desk 4B, 3rd Floor, Infocity Tower 2, Infocity, Gandhinagar',
-      area: 'Infocity',
-      sector: 'Infocity Tech Park',
-      landmark: 'Opposite Infocity Club',
-      city: 'Gandhinagar',
-      state: 'Gujarat',
-      pincode: '382007',
-      clusterId: 'cluster-a',
-      clusterName: 'Cluster A (Tech Hub)',
-      deliveryFee: 0,
-      isServiceable: true
-    }
-  ];
+  const activeAddressList = savedAddresses;
+  const [isSaving, setIsSaving] = useState(false);
 
-  const handleSaveNewAddress = (e: React.FormEvent) => {
+  const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newPhone.trim() || (!newHouseNumber.trim() && !newBuilding.trim())) {
       setFormError('Please enter your name, phone number, and house/building details.');
       return;
     }
 
-    const serviceCheck = checkAreaServiceability(newArea || newPincode);
-    if (!serviceCheck.isServiceable) {
-      setFormError(`Area "${newArea}" is currently outside our active Gandhinagar cluster network.`);
-      return;
-    }
-
+    if(!newArea.trim()||!/^\d{6}$/.test(newPincode.trim())){setFormError('Enter your actual area and a six-digit pincode.');return;}
     let finalInstruction = '';
     switch (newInstructionPreset) {
       case 'call_on_reach':
@@ -131,7 +87,7 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
       newHouseNumber.trim(),
       newBuilding.trim(),
       newLandmark.trim() ? `Near ${newLandmark.trim()}` : '',
-      serviceCheck.areaName || newArea,
+      newArea.trim(),
       'Gandhinagar'
     ].filter(Boolean);
 
@@ -147,23 +103,26 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
       building: newBuilding.trim() || undefined,
       addressLine: fullAddress,
       addressLine1: fullAddress,
-      area: serviceCheck.areaName || newArea,
-      sector: serviceCheck.sectorOrZone || newArea,
+      area: newArea.trim(),
+      sector: newArea.trim(),
       landmark: newLandmark.trim() || undefined,
       city: 'Gandhinagar',
       state: 'Gujarat',
-      pincode: serviceCheck.pincode || newPincode,
-      clusterId: serviceCheck.clusterId,
-      clusterName: serviceCheck.clusterName,
-      zoneId: serviceCheck.zoneId,
-      deliveryFee: serviceCheck.deliveryFee || 0,
+      pincode: newPincode.trim(),
+      clusterId: '',
+      clusterName: '',
+      zoneId: undefined,
+      deliveryFee: 0,
       instructions: finalInstruction,
       instructionPreset: newInstructionPreset,
-      isServiceable: true
+      isServiceable: false
     };
 
-    saveDeliveryAddress(newAddr);
-    onSelectAddress(newAddr);
+    if(isSaving)return;
+    setIsSaving(true);
+    try {const saved=await saveDeliveryAddress(newAddr as any);onSelectAddress({...saved,addressLine:saved.addressLine??saved.addressLine1});}
+    catch(error){setFormError((error as Error).message);return;}
+    finally{setIsSaving(false);}
     setShowAddForm(false);
     setFormError('');
   };
@@ -199,8 +158,9 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
             </label>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {activeAddressList.length===0 && <p className="text-sm text-stone-600">No saved addresses. Add your delivery address to continue.</p>}
               {activeAddressList.map((addr) => {
-                const isSelected = selectedAddress.id === addr.id || (!selectedAddress.id && addr.id === activeAddressList[0].id);
+                const isSelected = selectedAddress.id === addr.id;
 
                 return (
                   <div
@@ -241,9 +201,9 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
                     <div className="mt-3 pt-2 border-t border-stone-200/60 flex items-center justify-between text-[10px] text-stone-500 font-semibold">
                       <span className="text-[#0D6E44] font-black flex items-center gap-1">
                         <ShieldCheck className="w-3 h-3" />
-                        <span>Gandhinagar Serviceable</span>
+                        <span>{addr.isServiceable ? "Within delivery coverage" : "Outside delivery coverage"}</span>
                       </span>
-                      <span>Zero Delivery Fee</span>
+                      <span>Fee shown in order review</span>
                     </div>
                   </div>
                 );
@@ -387,6 +347,10 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
                 </div>
               </div>
 
+              <div>
+                <label className="text-[11px] font-black uppercase text-stone-600 block mb-1" htmlFor="order-address-pincode">Pincode *</label>
+                <input id="order-address-pincode" required pattern="[0-9]{6}" inputMode="numeric" maxLength={6} value={newPincode} onChange={e=>setNewPincode(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-stone-200 text-xs" />
+              </div>
               {/* Delivery Instructions Preset */}
               <div>
                 <label className="text-[11px] font-black uppercase tracking-wider text-stone-600 block mb-1">
@@ -426,10 +390,11 @@ export const Step4Address: React.FC<Step4AddressProps> = ({
                 </button>
 
                 <button
+                  disabled={isSaving}
                   type="submit"
                   className="px-5 py-2 rounded-xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black shadow-xs transition-all cursor-pointer"
                 >
-                  Save & Use This Address
+                  {isSaving ? "Saving..." : "Save & Use This Address"}
                 </button>
               </div>
             </div>

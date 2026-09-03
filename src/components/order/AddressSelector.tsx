@@ -42,30 +42,26 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
 
   // New address form state
   const [newLabel, setNewLabel] = useState<AddressLabel>('Home');
-  const [newName, setNewName] = useState(selectedAddress.fullName || 'Jayendrasinh Parmar');
-  const [newPhone, setNewPhone] = useState(selectedAddress.phone || '9825014820');
+  const [newName, setNewName] = useState(selectedAddress.fullName || '');
+  const [newPhone, setNewPhone] = useState(selectedAddress.phone || '');
   const [newHouseNumber, setNewHouseNumber] = useState('');
   const [newBuilding, setNewBuilding] = useState('');
-  const [newArea, setNewArea] = useState('Kudasan');
-  const [newPincode, setNewPincode] = useState('382421');
+  const [newArea, setNewArea] = useState('');
+  const [newPincode, setNewPincode] = useState('');
   const [newLandmark, setNewLandmark] = useState('');
   const [newInstructionPreset, setNewInstructionPreset] = useState<DeliveryInstructionPreset>('call_on_reach');
   const [newCustomInstruction, setNewCustomInstruction] = useState('');
 
   const [formError, setFormError] = useState('');
 
-  const handleSaveNewAddress = (e: React.FormEvent) => {
+  const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim() || !newPhone.trim() || (!newHouseNumber.trim() && !newBuilding.trim())) {
       setFormError('Please fill in your name, phone number, and house/building details.');
       return;
     }
 
-    const serviceCheck = checkAreaServiceability(newArea || newPincode);
-    if (!serviceCheck.isServiceable) {
-      setFormError(`Area "${newArea}" is currently outside active cluster coverage. Please select a Gandhinagar sector (1–30, GIFT, Kudasan, Infocity).`);
-      return;
-    }
+    if(!newArea.trim()||!/^\d{6}$/.test(newPincode.trim())){setFormError('Enter your actual area and a six-digit pincode.');return;}
 
     let finalInstruction = '';
     switch (newInstructionPreset) {
@@ -90,7 +86,7 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
       newHouseNumber.trim(),
       newBuilding.trim(),
       newLandmark.trim() ? `Near ${newLandmark.trim()}` : '',
-      serviceCheck.areaName || newArea,
+      newArea.trim(),
       'Gandhinagar'
     ].filter(Boolean);
 
@@ -106,58 +102,29 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
       building: newBuilding.trim() || undefined,
       addressLine: fullAddress,
       addressLine1: fullAddress,
-      area: serviceCheck.areaName || newArea,
-      sector: serviceCheck.sectorOrZone || newArea,
+      area: newArea.trim(),
+      sector: newArea.trim(),
       landmark: newLandmark.trim() || undefined,
       city: 'Gandhinagar',
       state: 'Gujarat',
-      pincode: serviceCheck.pincode || newPincode,
-      clusterId: serviceCheck.clusterId,
-      clusterName: serviceCheck.clusterName,
-      zoneId: serviceCheck.zoneId,
-      deliveryFee: serviceCheck.deliveryFee,
+      pincode: newPincode.trim(),
+      clusterId: '',
+      clusterName: '',
+      zoneId: undefined,
+      deliveryFee: 0,
       instructions: finalInstruction,
       instructionPreset: newInstructionPreset,
       isDefault: false,
-      isServiceable: true
+      isServiceable: false
     };
 
-    saveDeliveryAddress(newAddr);
-    onSelectAddress(newAddr);
+    try { const saved=await saveDeliveryAddress(newAddr as any); onSelectAddress({...saved,addressLine:saved.addressLine??saved.addressLine1}); }
+    catch(error){setFormError((error as Error).message);return;}
     setShowAddForm(false);
     setFormError('');
   };
 
-  const handleGpsDetect = async () => {
-    const loc = await detectUserLocation();
-    if (loc && loc.isServiceable && loc.serviceability) {
-      const gpsAddr: CustomerAddress = {
-        id: `addr-gps-${Date.now()}`,
-        label: 'Home',
-        fullName: newName || 'Jayendrasinh Parmar',
-        name: newName || 'Jayendrasinh Parmar',
-        phone: newPhone || '9825014820',
-        addressLine: `${loc.sector || loc.area}, Gandhinagar`,
-        addressLine1: `${loc.sector || loc.area}, Gandhinagar`,
-        area: loc.area,
-        sector: loc.sector || loc.area,
-        city: 'Gandhinagar',
-        state: 'Gujarat',
-        pincode: loc.pincode,
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        clusterId: loc.serviceability.clusterId,
-        clusterName: loc.serviceability.clusterName,
-        zoneId: loc.serviceability.zoneId,
-        deliveryFee: loc.serviceability.deliveryFee,
-        isDefault: false,
-        isServiceable: true
-      };
-
-      selectDeliveryAddress(gpsAddr);
-      onSelectAddress(gpsAddr);
-    }
-  };
+  const handleGpsDetect = () => { setIsLocationModalOpen(true); };
 
   const getLabelIcon = (label: string) => {
     switch (label) {
@@ -376,21 +343,7 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-[11px] font-bold text-stone-700 block mb-1">Gandhinagar Area / Sector *</label>
-              <select
-                value={newArea}
-                onChange={(e) => setNewArea(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0D6E44]"
-              >
-                <option value="Kudasan">Kudasan (Sectors / PDPU Corridor)</option>
-                <option value="Infocity (Phase 1 & 2)">Infocity (Tech Hub)</option>
-                <option value="GIFT City">GIFT City (Fintech Hub)</option>
-                <option value="Sargasan">Sargasan Cross Roads</option>
-                <option value="Randesan">Randesan / Koba</option>
-                <option value="Bhaijipura & Raysan">Bhaijipura & Raysan</option>
-                <option value="Sector 1 to 15">Sector 1 to 15 (Capital Core)</option>
-                <option value="Sector 16 to 30">Sector 16 to 30 (Residential)</option>
-                <option value="Sector 24, 25, 26, 28 GIDC">Sector 24–28 GIDC</option>
-              </select>
+              <input type="text" value={newArea} onChange={e=>setNewArea(e.target.value)} required placeholder="e.g. Sector 21, Kudasan or GIFT City" className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs" />
             </div>
 
             <div>

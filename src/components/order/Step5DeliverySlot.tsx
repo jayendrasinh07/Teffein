@@ -14,13 +14,15 @@ interface Step5DeliverySlotProps {
   selectedSlotId: string;
   onSelectSlot: (slotId: string) => void;
   mealSlot: 'lunch' | 'dinner';
+  quantity: number;
 }
 
 export const Step5DeliverySlot: React.FC<Step5DeliverySlotProps> = ({
   slots,
   selectedSlotId,
   onSelectSlot,
-  mealSlot
+  mealSlot,
+  quantity
 }) => {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
@@ -45,9 +47,10 @@ export const Step5DeliverySlot: React.FC<Step5DeliverySlotProps> = ({
 
         {/* Slot Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          {slots.length===0 && <p role="status" className="text-sm text-stone-600">No delivery windows are available for this meal.</p>}
           {slots.map((slot) => {
             const isSelected = selectedSlotId === slot.id;
-            const isFull = slot.bookedCount >= slot.maxCapacity;
+            const isFull = slot.maxCapacity - slot.bookedCount < quantity;
             const remaining = Math.max(0, slot.maxCapacity - slot.bookedCount);
 
             return (
@@ -85,7 +88,7 @@ export const Step5DeliverySlot: React.FC<Step5DeliverySlotProps> = ({
 
                 <div className="mt-4 pt-2.5 border-t border-stone-200/60 flex items-center justify-between text-[11px]">
                   <span className={`font-bold ${isFull ? 'text-rose-600' : 'text-stone-500'}`}>
-                    {isFull ? 'Batch Full' : `${remaining} slots open`}
+                    {isFull ? 'Insufficient portions' : `${remaining} portions available`}
                   </span>
 
                   <span className={`font-black ${isSelected ? 'text-[#0D6E44]' : 'text-stone-400'}`}>

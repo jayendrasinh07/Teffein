@@ -29,48 +29,7 @@ export const OrderHistoryPage: React.FC = () => {
 
   const [filterType, setFilterType] = useState<'all' | 'one_time' | 'subscription'>('all');
 
-  const subscriptionHistory = [
-    {
-      id: 'GDM-2841',
-      date: 'Today, 21 Aug 2026',
-      slot: 'Lunch Thali (12:15 PM)',
-      items: 'Kathiyawadi Ringan Olo, Sev Tameta, 4 Phulkas, Toor Dal, Rice, Chaas',
-      status: 'Delivered',
-      rating: 5,
-      temperature: '72°C',
-      van: 'Van #03 (Cluster A)'
-    },
-    {
-      id: 'GDM-2834',
-      date: 'Yesterday, 20 Aug 2026',
-      slot: 'Lunch Thali (12:20 PM)',
-      items: 'Paneer Bhurji, Sukhi Bhaji, 4 Phulkas, Gujarati Kadhi, Khichdi',
-      status: 'Delivered',
-      rating: 5,
-      temperature: '74°C',
-      van: 'Van #03 (Cluster A)'
-    },
-    {
-      id: 'GDM-2820',
-      date: '19 Aug 2026',
-      slot: 'Lunch Thali (12:10 PM)',
-      items: 'Undhiyu, Puri (Special Treat), Dal Tadka, Jeera Rice, Chaas',
-      status: 'Delivered',
-      rating: 4,
-      temperature: '71°C',
-      van: 'Van #03 (Cluster A)'
-    },
-    {
-      id: 'SKP-2811',
-      date: '18 Aug 2026',
-      slot: 'Lunch Thali',
-      items: 'Meal Skipped by Customer (Credit Retained)',
-      status: 'Skipped',
-      rating: null,
-      temperature: '-',
-      van: '-'
-    }
-  ];
+  const subscriptionHistory: {id:string;date:string;slot:string;items:string;status:string;rating:number|null;temperature:string;van:string}[] = [];
 
   return (
     <div className="py-10 bg-[#FAF8F5] min-h-[85vh]">
@@ -94,7 +53,7 @@ export const OrderHistoryPage: React.FC = () => {
               <span>Order Single Meal</span>
             </button>
             <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full">
-              Active Monthly Subscription
+              Your account orders
             </span>
           </div>
         </div>
@@ -160,7 +119,7 @@ export const OrderHistoryPage: React.FC = () => {
               ) : (
                 <div className="space-y-3">
                   {oneTimeOrders.map((order: OneTimeOrder) => {
-                    const isCancellable = order.orderStatus === 'CONFIRMED' || order.orderStatus === 'PREPARING';
+                    const isCancellable = order.orderStatus === 'CONFIRMED' && order.paymentStatus === 'PENDING';
                     return (
                       <div
                         key={order.id}
@@ -169,7 +128,7 @@ export const OrderHistoryPage: React.FC = () => {
                         <div className="space-y-1.5 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-mono font-bold text-xs text-[#0D6E44] bg-emerald-100 px-2 py-0.5 rounded">
-                              #{order.id}
+                              #{order.orderNumber || order.id}
                             </span>
                             <span className="text-xs text-stone-500 font-semibold">
                               {order.scheduledDateLabel} ({order.mealSlot.toUpperCase()})
@@ -219,13 +178,7 @@ export const OrderHistoryPage: React.FC = () => {
                             </button>
                           )}
 
-                          <button
-                            onClick={() => lookupMealTraceability('GDM-2841')}
-                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 text-xs font-bold text-stone-800 transition-colors flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                          >
-                            <QrCode className="w-3.5 h-3.5 text-[#0D6E44]" />
-                            <span>Audit QR</span>
-                          </button>
+
 
                           <button
                             onClick={() => reorderMeal(order.id)}

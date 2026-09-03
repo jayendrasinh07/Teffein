@@ -23,8 +23,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   segment TEXT NOT NULL DEFAULT 'individual' CHECK (segment IN ('student', 'worker', 'corporate', 'family', 'individual')),
   diet_preference TEXT DEFAULT 'standard_gujarati' CHECK (diet_preference IN ('standard_gujarati', 'jain_satvik', 'kathiyawadi', 'low_oil_fit', 'north_indian')),
   default_portion TEXT DEFAULT 'regular' CHECK (default_portion IN ('mini', 'regular', 'jumbo')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- 2.2 USER ROLES TABLE
@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'customer' CHECK (role IN ('customer', 'admin', 'kitchen', 'delivery', 'corporate')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT user_roles_user_role_unique UNIQUE (user_id, role)
 );
 
@@ -51,8 +51,8 @@ CREATE TABLE IF NOT EXISTS public.delivery_zones (
   pincodes TEXT[] NOT NULL DEFAULT '{}',
   sectors TEXT[] NOT NULL DEFAULT '{}',
   is_active BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Seed Default Gandhinagar Delivery Zones
@@ -129,12 +129,12 @@ CREATE TABLE IF NOT EXISTS public.addresses (
   delivery_instructions TEXT,
   instruction_preset TEXT DEFAULT 'call_on_reach' CHECK (instruction_preset IN ('call_on_reach', 'leave_at_security', 'ring_bell', 'deliver_at_reception', 'custom')),
   is_default BOOLEAN NOT NULL DEFAULT false,
-  is_verified BOOLEAN NOT NULL DEFAULT true,
+  is_verified BOOLEAN NOT NULL DEFAULT false,
   cluster_id TEXT DEFAULT 'cluster-a',
   zone_id TEXT REFERENCES public.delivery_zones(id) ON DELETE SET NULL,
-  is_serviceable BOOLEAN NOT NULL DEFAULT true,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+  is_serviceable BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- 2.5 AREA WAITLIST TABLE
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS public.area_waitlist (
   city TEXT NOT NULL DEFAULT 'Gandhinagar',
   pincode TEXT,
   segment TEXT DEFAULT 'individual',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- ==============================================================================
@@ -173,7 +173,7 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 BEGIN
-  NEW.updated_at = timezone('utc'::text, now());
+  NEW.updated_at = now();
   RETURN NEW;
 END;
 $$;
@@ -204,9 +204,10 @@ DECLARE
   v_phone TEXT;
   v_segment TEXT;
 BEGIN
-  v_full_name := COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1));
+  v_full_name := COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.raw_user_meta_data->>'name', NULLIF(split_part(NEW.email, '@', 1), ''), 'Customer');
   v_phone := COALESCE(NEW.raw_user_meta_data->>'phone', NEW.phone, '');
   v_segment := COALESCE(NEW.raw_user_meta_data->>'segment', 'individual');
+  IF v_segment NOT IN ('student', 'worker', 'corporate', 'family', 'individual') THEN v_segment := 'individual'; END IF;
 
   -- 1. Insert Profile
   INSERT INTO public.profiles (id, full_name, phone, email, segment)
@@ -257,9 +258,10 @@ SET search_path = public, pg_temp
 AS $$
 BEGIN
   IF NEW.is_default = true THEN
+    PERFORM 1 FROM public.profiles WHERE id = NEW.user_id FOR UPDATE;
     UPDATE public.addresses
     SET is_default = false
-    WHERE user_id = NEW.user_id AND id != NEW.id;
+    WHERE user_id = NEW.user_id AND id != NEW.id AND is_default;
   END IF;
   RETURN NEW;
 END;
@@ -357,3 +359,69 @@ DROP POLICY IF EXISTS "Only admins can view area waitlist entries" ON public.are
 CREATE POLICY "Only admins can view area waitlist entries"
   ON public.area_waitlist FOR SELECT
   USING (public.is_admin(auth.uid()));
+
+-- Server-owned serviceability, based only on the approved zone coverage lists.
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC, anon, authenticated;
+CREATE OR REPLACE FUNCTION private.resolve_delivery_zone(p_pincode TEXT, p_area TEXT, p_sector TEXT)
+RETURNS TEXT LANGUAGE sql STABLE SET search_path = '' AS $$
+  SELECT z.id FROM public.delivery_zones z
+  WHERE z.is_active AND btrim(p_pincode) = ANY(z.pincodes)
+    AND EXISTS (SELECT 1 FROM unnest(z.sectors) s
+      WHERE regexp_replace(lower(s), '[^a-z0-9]', '', 'g') IN
+        (regexp_replace(lower(coalesce(p_area,'')), '[^a-z0-9]', '', 'g'),
+         regexp_replace(lower(coalesce(p_sector,'')), '[^a-z0-9]', '', 'g')))
+  ORDER BY z.id LIMIT 1;
+$$;
+CREATE OR REPLACE FUNCTION private.normalize_address()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+  NEW.zone_id := private.resolve_delivery_zone(NEW.pincode, NEW.area, NEW.sector);
+  -- Same physical envelope as the existing location service. Unknown coordinates
+  -- can use an exact covered sector+pincode; supplied out-of-area pins are rejected.
+  IF (NEW.latitude IS NULL) <> (NEW.longitude IS NULL) OR
+     (NEW.latitude IS NOT NULL AND NOT (NEW.latitude BETWEEN 23.10 AND 23.35 AND NEW.longitude BETWEEN 72.54 AND 72.76)) THEN
+    NEW.zone_id := NULL;
+  END IF;
+  NEW.is_serviceable := NEW.zone_id IS NOT NULL;
+  NEW.is_verified := false;
+  NEW.cluster_id := CASE NEW.zone_id WHEN 'zone_a_core' THEN 'cluster-a' WHEN 'zone_b_extended' THEN 'cluster-b' WHEN 'zone_c_periphery' THEN 'cluster-c' ELSE NULL END;
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS a_normalize_address ON public.addresses;
+CREATE TRIGGER a_normalize_address BEFORE INSERT OR UPDATE ON public.addresses
+FOR EACH ROW EXECUTE FUNCTION private.normalize_address();
+CREATE UNIQUE INDEX IF NOT EXISTS addresses_one_default_per_user ON public.addresses(user_id) WHERE is_default;
+CREATE INDEX IF NOT EXISTS addresses_zone_id_idx ON public.addresses(zone_id);
+ALTER TABLE public.addresses DROP CONSTRAINT IF EXISTS addresses_valid_coordinates;
+ALTER TABLE public.addresses ADD CONSTRAINT addresses_valid_coordinates CHECK (
+  (latitude IS NULL OR latitude BETWEEN -90 AND 90) AND (longitude IS NULL OR longitude BETWEEN -180 AND 180));
+ALTER TABLE public.delivery_zones DROP CONSTRAINT IF EXISTS delivery_zones_valid_fees;
+ALTER TABLE public.delivery_zones ADD CONSTRAINT delivery_zones_valid_fees CHECK (delivery_fee >= 0 AND min_order_amount >= 0);
+
+-- The quotation uses current zone pricing and authenticated address ownership.
+CREATE OR REPLACE FUNCTION public.quote_delivery_address(p_address_id UUID)
+RETURNS JSONB LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE a public.addresses%ROWTYPE; z public.delivery_zones%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  SELECT * INTO a FROM public.addresses WHERE id=p_address_id AND user_id=auth.uid();
+  IF NOT FOUND THEN RAISE EXCEPTION 'Delivery address not found'; END IF;
+  SELECT * INTO z FROM public.delivery_zones WHERE id=private.resolve_delivery_zone(a.pincode,a.area,a.sector) AND is_active;
+  IF NOT FOUND OR NOT a.is_serviceable OR z.id IS DISTINCT FROM a.zone_id THEN RAISE EXCEPTION 'This address is outside current delivery coverage'; END IF;
+  RETURN jsonb_build_object('zoneId',z.id,'deliveryFee',CASE WHEN z.is_free_delivery THEN 0 ELSE z.delivery_fee END,'minOrderAmount',z.min_order_amount);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.quote_delivery_address(UUID) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.quote_delivery_address(UUID) TO authenticated;
+REVOKE ALL ON FUNCTION private.resolve_delivery_zone(TEXT,TEXT,TEXT), private.normalize_address() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.handle_updated_at(), public.handle_new_auth_user(), public.handle_default_address() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.is_admin(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.is_admin(UUID) TO anon, authenticated;
+REVOKE ALL ON public.profiles, public.user_roles, public.addresses, public.delivery_zones, public.area_waitlist FROM anon, authenticated;
+GRANT SELECT ON public.delivery_zones TO anon, authenticated;
+GRANT INSERT ON public.area_waitlist TO anon, authenticated;
+GRANT SELECT, INSERT, UPDATE ON public.profiles TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.user_roles, public.addresses, public.delivery_zones TO authenticated;
+GRANT SELECT ON public.area_waitlist TO authenticated;

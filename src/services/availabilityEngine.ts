@@ -42,7 +42,7 @@ export const TEFFEIN_OPERATIONAL_CONFIG: TeffeinConfig = {
     cutoffLabel: '10:30 AM'
   },
   dinner: {
-    startTime: '07:00 PM',
+    startTime: '07:30 PM',
     endTime: '09:00 PM',
     cutoffTimeHours: 17,
     cutoffTimeMinutes: 30,
@@ -53,18 +53,7 @@ export const TEFFEIN_OPERATIONAL_CONFIG: TeffeinConfig = {
   baseOneTimeMealPrice: 119,
   freeDeliveryThreshold: 0, // Free cluster delivery in Gandhinagar
   standardDeliveryFee: 0,
-  defaultSlots: {
-    lunch: [
-      { id: 'L-1', windowLabel: '12:00 PM – 12:30 PM', startTime: '12:00 PM', endTime: '12:30 PM', maxCapacity: 45, bookedCount: 28, isASAP: true },
-      { id: 'L-2', windowLabel: '12:30 PM – 01:00 PM', startTime: '12:30 PM', endTime: '01:00 PM', maxCapacity: 50, bookedCount: 34 },
-      { id: 'L-3', windowLabel: '01:00 PM – 01:30 PM', startTime: '01:00 PM', endTime: '01:30 PM', maxCapacity: 40, bookedCount: 22 }
-    ],
-    dinner: [
-      { id: 'D-1', windowLabel: '07:00 PM – 07:30 PM', startTime: '07:00 PM', endTime: '07:30 PM', maxCapacity: 35, bookedCount: 14, isASAP: true },
-      { id: 'D-2', windowLabel: '07:30 PM – 08:00 PM', startTime: '07:30 PM', endTime: '08:00 PM', maxCapacity: 45, bookedCount: 29 },
-      { id: 'D-3', windowLabel: '08:00 PM – 08:30 PM', startTime: '08:00 PM', endTime: '08:30 PM', maxCapacity: 40, bookedCount: 19 }
-    ]
-  }
+  defaultSlots: {lunch: [], dinner: []}
 };
 
 export const AVAILABLE_ADDONS: MealAddOn[] = [
@@ -110,34 +99,7 @@ export const AVAILABLE_ADDONS: MealAddOn[] = [
   }
 ];
 
-export const SAVED_CUSTOMER_ADDRESSES: CustomerAddress[] = [
-  {
-    id: 'addr-1',
-    label: 'PG',
-    fullName: 'Aarav Patel',
-    phone: '+91 98254 99120',
-    addressLine: 'Room 402, Shivalik Elite Boys PG, Near Swagat Flamingo',
-    area: 'Kudasan',
-    sector: 'PDPU Knowledge Corridor',
-    landmark: 'Behind Reliance Petrol Pump',
-    pincode: '382421',
-    clusterId: 'cluster-a',
-    isServiceable: true
-  },
-  {
-    id: 'addr-2',
-    label: 'Office',
-    fullName: 'Aarav Patel',
-    phone: '+91 98254 99120',
-    addressLine: 'Desk 4B, 3rd Floor, Infocity Tower 2',
-    area: 'Infocity (Phase 1 & 2)',
-    sector: 'Infocity Tech Hub',
-    landmark: 'Opposite Infocity Club',
-    pincode: '382007',
-    clusterId: 'cluster-a',
-    isServiceable: true
-  }
-];
+export const SAVED_CUSTOMER_ADDRESSES: CustomerAddress[] = [];
 
 /**
  * Checks if a given pincode or area name in Gandhinagar is serviceable
@@ -201,188 +163,24 @@ export function checkServiceability(pincodeOrArea: string): {
 /**
  * Checks availability for a specific Date & Meal Slot with intelligent "Next Available" computation
  */
-export function checkMealAvailability(params: {
-  date: string; // YYYY-MM-DD
-  mealSlot: 'lunch' | 'dinner';
-  currentTime?: Date;
-}): AvailabilityCheckResult {
-  const { date, mealSlot } = params;
-  const now = params.currentTime || new Date();
-  
-  const todayStr = now.toISOString().split('T')[0];
-  const tomorrow = new Date(now);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
-  const dateObj = new Date(date + 'T00:00:00');
-  const isToday = date === todayStr;
-  const isTomorrow = date === tomorrowStr;
-
-  const dateLabel = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
-
-  // 1. Check if closed date
-  if (TEFFEIN_OPERATIONAL_CONFIG.closedDates.includes(date)) {
-    return {
-      isAvailable: false,
-      reason: 'KITCHEN_CLOSED',
-      message: `TEFFEIN kitchen is closed on ${dateLabel} for holiday maintenance.`,
-      mealSlot,
-      date,
-      dateLabel,
-      availableSlots: [],
-      nextAvailable: {
-        date: tomorrowStr,
-        dateLabel: 'Tomorrow',
-        mealSlot: 'lunch',
-        timeWindow: '12:00 PM – 01:30 PM',
-        actionLabel: "Order Tomorrow's Lunch"
-      }
-    };
-  }
-
-  // 2. Check if date is in the past
-  if (date < todayStr) {
-    return {
-      isAvailable: false,
-      reason: 'DATE_OUT_OF_BOUNDS',
-      message: 'Selected date is in the past.',
-      mealSlot,
-      date,
-      dateLabel,
-      availableSlots: [],
-      nextAvailable: {
-        date: todayStr,
-        dateLabel: 'Today',
-        mealSlot: 'dinner',
-        timeWindow: '07:00 PM – 08:30 PM',
-        actionLabel: "Order Today's Dinner"
-      }
-    };
-  }
-
-  // 3. Evaluate Cutoff time if ordering for TODAY
-  if (isToday) {
-    const currentHour = now.getHours();
-    const currentMin = now.getMinutes();
-    const currentMinutesOfDay = currentHour * 60 + currentMin;
-
-    if (mealSlot === 'lunch') {
-      const lunchCutoffMinutes = 
-        TEFFEIN_OPERATIONAL_CONFIG.lunch.cutoffTimeHours * 60 + 
-        TEFFEIN_OPERATIONAL_CONFIG.lunch.cutoffTimeMinutes;
-
-      if (currentMinutesOfDay > lunchCutoffMinutes) {
-        // Today's Lunch Cutoff Passed! Provide Next Available: Dinner (if before dinner cutoff) or Tomorrow's Lunch
-        const dinnerCutoffMinutes = 
-          TEFFEIN_OPERATIONAL_CONFIG.dinner.cutoffTimeHours * 60 + 
-          TEFFEIN_OPERATIONAL_CONFIG.dinner.cutoffTimeMinutes;
-
-        if (currentMinutesOfDay <= dinnerCutoffMinutes) {
-          return {
-            isAvailable: false,
-            reason: 'CUTOFF_PASSED',
-            message: `Today's lunch ordering closed at ${TEFFEIN_OPERATIONAL_CONFIG.lunch.cutoffLabel}. The morning cooking batch has already been dispatched.`,
-            mealSlot: 'lunch',
-            date,
-            dateLabel,
-            availableSlots: [],
-            nextAvailable: {
-              date: todayStr,
-              dateLabel: 'Today',
-              mealSlot: 'dinner',
-              timeWindow: '07:00 PM – 08:30 PM',
-              actionLabel: "Order Today's Dinner"
-            }
-          };
-        } else {
-          return {
-            isAvailable: false,
-            reason: 'CUTOFF_PASSED',
-            message: `Today's lunch ordering closed at ${TEFFEIN_OPERATIONAL_CONFIG.lunch.cutoffLabel}.`,
-            mealSlot: 'lunch',
-            date,
-            dateLabel,
-            availableSlots: [],
-            nextAvailable: {
-              date: tomorrowStr,
-              dateLabel: 'Tomorrow',
-              mealSlot: 'lunch',
-              timeWindow: '12:00 PM – 01:30 PM',
-              actionLabel: "Order Tomorrow's Lunch"
-            }
-          };
-        }
-      }
-    } else if (mealSlot === 'dinner') {
-      const dinnerCutoffMinutes = 
-        TEFFEIN_OPERATIONAL_CONFIG.dinner.cutoffTimeHours * 60 + 
-        TEFFEIN_OPERATIONAL_CONFIG.dinner.cutoffTimeMinutes;
-
-      if (currentMinutesOfDay > dinnerCutoffMinutes) {
-        // Today's Dinner Cutoff Passed! Provide Next Available: Tomorrow's Lunch
-        return {
-          isAvailable: false,
-          reason: 'CUTOFF_PASSED',
-          message: `Today's dinner ordering closed at ${TEFFEIN_OPERATIONAL_CONFIG.dinner.cutoffLabel}. Fresh evening batches are currently in steam preparation.`,
-          mealSlot: 'dinner',
-          date,
-          dateLabel,
-          availableSlots: [],
-          nextAvailable: {
-            date: tomorrowStr,
-            dateLabel: 'Tomorrow',
-            mealSlot: 'lunch',
-            timeWindow: '12:00 PM – 01:30 PM',
-            actionLabel: "Order Tomorrow's Lunch"
-          }
-        };
-      }
-    }
-  }
-
-  // 4. Return Available delivery slots with remaining capacity
-  const baseSlots = mealSlot === 'lunch' 
-    ? TEFFEIN_OPERATIONAL_CONFIG.defaultSlots.lunch 
-    : TEFFEIN_OPERATIONAL_CONFIG.defaultSlots.dinner;
-
-  const mappedSlots: DeliverySlot[] = baseSlots.map((s) => ({
-    ...s,
-    mealSlot
-  }));
-
-  return {
-    isAvailable: true,
-    message: `${dateLabel}'s ${mealSlot} is open for fresh preparation! Select your preferred delivery window.`,
-    mealSlot,
-    date,
-    dateLabel,
-    availableSlots: mappedSlots
-  };
+export function istDate(now:Date=new Date()):string {
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+ const part=(type:string)=>parts.find(p=>p.type===type)!.value;
+ return `${part('year')}-${part('month')}-${part('day')}`;
 }
-
-/**
- * Returns available orderable dates list (e.g. Today, Tomorrow, and next 5 days)
- */
-export function getOrderableDates(): { dateStr: string; label: string; subLabel: string; isToday: boolean }[] {
-  const dates = [];
-  const now = new Date();
-
-  for (let i = 0; i <= TEFFEIN_OPERATIONAL_CONFIG.maxAdvanceBookingDays; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().split('T')[0];
-    const isToday = i === 0;
-    const isTomorrow = i === 1;
-    const label = isToday ? 'Today' : isTomorrow ? 'Tomorrow' : d.toLocaleDateString('en-IN', { weekday: 'short' });
-    const subLabel = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
-
-    dates.push({
-      dateStr,
-      label,
-      subLabel,
-      isToday
-    });
-  }
-
-  return dates;
+export function addCalendarDays(date:string,days:number):string { const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10); }
+export function checkMealAvailability(params:{date:string;mealSlot:'lunch'|'dinner';currentTime?:Date}):AvailabilityCheckResult {
+ const {date,mealSlot}=params;const now=params.currentTime??new Date();const today=istDate(now);const tomorrow=addCalendarDays(today,1);
+ const clock=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(now);
+ const cutoff=mealSlot==='lunch'?'10:30:00':'17:30:00';
+ const dateLabel=date===today?'Today':date===tomorrow?'Tomorrow':date;
+ const inBounds=/^\d{4}-\d{2}-\d{2}$/.test(date)&&date>=today&&date<=addCalendarDays(today,6);
+ const closed=TEFFEIN_OPERATIONAL_CONFIG.closedDates.includes(date);
+ const pastCutoff=date===today&&clock>=cutoff;
+ const available=inBounds&&!closed&&!pastCutoff;
+ return {date,mealSlot,dateLabel,isAvailable:available,availableSlots:[],reason:!inBounds?'DATE_OUT_OF_BOUNDS':closed?'KITCHEN_CLOSED':pastCutoff?'CUTOFF_PASSED':undefined,
+ message:available?'Select a published menu and an available delivery window.':!inBounds?'Choose a date within the next seven days.':closed?'The kitchen is closed for this date.':`Ordering closed at ${mealSlot==='lunch'?'10:30 AM':'5:30 PM'} IST.`,
+ nextAvailable:available?undefined:{date:pastCutoff&&mealSlot==='lunch'&&clock<'17:30:00'?today:tomorrow,dateLabel:pastCutoff&&mealSlot==='lunch'&&clock<'17:30:00'?'Today':'Tomorrow',mealSlot:pastCutoff&&mealSlot==='lunch'&&clock<'17:30:00'?'dinner':'lunch',timeWindow:'Select a published menu',actionLabel:'Check next available menu'}};
 }
+export function getOrderableDates(){const today=istDate();return Array.from({length:7},(_,i)=>{const dateStr=addCalendarDays(today,i);return{dateStr,label:i===0?'Today':i===1?'Tomorrow':dateStr,subLabel:dateStr,isToday:i===0};});}

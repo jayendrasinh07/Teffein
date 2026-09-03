@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { User } from '@supabase/supabase-js';
 import { 
@@ -32,7 +32,7 @@ import {
   MEAL_PLANS
 } from '../data/config';
 import { INITIAL_ONE_TIME_ORDERS } from '../data/orders';
-import { checkMealAvailability } from '../services/availabilityEngine';
+import { checkMealAvailability, istDate } from '../services/availabilityEngine';
 import { permissionManager } from '../services/permissionService';
 import { 
   reverseGeocodeCoordinates, 
@@ -42,6 +42,7 @@ import {
   getSavedAddresses, 
   saveAddressesToStorage, 
   DEFAULT_SAVED_ADDRESSES,
+  EMPTY_DELIVERY_ADDRESS,
   checkAreaServiceability,
   calculateDeliveryFeeForZone,
   getInitialCentralLocationState,
@@ -116,7 +117,7 @@ interface AppContextType {
   setIsOrderOnceModalOpen: (open: boolean) => void;
   createOneTimeOrder: (orderData: Omit<OneTimeOrder, 'id' | 'createdAt' | 'traceabilityMealId'>) => Promise<OneTimeOrder>;
   reorderMeal: (orderId: string) => void;
-  cancelOneTimeOrder: (orderId: string) => void;
+  cancelOneTimeOrder: (orderId: string) => Promise<void>;
   advanceOrderStatus: (orderId: string, nextStatus: OrderStatus) => void;
 
   // Interactive Operations
@@ -142,7 +143,7 @@ interface AppContextType {
   simulateLocationCoordinates: (latitude: number, longitude: number, accuracy?: number) => Promise<DetectedLocation>;
   confirmDetectedAddress: (options?: { label?: AddressLabel; fullName?: string; phone?: string; addressLine1?: string }) => DeliveryAddress;
   selectDeliveryAddress: (address: DeliveryAddress) => void;
-  saveDeliveryAddress: (address: DeliveryAddress) => void;
+  saveDeliveryAddress: (address: DeliveryAddress) => Promise<DeliveryAddress>;
   deleteDeliveryAddress: (id: string) => void;
   setDefaultDeliveryAddress: (id: string) => void;
   isLocationModalOpen: boolean;
@@ -212,38 +213,11 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('home');
-  const [userRole, setUserRole] = useState<UserRole>(() => {
-    const saved = localStorage.getItem('teffein_user_role');
-    return (saved as UserRole) || 'guest';
-  });
-  const [subscription, setSubscription] = useState<UserSubscription>(() => {
-    const saved = localStorage.getItem('teffein_sub');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // fallback
-      }
-    }
-    return INITIAL_USER_SUBSCRIPTION;
-  });
+  const [userRole, setUserRole] = useState<UserRole>('guest');
+  const [subscription, setSubscription] = useState<UserSubscription>(INITIAL_USER_SUBSCRIPTION);
 
-  const [oneTimeOrders, setOneTimeOrders] = useState<OneTimeOrder[]>(() => {
-    const saved = localStorage.getItem('teffein_onetime_orders');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // fallback
-      }
-    }
-    return INITIAL_ONE_TIME_ORDERS;
-  });
-
-  const [activeTrackingOrder, setActiveTrackingOrder] = useState<OneTimeOrder | null>(() => {
-    return INITIAL_ONE_TIME_ORDERS[0] || null;
-  });
-
+  const [oneTimeOrders, setOneTimeOrders] = useState<OneTimeOrder[]>([]);
+  const [activeTrackingOrder, setActiveTrackingOrder] = useState<OneTimeOrder|null>(null);
   const [isOrderOnceModalOpen, setIsOrderOnceModalOpen] = useState<boolean>(false);
 
   const [feedbacks, setFeedbacks] = useState<CustomerFeedback[]>(CUSTOMER_FEEDBACKS);
@@ -260,7 +234,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeDeliveryAddress, setActiveDeliveryAddress] = useState<DeliveryAddress>(() => {
     const addresses = getSavedAddresses();
     const defaultAddr = addresses.find((a) => a.isDefault);
-    return defaultAddr || addresses[0] || DEFAULT_SAVED_ADDRESSES[0];
+    return defaultAddr || addresses[0] || EMPTY_DELIVERY_ADDRESS;
   });
   const [isLocationModalOpen, setIsLocationModalOpen] = useState<boolean>(false);
   const [locationErrorMessage, setLocationErrorMessage] = useState<string | null>(null);
@@ -287,54 +261,52 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [userRolesList, setUserRolesList] = useState<UserRoleType[]>(['customer']);
   const isSupabaseConnected = isSupabaseConfigured();
 
-  const refreshUserProfile = useCallback(async () => {
-    const user = await authService.getCurrentUser();
-    setCurrentUser(user);
-    if (user) {
-      const [profile, roles] = await Promise.all([
-        authService.getProfile(user.id),
-        authService.getUserRoles(user.id)
-      ]);
-      setUserProfile(profile);
-      setUserRolesList(roles);
-      if (roles.includes('admin')) {
-        setUserRole('admin');
-      } else if (roles.includes('kitchen')) {
-        setUserRole('kitchen_lead');
-      } else if (roles.includes('delivery')) {
-        setUserRole('delivery_fleet');
-      } else if (roles.includes('corporate')) {
-        setUserRole('corporate_lead');
-      } else {
-        setUserRole('customer');
-      }
 
-      // Sync user addresses from Supabase database
-      const dbAddresses = await addressService.getUserAddresses(user.id);
-      if (dbAddresses && dbAddresses.length > 0) {
-        setSavedAddresses(dbAddresses);
-        const def = dbAddresses.find(a => a.isDefault) || dbAddresses[0];
-        setActiveDeliveryAddress(def);
-        setDefaultAddressIdState(def.id);
-      }
-    } else {
-      setUserProfile(null);
-      setUserRolesList(['customer']);
-    }
-  }, []);
+  const authGeneration = useRef(0);
+  const authIdentity = useRef<string|null>(null);
+  const clearCustomerData = useCallback(() => {
+    setSubscription(INITIAL_USER_SUBSCRIPTION);setOneTimeOrders([]);setActiveTrackingOrder(null);setSavedAddresses([]);setActiveDeliveryAddress(EMPTY_DELIVERY_ADDRESS);setDefaultAddressIdState('');
+    setCentralLocation(getInitialCentralLocationState());setDetectedLocation(null);setUserProfile(null);setUserRolesList([]);setUserRole('guest');
+    for(const key of ['teffein_user_role','teffein_onetime_orders','teffein_saved_customer_orders','teffein_saved_addresses','teffein_mock_auth_session','teffein_sub'])localStorage.removeItem(key);
+    sessionStorage.removeItem('teffein_active_delivery_location');
+  },[]);
+  const refreshUserProfile = useCallback(async () => {
+    const generation=++authGeneration.current;
+    const user=await authService.getCurrentUser();
+    if(generation!==authGeneration.current)return;
+    if(authIdentity.current!==user?.id){clearCustomerData();authIdentity.current=user?.id??null;}
+    setCurrentUser(user);
+    if(!user)return;
+    try {
+      const [profile,roles,addresses,orders]=await Promise.all([authService.getProfile(user.id),authService.getUserRoles(user.id),addressService.getUserAddresses(user.id),orderService.getUserOrders(user.id)]);
+      if(generation!==authGeneration.current)return;
+      setUserProfile(profile);setUserRolesList(roles);setUserRole(roles.includes('admin')?'admin':roles.includes('kitchen')?'kitchen_lead':roles.includes('delivery')?'delivery_fleet':roles.includes('corporate')?'corporate_lead':'customer');
+      setSavedAddresses(addresses);setOneTimeOrders(orders);
+      const address=addresses.find(a=>a.isDefault)||addresses[0]||EMPTY_DELIVERY_ADDRESS;
+      setActiveDeliveryAddress(address);setDefaultAddressIdState(address.id);
+      setActiveTrackingOrder(prev=>prev?orders.find(o=>o.id===prev.id)??null:null);
+    } catch(error) { if(generation===authGeneration.current){clearCustomerData();setCurrentUser(user);console.error('Unable to load account data',error);} }
+  },[clearCustomerData]);
+
+  useEffect(() => {
+    if(!currentUser)return;
+    const owner=currentUser.id;let alive=true;
+    const refresh=async()=>{try{const orders=await orderService.getUserOrders(owner);if(alive&&authIdentity.current===owner){setOneTimeOrders(orders);setActiveTrackingOrder(prev=>prev?orders.find(o=>o.id===prev.id)??null:null);}}catch{/* Keep the last confirmed server state during a temporary connection failure. */}};
+    const timer=setInterval(refresh,15000);window.addEventListener('focus',refresh);
+    return()=>{alive=false;clearInterval(timer);window.removeEventListener('focus',refresh);};
+  },[currentUser?.id]);
 
   // Auth Lifecycle Initializer
   useEffect(() => {
     refreshUserProfile();
 
-    const { data: { subscription: authSub } } = authService.onAuthStateChange(async (event, session) => {
+    const { data: { subscription: authSub } } = authService.onAuthStateChange((event, session) => {
       if (session?.user) {
+        if(authIdentity.current!==session.user.id){++authGeneration.current;clearCustomerData();authIdentity.current=session.user.id;}
         setCurrentUser(session.user);
-        refreshUserProfile();
+        setTimeout(() => { void refreshUserProfile(); }, 0);
       } else {
-        setCurrentUser(null);
-        setUserProfile(null);
-        setUserRolesList(['customer']);
+        ++authGeneration.current;authIdentity.current=null;setCurrentUser(null);clearCustomerData();
       }
     });
 
@@ -360,10 +332,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const signOutUser = async () => {
-    await authService.signOut();
+    const result=await authService.signOut();
+    if(result.error){showToast('Sign out failed',result.error.message,'error');return;}
+    ++authGeneration.current;authIdentity.current=null;clearCustomerData();setActiveTab('home');
     setCurrentUser(null);
     setUserProfile(null);
-    setUserRolesList(['customer']);
+    setUserRolesList([]);
     setUserRole('guest');
     showToast('Signed Out', 'You have been safely signed out.', 'info');
   };
@@ -376,22 +350,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Toasts
   const [toasts, setToasts] = useState<ToastState[]>([]);
 
-  // Sync to localStorage
-  useEffect(() => {
-    localStorage.setItem('teffein_user_role', userRole);
-  }, [userRole]);
-
-  useEffect(() => {
-    localStorage.setItem('teffein_sub', JSON.stringify(subscription));
-  }, [subscription]);
-
-  useEffect(() => {
-    localStorage.setItem('teffein_onetime_orders', JSON.stringify(oneTimeOrders));
-  }, [oneTimeOrders]);
-
-  useEffect(() => {
-    saveAddressesToStorage(savedAddresses);
-  }, [savedAddresses]);
+  useEffect(() => { for(const key of ['teffein_user_role','teffein_onetime_orders','teffein_saved_customer_orders','teffein_saved_addresses','teffein_mock_auth_session','teffein_sub'])localStorage.removeItem(key); }, []);
 
   // Window scroll to top on tab change
   useEffect(() => {
@@ -567,9 +526,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const newAddr: DeliveryAddress = {
       id: `addr-gps-${Date.now()}`,
       label: options?.label || 'Home',
-      name: options?.fullName || activeDeliveryAddress.name || 'Jayendrasinh Parmar',
-      fullName: options?.fullName || activeDeliveryAddress.fullName || 'Jayendrasinh Parmar',
-      phone: options?.phone || activeDeliveryAddress.phone || '9825014820',
+      name: options?.fullName || activeDeliveryAddress.name || '',
+      fullName: options?.fullName || activeDeliveryAddress.fullName || '',
+      phone: options?.phone || activeDeliveryAddress.phone || '',
       addressLine1: options?.addressLine1 || loc.displayName || `${loc.sector || loc.area}`,
       addressLine: options?.addressLine1 || loc.displayName || `${loc.sector || loc.area}`,
       area: loc.area || 'Gandhinagar',
@@ -591,102 +550,35 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isServiceable: serviceCheck.isServiceable
     };
 
-    setSavedAddresses((prev) => [newAddr, ...prev.map((a) => ({ ...a, isDefault: false }))]);
     setActiveDeliveryAddress(newAddr);
-    setDefaultAddressIdState(newAddr.id);
-
-    setCentralLocation((prev) => ({
-      ...prev,
-      isAddressConfirmed: true,
-      confirmedAddress: newAddr,
-      selectedAddressId: newAddr.id,
-      source: 'gps',
-      latitude: loc.latitude,
-      longitude: loc.longitude,
-      accuracy: loc.accuracy ?? null,
-      city: newAddr.city,
-      area: newAddr.area,
-      sector: newAddr.sector || newAddr.area,
-      pincode: newAddr.pincode,
-      formattedAddress: newAddr.addressLine1,
-      deliveryZoneId: zoneId,
-      deliveryFee: fee,
-      serviceable: newAddr.isServiceable
-    }));
-
-    showToast('Address Confirmed', `Delivery set to ${newAddr.label}: ${newAddr.sector || newAddr.area}`, 'success');
+    setCentralLocation(prev=>({...prev,isAddressConfirmed:false,confirmedAddress:null,selectedAddressId:null}));
+    showToast('Location detected','Complete and save the delivery address before ordering.','info');
     return newAddr;
   }, [detectedLocation, activeDeliveryAddress]);
 
-  const saveDeliveryAddress = useCallback((address: DeliveryAddress) => {
-    setSavedAddresses((prev) => {
-      const existingIdx = prev.findIndex((a) => a.id === address.id);
-      let updated: DeliveryAddress[];
-      if (existingIdx >= 0) {
-        updated = [...prev];
-        updated[existingIdx] = address;
-      } else {
-        updated = [address, ...prev];
-      }
 
-      if (address.isDefault) {
-        updated = updated.map((a) => ({
-          ...a,
-          isDefault: a.id === address.id
-        }));
-        setDefaultAddressIdState(address.id);
-      }
-      return updated;
-    });
-
-    setActiveDeliveryAddress(address);
-    const fee = calculateDeliveryFeeForZone(address.zoneId);
-
-    setCentralLocation((prev) => ({
-      ...prev,
-      isAddressConfirmed: true,
-      confirmedAddress: address,
-      selectedAddressId: address.id,
-      area: address.area,
-      sector: address.sector || address.area,
-      pincode: address.pincode,
-      formattedAddress: address.addressLine1 || address.addressLine || `${address.area}, Gandhinagar`,
-      deliveryZoneId: (address.zoneId || 'zone_a_core') as any,
-      deliveryFee: fee,
-      serviceable: address.isServiceable
-    }));
-
-    showToast('Address Saved', `${address.label} address has been saved for future orders.`, 'success');
-  }, []);
-
-  const deleteDeliveryAddress = useCallback((id: string) => {
-    setSavedAddresses((prev) => {
-      const filtered = prev.filter((a) => a.id !== id);
-      if (activeDeliveryAddress.id === id && filtered.length > 0) {
-        setActiveDeliveryAddress(filtered[0]);
-        selectDeliveryAddress(filtered[0]);
-      }
-      return filtered;
-    });
-    showToast('Address Removed', 'Delivery address removed.', 'info');
-  }, [activeDeliveryAddress.id, selectDeliveryAddress]);
-
-  const setDefaultDeliveryAddress = useCallback((id: string) => {
-    setSavedAddresses((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isDefault: a.id === id
-      }))
-    );
-    setDefaultAddressIdState(id);
-    const target = savedAddresses.find((a) => a.id === id);
-    if (target) {
-      const updated = { ...target, isDefault: true };
-      setActiveDeliveryAddress(updated);
-      selectDeliveryAddress(updated);
-      showToast('Default Address Set', `${target.label} is now your primary delivery address.`, 'success');
-    }
-  }, [savedAddresses, selectDeliveryAddress]);
+  const saveDeliveryAddress = useCallback(async (address: DeliveryAddress):Promise<DeliveryAddress> => {
+    if(!currentUser){setIsAuthModalOpen(true);throw new Error('Please sign in to save this address.');}
+    const owner=currentUser.id;
+    let saved:DeliveryAddress;
+    if(/^[0-9a-f]{8}-/i.test(address.id)){
+      await addressService.updateAddress(address.id,address,owner);
+      const refreshed=await addressService.getUserAddresses(owner);saved=refreshed.find(a=>a.id===address.id)!;
+    }else saved=await addressService.createAddress(owner,address);
+    if(authIdentity.current!==owner)throw new Error('Your account changed. Please retry.');
+    const addresses=await addressService.getUserAddresses(owner);
+    if(authIdentity.current!==owner)throw new Error('Your account changed. Please retry.');
+    setSavedAddresses(addresses);setActiveDeliveryAddress(saved);setDefaultAddressIdState(addresses.find(a=>a.isDefault)?.id??'');
+    showToast('Address Saved',saved.isServiceable?'Delivery coverage verified.':'This address is outside current delivery coverage.','info');return saved;
+  },[currentUser]);
+  const deleteDeliveryAddress = useCallback(async (id:string) => {
+    try{await addressService.deleteAddress(id,currentUser?.id);await refreshUserProfile();showToast('Address Removed','Delivery address removed.','info');}
+    catch(error){showToast('Address not removed',(error as Error).message,'error');}
+  },[currentUser,refreshUserProfile]);
+  const setDefaultDeliveryAddress = useCallback(async (id:string) => {
+    try{await addressService.updateAddress(id,{isDefault:true},currentUser?.id);await refreshUserProfile();showToast('Default Address Set','Your default address has been saved.','success');}
+    catch(error){showToast('Address not updated',(error as Error).message,'error');}
+  },[currentUser,refreshUserProfile]);
 
   // ----------------------------------------------------
   // NOTIFICATION ACTIONS
@@ -713,136 +605,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [notificationPermission]);
 
-  // ONE TIME ORDER CREATION WITH IMMUTABLE ADDRESS SNAPSHOT & VALIDATION
-  const createOneTimeOrder = async (
-    orderData: Omit<OneTimeOrder, 'id' | 'createdAt' | 'traceabilityMealId'>
-  ): Promise<OneTimeOrder> => {
-    // 1. Server-side validation simulation
-    const validation = validateOrderPayload({
-      address: orderData.address,
-      quantity: orderData.quantity,
-      scheduledDate: orderData.scheduledDate,
-      mealSlot: orderData.mealSlot,
-      subtotal: orderData.subtotal,
-      addOnsTotal: orderData.addOnsTotal,
-      deliveryFee: orderData.deliveryFee,
-      total: orderData.total
-    });
 
-    if (!validation.isValid && validation.errors.length > 0) {
-      showToast('Order Verification Issue', validation.errors[0], 'warning');
-    }
-
-    const orderId = `TF${Math.floor(10000 + Math.random() * 90000)}`;
-    const traceId = `GDM-${Math.floor(2000 + Math.random() * 8000)}`;
-    const timeString = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-    // 2. Build order with immutable address snapshot
-    const newOrder: OneTimeOrder = {
-      ...orderData,
-      id: orderId,
-      createdAt: `${timeString}, ${orderData.scheduledDateLabel}`,
-      traceabilityMealId: traceId,
-      deliveryAddressSnapshot: validation.immutableAddressSnapshot,
-      deliveryZoneId: validation.validatedDeliveryZoneId,
-      deliveryFee: validation.validatedDeliveryFee
-    };
-
-    setOneTimeOrders((prev) => [newOrder, ...prev]);
-    setActiveTrackingOrder(newOrder);
-
-    // Persist to Supabase if authenticated
-    if (userProfile?.id || currentUser?.id) {
-      orderService.createOrder({
-        userId: userProfile?.id || currentUser?.id || '',
-        address: orderData.address as any,
-        orderDate: orderData.scheduledDate,
-        mealType: orderData.mealSlot,
-        deliverySlotId: orderData.deliverySlotId,
-        deliverySlotName: orderData.deliverySlotLabel,
-        mealName: orderData.mealName,
-        quantity: orderData.quantity,
-        basePricePerMeal: orderData.subtotal / Math.max(1, orderData.quantity),
-        mealCustomizations: (orderData.mealCustomizations as any) || [],
-        deliveryFee: orderData.deliveryFee,
-        paymentMethod: orderData.paymentMethod
-      }).catch((err) => console.warn('[TEFFEIN] Supabase order sync error:', err));
-    }
-
-    // Launch celebratory confetti
-    try {
-      confetti({
-        particleCount: 50,
-        spread: 60,
-        origin: { y: 0.7 }
-      });
-    } catch (e) {
-      // safe fallback
-    }
-
-    showToast(
-      'Order Confirmed! 🍱',
-      `Your meal #${orderId} is scheduled for ${orderData.scheduledDateLabel} (${orderData.deliverySlotLabel}).`,
-      'success'
-    );
-
-    return newOrder;
+  const createOneTimeOrder = async (orderData:Omit<OneTimeOrder,'id'|'createdAt'|'traceabilityMealId'>):Promise<OneTimeOrder> => {
+    if(!currentUser)throw new Error('Please sign in to place your order.');
+    const owner=currentUser.id;
+    const result=await orderService.createOrder({userId:owner,addressId:orderData.address.id,orderDate:orderData.scheduledDate,mealType:orderData.mealSlot,deliverySlotId:orderData.deliverySlotId,mealId:orderData.mealId,quantity:orderData.quantity,selectedAddons:Object.fromEntries(orderData.addOns.map(a=>[a.id,a.quantity])),notes:orderData.notes,preferences:{spiceLevel:orderData.customizations.spiceLevel,oilLevel:orderData.customizations.oilLevel}});
+    if(result.error||!result.order)throw result.error??new Error('The server did not confirm this order.');
+    if(authIdentity.current!==owner)throw new Error('Your account changed. Check the original account order history.');
+    const order=result.order;setOneTimeOrders(prev=>[order,...prev.filter(o=>o.id!==order.id)]);setActiveTrackingOrder(order);
+    showToast('Order Confirmed',`Order ${order.orderNumber} was saved. Payment is pending.`,'success');return order;
   };
-
-  const reorderMeal = (orderId: string) => {
-    const prevOrder = oneTimeOrders.find((o) => o.id === orderId);
-    if (!prevOrder) return;
-
-    const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
-    const availability = checkMealAvailability({
-      date: todayStr,
-      mealSlot: prevOrder.mealSlot
-    });
-
-    if (availability.isAvailable) {
-      createOneTimeOrder({
-        ...prevOrder,
-        scheduledDate: todayStr,
-        scheduledDateLabel: 'Today',
-        orderStatus: 'CONFIRMED',
-        paymentStatus: 'PAID'
-      });
-      setActiveTab('order_history');
-    } else if (availability.nextAvailable) {
-      createOneTimeOrder({
-        ...prevOrder,
-        scheduledDate: availability.nextAvailable.date,
-        scheduledDateLabel: availability.nextAvailable.dateLabel,
-        mealSlot: availability.nextAvailable.mealSlot,
-        deliverySlotLabel: availability.nextAvailable.timeWindow,
-        orderStatus: 'CONFIRMED',
-        paymentStatus: 'PAID'
-      });
-      showToast(
-        'Reordered for Next Available Slot!',
-        `Today's cutoff passed. Order scheduled for ${availability.nextAvailable.dateLabel} ${availability.nextAvailable.mealSlot}.`,
-        'info'
-      );
-      setActiveTab('order_history');
-    }
+  const reorderMeal = (_orderId:string) => {
+    setActiveTab('order_once');showToast('Review your next order','Choose a published menu, delivery date and current prices.','info');
   };
-
-  const cancelOneTimeOrder = (orderId: string) => {
-    setOneTimeOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, orderStatus: 'CANCELLED', paymentStatus: 'REFUNDED' } : o))
-    );
-    showToast('Order Cancelled', `Order #${orderId} was cancelled. Refund initiated.`, 'info');
+  const cancelOneTimeOrder = async (id:string) => {
+    const owner=currentUser?.id;
+    try{const order=await orderService.cancelOrder(id);if(authIdentity.current!==owner)return;setOneTimeOrders(prev=>prev.map(o=>o.id===id?order:o));setActiveTrackingOrder(prev=>prev?.id===id?order:prev);showToast('Order Cancelled','The cancellation was saved. No payment or refund was processed.','info');}
+    catch(error){showToast('Cancellation unavailable',(error as Error).message,'error');}
   };
-
-  const advanceOrderStatus = (orderId: string, nextStatus: OrderStatus) => {
-    setOneTimeOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, orderStatus: nextStatus } : o))
-    );
-    if (activeTrackingOrder && activeTrackingOrder.id === orderId) {
-      setActiveTrackingOrder((prev) => (prev ? { ...prev, orderStatus: nextStatus } : null));
-    }
-  };
+  const advanceOrderStatus = (_orderId:string,_nextStatus:OrderStatus) => {showToast('Status not changed','Use the kitchen workflow to update preparation status.','info');};
 
   const pauseSubscription = (daysCount = 3) => {
     const today = new Date().toISOString().split('T')[0];

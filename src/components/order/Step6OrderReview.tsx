@@ -27,6 +27,7 @@ interface Step6OrderReviewProps {
   selectedSlot?: DeliverySlot;
   selectedAddress: CustomerAddress;
   notes: string;
+  deliveryFee: number;
   onNotesChange: (notes: string) => void;
   onConfirmOrder: () => void;
   isSubmitting: boolean;
@@ -46,6 +47,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
   selectedSlot,
   selectedAddress,
   notes,
+  deliveryFee,
   onNotesChange,
   onConfirmOrder,
   isSubmitting,
@@ -62,7 +64,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
   Object.entries(selectedAddons).forEach(([addonId, qty]: [string, number]) => {
     if (qty > 0) {
       const addon = customizationCatalog.find((c) => c.id === addonId);
-      const price = Number(addon?.price || 20);
+      const price = Number(addon?.price ?? 0);
       const total = price * qty;
       addonsTotal += total;
       addonItems.push({
@@ -74,7 +76,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
     }
   });
 
-  const estimatedGrandTotal = mealsSubtotal + addonsTotal;
+  const estimatedGrandTotal = mealsSubtotal + addonsTotal + deliveryFee;
 
   // Format date
   const dateObj = new Date(selectedDate + 'T00:00:00');
@@ -159,7 +161,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
                 {selectedAddress.addressLine || `${selectedAddress.houseNumber || ''} ${selectedAddress.building || ''}, ${selectedAddress.area}, Gandhinagar`}
               </p>
               <div className="text-stone-500 font-semibold pt-1">
-                Window: <strong className="text-stone-900">{selectedSlot?.windowLabel || '12:00 PM – 12:30 PM'}</strong>
+                Window: <strong className="text-stone-900">{selectedSlot?.windowLabel || 'Select a slot'}</strong>
               </div>
             </div>
           </div>
@@ -172,6 +174,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
             <span>Delivery Instructions & Special Notes (Optional)</span>
           </label>
           <input
+            maxLength={1000}
             type="text"
             value={notes}
             onChange={(e) => onNotesChange(e.target.value)}
@@ -207,10 +210,10 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
             <div className="flex items-center gap-1.5">
               <span>Cluster Doorstep Delivery</span>
               <span className="text-[10px] font-black text-[#0D6E44] bg-emerald-100 px-2 py-0.2 rounded-full">
-                FREE
+                {deliveryFee===0 ? "FREE" : ""}
               </span>
             </div>
-            <span className="font-mono font-black text-[#0D6E44]">₹0</span>
+            <span className="font-mono font-black text-[#0D6E44]">₹{deliveryFee}</span>
           </div>
 
           {/* Total */}
@@ -224,7 +227,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
         <div className="p-3 bg-[#FAF8F5] rounded-2xl border border-stone-200/80 flex items-center gap-2.5 text-[11px] text-stone-600">
           <ShieldCheck className="w-4 h-4 text-[#0D6E44] shrink-0" />
           <span>
-            Server-Authoritative Order Verification: Prices and delivery slot availability are atomically verified by our secure PostgreSQL backend before order placement.
+            Payment remains pending. No online payment is collected. We verify your price and slot before confirming the order.
           </span>
         </div>
 
