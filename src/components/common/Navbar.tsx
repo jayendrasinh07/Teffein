@@ -25,6 +25,7 @@ export const Navbar: React.FC = () => {
     subscription,
     oneTimeOrders,
     currentUser,
+    userRolesList,
     userProfile,
     setIsAuthModalOpen,
     signOutUser
@@ -167,6 +168,10 @@ export const Navbar: React.FC = () => {
             </button>
 
             {/* Account / Sign In */}
+            {currentUser && userRolesList.some(role => role === 'kitchen' || role === 'admin') && (
+              <button type="button" onClick={() => handleNavClick('kitchen_dashboard')}
+                className="min-h-11 rounded-xl bg-emerald-50 px-3 text-xs font-bold text-[#0D6E44]">Kitchen</button>
+            )}
             {currentUser ? (
               <div className="flex items-center gap-1.5">
                 <button
@@ -243,6 +248,10 @@ export const Navbar: React.FC = () => {
           </button>
 
           <div className="grid grid-cols-2 gap-2">
+            {currentUser && userRolesList.some(role => role === 'kitchen' || role === 'admin') && (
+              <button type="button" onClick={() => handleNavClick('kitchen_dashboard')}
+                className="min-h-11 rounded-xl bg-emerald-50 p-3 text-left text-xs font-bold text-[#0D6E44]">Kitchen workspace</button>
+            )}
             <button
               onClick={() => handleNavClick('home')}
               className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${

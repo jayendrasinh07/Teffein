@@ -1,0 +1,104 @@
+-- Disposable fixtures: safe to run on cloud in this transaction; nothing survives rollback.
+BEGIN;
+DO $$
+DECLARE owner_id UUID:=gen_random_uuid(); staff UUID:=gen_random_uuid(); admin_id UUID:=gen_random_uuid();
+ delivery UUID:=gen_random_uuid(); corporate UUID:=gen_random_uuid(); addr UUID; meal UUID; slot UUID; addon UUID; day UUID;
+ d DATE:=(clock_timestamp() AT TIME ZONE 'Asia/Kolkata')::date+1; o JSONB;
+BEGIN
+ INSERT INTO auth.users(id,email,raw_user_meta_data) VALUES
+ (owner_id,owner_id||'@example.invalid','{"role":"admin","roles":["kitchen"]}'),
+ (staff,staff||'@example.invalid','{}'),(admin_id,admin_id||'@example.invalid','{}'),
+ (delivery,delivery||'@example.invalid','{}'),(corporate,corporate||'@example.invalid','{}');
+ INSERT INTO public.user_roles(user_id,role) VALUES(staff,'kitchen'),(admin_id,'admin'),(delivery,'delivery'),(corporate,'corporate');
+ INSERT INTO public.addresses(user_id,recipient_name,recipient_phone,area,pincode)
+ VALUES(owner_id,'Private customer','0000000000','Kudasan','382421') RETURNING id INTO addr;
+ INSERT INTO public.meals(name,meal_type,base_price) VALUES('Frozen kitchen thali','lunch',100) RETURNING id INTO meal;
+ INSERT INTO public.menu_days(menu_date,is_published) VALUES(d,true) ON CONFLICT(menu_date) DO UPDATE SET is_published=true RETURNING id INTO day;
+ INSERT INTO public.menu_items(menu_day_id,meal_id) VALUES(day,meal);
+ INSERT INTO public.delivery_slots(name,meal_type,start_time,end_time,cutoff_time,max_orders)
+ VALUES('Kitchen test','lunch','12:00','12:45','10:30',20) RETURNING id INTO slot;
+ INSERT INTO public.meal_customizations(name,price,meal_id) VALUES('Frozen roti',10,meal) RETURNING id INTO addon;
+ PERFORM set_config('request.jwt.claim.sub',owner_id::text,true);
+ o:=public.place_order_secure(d,'lunch',slot,addr,meal,2,
+ jsonb_build_array(jsonb_build_object('customization_id',addon,'quantity',3)),
+ 'Less salt',gen_random_uuid(),'{"spiceLevel":"Less Spicy","oilLevel":"Less Oil (Fit)"}');
+ PERFORM set_config('test.kitchen',jsonb_build_object('owner',owner_id,'staff',staff,'admin',admin_id,'delivery',delivery,'corporate',corporate,'id',o->>'id','date',d,'before',o)::text,true);
+ UPDATE public.meals SET name='Changed catalog' WHERE id=meal;
+ UPDATE public.meal_customizations SET name='Changed add-on' WHERE id=addon;
+ UPDATE public.delivery_slots SET start_time='13:00',end_time='13:45' WHERE id=slot;
+ -- Inactive states, another shift, and another date must not enter the selected queue.
+ INSERT INTO public.orders(user_id,order_number,idempotency_key,request_payload,order_date,meal_type,status)
+ SELECT owner_id,gen_random_uuid()::text,gen_random_uuid(),'{}',d,'lunch',s
+ FROM unnest(ARRAY['pending','cancelled','out_for_delivery','delivered']) s;
+ INSERT INTO public.orders(user_id,order_number,idempotency_key,request_payload,order_date,meal_type,status)
+ VALUES(owner_id,gen_random_uuid()::text,gen_random_uuid(),'{}',d,'dinner','confirmed'),
+ (owner_id,gen_random_uuid()::text,gen_random_uuid(),'{}',d+1,'lunch','confirmed');
+END $$;
+SET LOCAL ROLE anon;
+DO $$ BEGIN
+ BEGIN PERFORM public.get_kitchen_orders(current_date,'lunch'); RAISE EXCEPTION 'Anonymous queue access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN PERFORM public.update_kitchen_order_status(gen_random_uuid(),'confirmed','preparing'); RAISE EXCEPTION 'Anonymous mutation'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE f JSONB:=current_setting('test.kitchen')::jsonb; who TEXT; rows JSONB; result JSONB; args TEXT[];
+BEGIN
+ FOREACH who IN ARRAY ARRAY['owner','delivery','corporate'] LOOP
+  PERFORM set_config('request.jwt.claim.sub',f->>who,true);
+  BEGIN PERFORM public.get_kitchen_orders((f->>'date')::date,'lunch'); RAISE EXCEPTION 'Unauthorized role read: %',who; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM public.update_kitchen_order_status((f->>'id')::uuid,'confirmed','preparing'); RAISE EXCEPTION 'Unauthorized role write: %',who; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ END LOOP;
+ PERFORM set_config('request.jwt.claim.sub','',true);
+ BEGIN PERFORM public.get_kitchen_orders((f->>'date')::date,'lunch'); RAISE EXCEPTION 'Missing identity allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ PERFORM set_config('request.jwt.claim.sub',f->>'staff',true);
+ rows:=public.get_kitchen_orders((f->>'date')::date,'lunch');
+ IF jsonb_array_length(rows)<>1 OR rows#>>'{0,id}'<>f->>'id' THEN RAISE EXCEPTION 'Queue filter failed: %',rows; END IF;
+ result:=rows->0;
+ IF result->>'slot_label'<>'12:00:00 – 12:45:00' OR result#>>'{items,0,meal_name}'<>'Frozen kitchen thali'
+ OR result#>>'{items,0,quantity}'<>'2' OR result#>>'{items,0,addons,0,name}'<>'Frozen roti'
+ OR result#>>'{items,0,addons,0,quantity}'<>'3' OR result#>>'{items,0,preferences,spiceLevel}'<>'Less Spicy'
+ OR result->>'notes'<>'Less salt' THEN RAISE EXCEPTION 'Preparation snapshots failed: %',result; END IF;
+ IF result ?| ARRAY['user_id','address_snapshot','payment_status','grand_total','request_payload','address_id']
+ OR (result#>'{items,0}') ?| ARRAY['unit_price','line_total','meal_id']
+ OR (result#>'{items,0,addons,0}') ?| ARRAY['unit_price','line_total'] THEN RAISE EXCEPTION 'Kitchen exposed private fields'; END IF;
+ IF EXISTS(SELECT 1 FROM public.orders) OR EXISTS(SELECT 1 FROM public.order_items) OR EXISTS(SELECT 1 FROM public.order_customizations) THEN RAISE EXCEPTION 'Kitchen unrestricted table access'; END IF;
+ BEGIN UPDATE public.orders SET payment_status='paid' WHERE id=(f->>'id')::uuid; RAISE EXCEPTION 'Direct payment write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN SELECT count(*) INTO rows FROM private.kitchen_status_events; RAISE EXCEPTION 'Private audit exposed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN PERFORM public.get_kitchen_orders(NULL,'lunch'); RAISE EXCEPTION 'Missing date accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ BEGIN PERFORM public.get_kitchen_orders((f->>'date')::date,'breakfast'); RAISE EXCEPTION 'Invalid shift accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ FOREACH args SLICE 1 IN ARRAY ARRAY[['confirmed','ready'],['preparing','confirmed'],['ready','delivered'],['confirmed','cancelled']] LOOP
+  BEGIN PERFORM public.update_kitchen_order_status((f->>'id')::uuid,args[1],args[2]); RAISE EXCEPTION 'Invalid transition accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ END LOOP;
+ result:=public.update_kitchen_order_status((f->>'id')::uuid,'confirmed','preparing');
+ IF result->>'status'<>'preparing' THEN RAISE EXCEPTION 'Preparation failed'; END IF;
+ IF public.update_kitchen_order_status((f->>'id')::uuid,'confirmed','preparing')<>result THEN RAISE EXCEPTION 'Retry changed the order'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',f->>'owner',true);
+ BEGIN PERFORM public.cancel_customer_order((f->>'id')::uuid); RAISE EXCEPTION 'Customer cancelled preparing order'; EXCEPTION WHEN raise_exception THEN IF SQLERRM='Customer cancelled preparing order' THEN RAISE; END IF; END;
+ IF (SELECT status FROM public.orders WHERE id=(f->>'id')::uuid)<>'preparing' THEN RAISE EXCEPTION 'Customer tracking RLS failed'; END IF;
+ PERFORM set_config('request.jwt.claim.sub',f->>'admin',true);
+ result:=public.update_kitchen_order_status((f->>'id')::uuid,'preparing','ready');
+ IF result->>'status'<>'ready' THEN RAISE EXCEPTION 'Ready failed'; END IF;
+ BEGIN PERFORM public.update_kitchen_order_status((f->>'id')::uuid,'confirmed','preparing'); RAISE EXCEPTION 'Stale update accepted'; EXCEPTION WHEN serialization_failure THEN NULL; END;
+ BEGIN PERFORM public.update_kitchen_order_status(gen_random_uuid(),'confirmed','preparing'); RAISE EXCEPTION 'Missing order accepted'; EXCEPTION WHEN no_data_found THEN NULL; END;
+END $$;
+RESET ROLE;
+DO $$
+DECLARE f JSONB:=current_setting('test.kitchen')::jsonb; snapshot JSONB; actor UUID;
+BEGIN
+ snapshot:=private.order_document((f->>'id')::uuid);
+ IF snapshot-ARRAY['status','updated_at']<>(f->'before')-ARRAY['status','updated_at'] THEN RAISE EXCEPTION 'Kitchen changed immutable order data or payment'; END IF;
+ IF (SELECT count(*) FROM private.kitchen_status_events WHERE order_id=(f->>'id')::uuid)<>2 THEN RAISE EXCEPTION 'Transition audit count incorrect'; END IF;
+ SELECT actor_id INTO actor FROM private.kitchen_status_events WHERE order_id=(f->>'id')::uuid AND next_status='preparing';
+ IF actor<>(f->>'staff')::uuid THEN RAISE EXCEPTION 'Preparation actor missing'; END IF;
+ DELETE FROM public.user_roles WHERE user_id=(f->>'staff')::uuid AND role='kitchen';
+ PERFORM set_config('request.jwt.claim.sub',f->>'staff',true);
+END $$;
+SET LOCAL ROLE authenticated;
+DO $$ BEGIN
+ BEGIN PERFORM public.get_kitchen_orders((current_setting('test.kitchen')::jsonb->>'date')::date,'lunch'); RAISE EXCEPTION 'Revoked role retained read access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+ BEGIN PERFORM public.update_kitchen_order_status((current_setting('test.kitchen')::jsonb->>'id')::uuid,'preparing','ready'); RAISE EXCEPTION 'Revoked role retained write access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+ROLLBACK;
+SELECT 'PASS: kitchen authorization, projection, snapshots, filters, transitions, retries, audit, revocation and customer isolation' AS result;
