@@ -665,6 +665,10 @@ export type Database = {
           start_time: string
         }[]
       }
+      get_kitchen_orders: {
+        Args: { p_meal_type: string; p_order_date: string }
+        Returns: Json
+      }
       is_admin: { Args: { check_user_id: string }; Returns: boolean }
       place_order_secure: {
         Args: {
@@ -682,6 +686,14 @@ export type Database = {
         Returns: Json
       }
       quote_delivery_address: { Args: { p_address_id: string }; Returns: Json }
+      update_kitchen_order_status: {
+        Args: {
+          p_expected_status: string
+          p_next_status: string
+          p_order_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

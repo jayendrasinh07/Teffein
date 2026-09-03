@@ -1,23 +1,32 @@
-# TEFFEIN ordering foundation
+# TEFFEIN ordering and Kitchen MVP
 
-This working copy fixes the pre-deployment ordering audit against GitHub main commit `bf455f539e3bf7af92764d901ab631e421eac383`. The corrected Phase 1/2 migrations have been applied to the Tiffein Supabase project `boeceqmjrnxpkmhppblq` and passed transactional cloud smoke checks.
+The ordering foundation is merged in GitHub main at `331c22b786a304b28cbd2f985ad37c4bf2136cbc`. Its TypeScript check, production build, client tests and PostgreSQL 17 tests passed in [CI run 33764191064](https://github.com/jayendrasinh07/Teffein/actions/runs/33764191064).
 
-The GitHub integration rejected writes with HTTP 403, so these source changes have not reached GitHub main or the hosted frontend. The full application typecheck/build and browser checkout verification remain pending. Do not describe the frontend or Kitchen MVP as deployed.
+This change implements the minimal Kitchen workspace and deploys its guarded database RPCs. The new frontend still needs its own CI typecheck/build and browser smoke before release; the passing foundation run does not validate these new UI files.
 
 ## Deployed database source
 
+Connected project: Tiffein, `boeceqmjrnxpkmhppblq`.
+
 - `supabase/migrations/20260903125901_phase1_foundation.sql`
 - `supabase/migrations/20260903125913_phase2_ordering_engine.sql`
+- `supabase/migrations/20260903141846_kitchen_mvp.sql`
 
-The migration filenames match the actual cloud migration history. They replace the undeployed original `20260901000001`/`20260901000002` files. Keep these deployed files immutable; future database changes belong in new migrations. `src/types/database.generated.ts` was generated from this cloud project.
+These names match cloud migration history. Phase 1/2 remain unchanged. Kitchen was created by the Supabase CLI in the foundation CI job as `20260903135955_kitchen_mvp.sql`; after deployment its filename was synchronized with the cloud-assigned version. Cloud-generated TypeScript types include both Kitchen RPCs.
 
-All 13 application tables have RLS. Only the secure ordering RPC creates orders and their snapshots. Orders are `confirmed` with payment `pending`; no gateway charge or refund is simulated. Capacity is the sum of non-cancelled portions per delivery date and slot. Cutoffs are inclusive at 10:30 AM / 5:30 PM Asia/Kolkata. Dates are today through six days ahead.
+All 13 public application tables have RLS. The private Kitchen audit table has RLS and no API grants/policies, intentionally denying direct client access. Customer ordering persists immutable snapshots through the secure ordering RPC. Payment stays pending in manual-payment mode. Capacity counts non-cancelled portions per date/slot; lunch cutoff is 10:30 AM and dinner is 5:30 PM Asia/Kolkata, inclusive. Ordering supports today through six days ahead.
 
-The cloud has 5 catalog meals, 6 standard add-ons, 4 delivery slots and 3 zones. It has no customers, orders or published daily menus. Daily menu publication is an operational prerequisite; the application intentionally does not invent an orderable menu.
+## Kitchen workspace
 
-## Application checks
+Authorized kitchen/admin accounts see a Kitchen link on desktop and mobile. The queue shows date, lunch/dinner, three preparation stages, portion totals, frozen meal/add-on names, preferences and kitchen notes. Controls permit only confirmed → preparing → ready. Changes are server-confirmed and privately audited; duplicate requests do not create duplicate events. See [Kitchen operations and verification](docs/kitchen-mvp-plan.md).
 
-Use Node 22.18 or later. Copy `.env.example` to a local environment file and supply the project's publishable frontend key. The service-role key must never be placed in Vite environment variables.
+Customer addresses, phone numbers, account IDs and payment fields are excluded from the kitchen response. Free-text notes may contain customer-entered personal information and are restricted to kitchen/admin accounts. Role checks run in the database on each privileged call. Changing browser roles or Auth metadata cannot grant access.
+
+The queue refreshes every 15 seconds while visible, on focus and on request. Failed refreshes label retained data and pause controls; revoked access clears it. Account/date/shift changes discard pending responses. Customer tracking already refreshes and maps ready to its existing PACKED presentation.
+
+## Checks and setup
+
+Use Node 22.18+ and Bun 1.3.10. Supply the project's publishable frontend key in a local environment file based on `.env.example`. Never use a service-role key in Vite variables.
 
 ```sh
 bun install --frozen-lockfile
@@ -26,14 +35,12 @@ bun run build
 bun run test
 ```
 
-The included GitHub workflow runs these checks and PostgreSQL 17 integration tests. It has not run yet because repository writes are blocked.
+For a disposable PostgreSQL database, run `tests/bootstrap.sql`, all migrations in order, `tests/ordering.sql`, `tests/kitchen.sql`, `python3 tests/concurrency.py` and `python3 tests/kitchen_concurrency.py` with standard PG environment variables. Bootstrap and concurrency scripts are local/CI-only. The two SQL suites roll back every fixture and have also passed on connected Supabase PostgreSQL 17. Local PostgreSQL 18 concurrency and Node client suites pass.
 
-## Database tests
+The workflow runs the complete typecheck/build/client/database suite on pull requests and main/feature pushes.
 
-`tests/bootstrap.sql` creates a minimal Supabase-like Auth schema for a disposable local/CI PostgreSQL database. It is not a cloud migration. Apply the migrations after bootstrap, then run `tests/ordering.sql` and `python3 tests/concurrency.py` with standard PG environment variables. The first test uses a transaction and rolls back all fixtures. The concurrency test commits temporary fixture rows in a disposable test database so independent sessions can compete, then removes its own fixtures.
+## Activation prerequisites
 
-Local PostgreSQL 18 checks passed for pricing, add-ons, snapshots, roles, customer RLS, serviceability, menu publication, cutoffs, portion capacity, cancellation, idempotent replay and simultaneous checkout/default-address writes. The transactional ordering test also passed against the actual Supabase PostgreSQL 17 project. Browser Auth, REST/SDK end-to-end checkout and a production app build have not been exercised in this environment.
+The database currently has seed catalog/slots/zones, but no real users, orders or daily menus. Publish the intended daily menu and assign the existing kitchen role to the intended authenticated staff account through an authorized administrative process. Do not invent business menu choices or create test staff accounts on the live project.
 
-## Kitchen preparation
-
-See `docs/kitchen-mvp-plan.md`. The old simulated kitchen screen is disabled in this working copy. No new Admin, Delivery or Corporate panel is implemented, and Razorpay is not integrated. The Kitchen role, queue projection, transition contract and verification gate are defined, but the Kitchen migration and functioning UI still need implementation after the source/build access blocker is resolved.
+Before operational use, verify the new CI run, configure the frontend key, then smoke-test customer sign-in → address → published meal → pending-payment order → Kitchen preparing/ready → refreshed customer tracking using intended accounts. No new Admin, Delivery or Corporate panel and no Razorpay integration is included.

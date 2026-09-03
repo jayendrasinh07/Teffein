@@ -1,8 +1,8 @@
-name: Verify ordering foundation
+name: Verify ordering and kitchen
 on:
   pull_request:
   push:
-    branches: [fix/ordering-foundation]
+    branches: [main, fix/ordering-foundation, feat/kitchen-mvp]
 permissions:
   contents: read
 jobs:
@@ -42,13 +42,6 @@ jobs:
             psql -v ON_ERROR_STOP=1 -f "$migration"
           done
           psql -v ON_ERROR_STOP=1 -f tests/ordering.sql
+          psql -v ON_ERROR_STOP=1 -f tests/kitchen.sql
           python3 tests/concurrency.py
-      - uses: supabase/setup-cli@v1
-        with:
-          version: latest
-      - name: Prepare the next migration filename
-        run: |
-          supabase --help
-          supabase migration --help
-          supabase migration new --help
-          supabase migration new kitchen_mvp
+          python3 tests/kitchen_concurrency.py
