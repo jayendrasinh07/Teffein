@@ -59,7 +59,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
     
   const dinnerTimeRange = dinnerSlots.length > 0
     ? `${dinnerSlots[0].startTime} – ${dinnerSlots[dinnerSlots.length - 1].endTime}`
-    : '07:00 PM – 08:30 PM';
+    : '07:30 PM – 09:00 PM';
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

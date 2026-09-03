@@ -46,10 +46,11 @@ export const OrderSuccessView: React.FC<OrderSuccessViewProps> = ({
             Your fresh meal is in the kitchen queue!
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto">
-            Order Reference: <strong className="text-stone-900 font-mono font-black">{order.id}</strong>
+            Order Reference: <strong className="text-stone-900 font-mono font-black">{order.orderNumber || order.id}</strong>
           </p>
         </div>
 
+        <p className="text-center text-amber-900">Payment: {order.paymentStatus.toLowerCase()}. No online payment was collected.</p>
         {/* 2. Order Details Summary Snapshot */}
         <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-stone-200/90 text-left space-y-3">
           <div className="flex items-center justify-between border-b border-stone-200/60 pb-2.5">

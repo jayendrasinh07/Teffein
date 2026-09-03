@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
   ArrowRight, 
@@ -36,6 +36,9 @@ import {
   SAVED_CUSTOMER_ADDRESSES 
 } from '../services/availabilityEngine';
 import { CustomerAddress, DeliverySlot, OneTimeOrder } from '../types';
+import { EMPTY_DELIVERY_ADDRESS } from '../services/locationService';
+import { addressService } from '../services/addressService';
+import { dietLabel } from '../services/menuService';
 import { IMAGES } from '../data/images';
 
 export const OrderOncePage: React.FC = () => {
@@ -44,6 +47,7 @@ export const OrderOncePage: React.FC = () => {
     activeDeliveryAddress, 
     savedAddresses, 
     currentUser,
+    oneTimeOrders,
     userProfile,
     setActiveTab,
     setActiveTrackingOrder,
@@ -69,16 +73,8 @@ export const OrderOncePage: React.FC = () => {
   const [isLoadingMenu, setIsLoadingMenu] = useState<boolean>(true);
 
   // Step 2: Selected Meal
-  const [selectedMeal, setSelectedMeal] = useState<DatabaseMeal>({
-    id: 'meal-standard-thali',
-    name: 'Standard Gujarati Daily Thali',
-    description: 'Wholesome everyday home thali cooked in pure filtered groundnut oil with balanced spices.',
-    mealType: 'lunch',
-    dietType: 'standard_gujarati',
-    basePrice: 119,
-    isActive: true,
-    imageUrl: IMAGES.hero.mainThali
-  });
+  const emptyMeal: DatabaseMeal = {id:'',name:'Choose a meal',description:'',mealType:selectedMealSlot,dietType:'',basePrice:0,isActive:false};
+  const [selectedMeal, setSelectedMeal] = useState<DatabaseMeal>(emptyMeal);
 
   // Step 3: Customization & Quantity
   const [quantity, setQuantity] = useState<number>(1);
@@ -89,7 +85,7 @@ export const OrderOncePage: React.FC = () => {
 
   // Step 4: Address
   const [selectedAddress, setSelectedAddress] = useState<CustomerAddress>(() => {
-    return (activeDeliveryAddress as CustomerAddress) || (savedAddresses && savedAddresses[0]) || SAVED_CUSTOMER_ADDRESSES[0];
+    return (activeDeliveryAddress as CustomerAddress) || (savedAddresses && savedAddresses[0]) || EMPTY_DELIVERY_ADDRESS;
   });
 
   // Step 5: Delivery Slot
@@ -111,56 +107,44 @@ export const OrderOncePage: React.FC = () => {
     }
   }, [activeDeliveryAddress]);
 
-  // Load menu items, customizations, and slots from Supabase
+  const submitLock = useRef(false);
+  const [clock, setClock] = useState(() => new Date());
+  const [menuError, setMenuError] = useState('');
+  const [quote, setQuote] = useState<{deliveryFee:number;minOrderAmount:number}|null>(null);
+  const [quoteError, setQuoteError] = useState('');
+  useEffect(() => {const timer=setInterval(()=>setClock(new Date()),1000);return()=>clearInterval(timer);},[]);
+  useEffect(() => {setConfirmedOrder(null);setIsTrackingMode(false);setSelectedAddress(EMPTY_DELIVERY_ADDRESS);},[currentUser?.id]);
+  useEffect(() => {if(confirmedOrder){const latest=oneTimeOrders.find(o=>o.id===confirmedOrder.id);if(latest)setConfirmedOrder(latest);}},[oneTimeOrders]);
   useEffect(() => {
-    let isMounted = true;
-    const loadSupabaseData = async () => {
-      setIsLoadingMenu(true);
-      try {
-        const [meals, customizations, lunchSlots, dinnerSlots] = await Promise.all([
-          menuService.getActiveMeals(),
-          menuService.getMealCustomizations(),
-          menuService.getDeliverySlots('lunch'),
-          menuService.getDeliverySlots('dinner')
-        ]);
-
-        if (isMounted) {
-          if (meals && meals.length > 0) {
-            setDbMeals(meals);
-            // Default selected meal
-            const matchedMeal = meals.find((m) => m.mealType === selectedMealSlot) || meals[0];
-            setSelectedMeal(matchedMeal);
-          }
-          if (customizations && customizations.length > 0) {
-            setDbCustomizations(customizations);
-          }
-          if (lunchSlots && lunchSlots.length > 0) {
-            setDbLunchSlots(lunchSlots as any);
-          }
-          if (dinnerSlots && dinnerSlots.length > 0) {
-            setDbDinnerSlots(dinnerSlots as any);
-          }
-        }
-      } catch (err) {
-        console.warn('[TEFFEIN Order] Using robust fallback catalog:', err);
-      } finally {
-        if (isMounted) setIsLoadingMenu(false);
-      }
-    };
-
-    loadSupabaseData();
-    return () => {
-      isMounted = false;
-    };
-  }, [selectedMealSlot]);
+    let alive=true;
+    setIsLoadingMenu(true);setMenuError('');setDbMeals([]);setSelectedMeal(emptyMeal);setSelectedAddons({});setSelectedSlotId('');
+    setDbLunchSlots([]);setDbDinnerSlots([]);setMaxCompletedStep(1);
+    Promise.all([menuService.getMenuForDate(selectedDate),menuService.getDeliverySlots('lunch',selectedDate),menuService.getDeliverySlots('dinner',selectedDate)])
+      .then(([menu,lunch,dinner])=>{if(alive){setDbMeals((menu?.meals??[]).filter(m=>(m.mealType===selectedMealSlot||m.mealType==='both')));setDbLunchSlots(lunch);setDbDinnerSlots(dinner);}})
+      .catch(error=>{if(alive)setMenuError(error.message||'Unable to load the menu. Please try again.');})
+      .finally(()=>{if(alive)setIsLoadingMenu(false);});
+    return()=>{alive=false;};
+  },[selectedDate,selectedMealSlot]);
+  useEffect(() => {
+    let alive=true;setDbCustomizations([]);setSelectedAddons({});setDietVariant(dietLabel(selectedMeal.dietType));
+    menuService.getMealCustomizations(selectedMeal.id).then(rows=>{if(alive)setDbCustomizations(rows);}).catch(error=>{if(alive)setSubmissionError(error.message);});
+    return()=>{alive=false;};
+  },[selectedMeal.id]);
+  useEffect(() => {
+    let alive=true;setQuote(null);setQuoteError('');
+    if(currentUser&&selectedAddress.id&&savedAddresses.some(a=>a.id===selectedAddress.id)){
+      addressService.quoteAddress(selectedAddress.id).then(value=>{if(alive)setQuote(value);}).catch(error=>{if(alive)setQuoteError(error.message);});
+    }
+    return()=>{alive=false;};
+  },[currentUser?.id,selectedAddress,savedAddresses]);
 
   // Check Availability for selected Date & Meal Slot
   const availability = useMemo(() => {
     return checkMealAvailability({
       date: selectedDate,
-      mealSlot: selectedMealSlot
+      mealSlot: selectedMealSlot, currentTime: clock
     });
-  }, [selectedDate, selectedMealSlot]);
+  }, [selectedDate, selectedMealSlot, clock]);
 
   // Current active slots based on mealSlot
   const currentAvailableSlots: DeliverySlot[] = useMemo(() => {
@@ -192,7 +176,7 @@ export const OrderOncePage: React.FC = () => {
     Object.entries(selectedAddons).forEach(([addonId, qty]: [string, number]) => {
       if (qty > 0) {
         const addon = dbCustomizations.find((c) => c.id === addonId);
-        const price = Number(addon?.price || 20);
+        const price = Number(addon?.price ?? 0);
         const lineTotal = price * qty;
         addonsTotal += lineTotal;
         addonLineItems.push({
@@ -203,7 +187,7 @@ export const OrderOncePage: React.FC = () => {
       }
     });
 
-    const deliveryFee = 0; // Free cluster delivery in Gandhinagar
+    const deliveryFee = quote?.deliveryFee ?? 0;
     const total = mealsSubtotal + addonsTotal + deliveryFee;
 
     return {
@@ -213,11 +197,15 @@ export const OrderOncePage: React.FC = () => {
       deliveryFee,
       total
     };
-  }, [selectedMeal, quantity, selectedAddons, dbCustomizations]);
+  }, [selectedMeal, quantity, selectedAddons, dbCustomizations, quote]);
 
   // Navigation handlers
   const handleNextStep = () => {
     setSubmissionError(null);
+    if(currentStep===1&&!checkMealAvailability({date:selectedDate,mealSlot:selectedMealSlot}).isAvailable){setSubmissionError('Ordering has closed. Please select another date or meal.');return;}
+    if(currentStep>=2&&!selectedMeal.id){setSubmissionError('Choose a meal from the published menu.');return;}
+    if(currentStep>=4&&(!quote||!savedAddresses.some(a=>a.id===selectedAddress.id))){setSubmissionError(quoteError||'Sign in and save a serviceable delivery address.');return;}
+    if(currentStep===5&&(!activeSlotObj||activeSlotObj.maxCapacity-activeSlotObj.bookedCount<quantity)){setSubmissionError('Choose a slot with enough remaining portions.');return;}
     if (currentStep < 6) {
       const next = currentStep + 1;
       setCurrentStep(next);
@@ -235,7 +223,7 @@ export const OrderOncePage: React.FC = () => {
   };
 
   const handleStepClick = (stepId: number) => {
-    if (stepId <= maxCompletedStep + 1) {
+    if (stepId <= maxCompletedStep) {
       setCurrentStep(stepId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -266,10 +254,17 @@ export const OrderOncePage: React.FC = () => {
       return;
     }
 
+    if(submitLock.current)return;
+    submitLock.current=true;
     setIsSubmitting(true);
     setSubmissionError(null);
 
     try {
+      if(!checkMealAvailability({date:selectedDate,mealSlot:selectedMealSlot}).isAvailable)throw new Error('Ordering has closed. Choose another date or meal.');
+      if(!selectedMeal.id||!dbMeals.some(m=>m.id===selectedMeal.id))throw new Error('Choose a meal from the published menu.');
+      if(!savedAddresses.some(a=>a.id===selectedAddress.id)||!quote)throw new Error(quoteError||'Save a serviceable delivery address first.');
+      if(!activeSlotObj||activeSlotObj.maxCapacity-activeSlotObj.bookedCount<quantity)throw new Error('This slot has insufficient portions remaining. Choose another slot.');
+      if(livePricing.mealsSubtotal+livePricing.addonsTotal<quote.minOrderAmount)throw new Error(`This delivery zone requires a minimum food order of ₹${quote.minOrderAmount}.`);
       // Map Add-ons for order record
       const mappedAddOns = Object.entries(selectedAddons)
         .filter(([_, qty]: [string, number]) => qty > 0)
@@ -278,7 +273,7 @@ export const OrderOncePage: React.FC = () => {
           return {
             id: addonId,
             name: addon?.name || 'Extra Side Item',
-            price: Number(addon?.price || 20),
+            price: Number(addon?.price ?? 0),
             quantity: qty
           };
         });
@@ -296,7 +291,7 @@ export const OrderOncePage: React.FC = () => {
       const newOrder = await createOneTimeOrder({
         userId: currentUser.id,
         userName: userProfile?.fullName || currentUser.email || selectedAddress.fullName || 'Customer',
-        userPhone: userProfile?.phone || selectedAddress.phone || '+91 98254 99120',
+        userPhone: userProfile?.phone || selectedAddress.phone || '',
         orderType: 'ONE_TIME',
         mealId: selectedMeal.id,
         mealName: selectedMeal.name,
@@ -304,9 +299,10 @@ export const OrderOncePage: React.FC = () => {
         scheduledDate: selectedDate,
         scheduledDateLabel,
         mealSlot: selectedMealSlot,
-        deliverySlotId: selectedSlotId || 'slot-1',
-        deliverySlotLabel: activeSlotObj?.windowLabel || '12:00 PM – 12:30 PM',
+        deliverySlotId: selectedSlotId,
+        deliverySlotLabel: activeSlotObj?.windowLabel || '',
         quantity,
+        notes,
         customizations: {
           spiceLevel,
           oilLevel,
@@ -320,13 +316,13 @@ export const OrderOncePage: React.FC = () => {
         address: selectedAddress,
         subtotal: livePricing.mealsSubtotal,
         addOnsTotal: livePricing.addonsTotal,
-        deliveryFee: 0,
+        deliveryFee: livePricing.deliveryFee,
         discount: 0,
         total: livePricing.total,
-        paymentMethod: 'UPI',
-        paymentStatus: 'PAID',
+        paymentMethod: 'CashOnDelivery',
+        paymentStatus: 'PENDING',
         orderStatus: 'CONFIRMED',
-        estimatedDeliveryTime: activeSlotObj?.windowLabel || '12:00 PM – 12:30 PM'
+        estimatedDeliveryTime: activeSlotObj?.windowLabel || ''
       });
 
       setConfirmedOrder(newOrder);
@@ -335,6 +331,7 @@ export const OrderOncePage: React.FC = () => {
       console.error('[TEFFEIN Order] Submission failed:', err);
       setSubmissionError(err?.message || 'Order verification failed. Please check your delivery slot and retry.');
     } finally {
+      submitLock.current=false;
       setIsSubmitting(false);
     }
   };
@@ -405,6 +402,7 @@ export const OrderOncePage: React.FC = () => {
           maxCompletedStep={maxCompletedStep}
         />
 
+        {(menuError || (submissionError && currentStep !== 6) || quoteError) && <p role="alert" className="rounded-xl bg-rose-50 p-4 text-rose-800">{menuError || submissionError || quoteError}</p>}
         {/* Main 2-Column Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
@@ -432,7 +430,7 @@ export const OrderOncePage: React.FC = () => {
                 selectedMealId={selectedMeal.id}
                 onSelectMeal={(meal) => {
                   setSelectedMeal(meal);
-                  handleNextStep();
+                  setCurrentStep(3);setMaxCompletedStep(prev=>Math.max(prev,3));
                 }}
                 selectedDate={selectedDate}
                 mealSlot={selectedMealSlot}
@@ -470,6 +468,7 @@ export const OrderOncePage: React.FC = () => {
             {/* Step 5: Delivery Slot */}
             {currentStep === 5 && (
               <Step5DeliverySlot
+                quantity={quantity}
                 slots={currentAvailableSlots}
                 selectedSlotId={selectedSlotId}
                 onSelectSlot={setSelectedSlotId}
@@ -495,7 +494,8 @@ export const OrderOncePage: React.FC = () => {
                 onNotesChange={setNotes}
                 onConfirmOrder={handleConfirmOrder}
                 isSubmitting={isSubmitting}
-                errorMessage={submissionError}
+                deliveryFee={quote?.deliveryFee ?? 0}
+                errorMessage={submissionError || quoteError}
               />
             )}
 
@@ -571,9 +571,9 @@ export const OrderOncePage: React.FC = () => {
                 <div className="flex items-center justify-between text-stone-600 pt-2 border-t border-stone-100">
                   <span className="flex items-center gap-1">
                     <span>Cluster Delivery</span>
-                    <span className="text-[9px] bg-emerald-100 text-[#0D6E44] font-black px-1.5 py-0.2 rounded">FREE</span>
+                    <span className="text-[9px]">{quote ? (quote.deliveryFee===0?'FREE':'') : 'Select address'}</span>
                   </span>
-                  <span className="font-black text-[#0D6E44]">₹0</span>
+                  <span className="font-black text-[#0D6E44]">{quote ? `₹${quote.deliveryFee}` : "—"}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-stone-200 text-sm font-black text-stone-900">

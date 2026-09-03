@@ -42,39 +42,8 @@ export const Step3Customization: React.FC<Step3CustomizationProps> = ({
   dietVariant,
   onDietVariantChange
 }) => {
-  // Fallback add-ons if database is connecting
-  const displayAddons: DatabaseMealCustomization[] = customizationCatalog.length > 0 ? customizationCatalog : [
-    {
-      id: 'cust-chaas',
-      name: 'Chilled Masala Chaas (250ml)',
-      price: 20,
-      isActive: true
-    },
-    {
-      id: 'cust-roti',
-      name: '2 Extra Soft Phulka Rotis (with Pure Ghee)',
-      price: 25,
-      isActive: true
-    },
-    {
-      id: 'cust-sweet',
-      name: 'Gujarati Traditional Sweet Treat (Mohanthal / Shrikhand)',
-      price: 35,
-      isActive: true
-    },
-    {
-      id: 'cust-sabji',
-      name: 'Extra Seasonal Sabji Bowl (200g)',
-      price: 45,
-      isActive: true
-    },
-    {
-      id: 'cust-dal',
-      name: 'Extra Gujarati Kadhi / Dal Tadka (200ml)',
-      price: 30,
-      isActive: true
-    }
-  ];
+  // Add-ons available for the selected meal.
+  const displayAddons = customizationCatalog;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

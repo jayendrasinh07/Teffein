@@ -1,3 +1,4 @@
+import type { Database } from '../types/database.generated';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 const env = (import.meta as any).env || {};
@@ -31,15 +32,15 @@ export const getSupabaseConfigDetails = () => {
 };
 
 // Singleton Supabase Client
-let _supabaseInstance: SupabaseClient | null = null;
+let _supabaseInstance: SupabaseClient<Database> | null = null;
 
-export const getSupabaseClient = (): SupabaseClient => {
+export const getSupabaseClient = (): SupabaseClient<Database> => {
   if (_supabaseInstance) {
     return _supabaseInstance;
   }
 
   if (isSupabaseConfigured()) {
-    _supabaseInstance = createClient(supabaseUrl!, supabaseKey!, {
+    _supabaseInstance = createClient<Database>(supabaseUrl!, supabaseKey!, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -50,24 +51,10 @@ export const getSupabaseClient = (): SupabaseClient => {
     return _supabaseInstance;
   }
 
-  // Fallback demo/mock client instance with safe dummy endpoints
-  // This ensures the application functions smoothly in preview until user adds keys
-  _supabaseInstance = createClient(
-    'https://teffein-demo-app.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.dummyKeyForSafeInitializationWithoutCrashingTheApp12345',
-    {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      }
-    }
-  );
-
-  return _supabaseInstance;
+  throw new Error('Ordering is unavailable because the database connection is not configured.');
 };
 
-export const supabase = getSupabaseClient();
+export const supabase = isSupabaseConfigured() ? getSupabaseClient() : null;
 
 /**
  * Diagnostic Verification Test for Supabase Connection & Table Existence
