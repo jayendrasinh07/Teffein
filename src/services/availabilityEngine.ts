@@ -44,9 +44,9 @@ export const TEFFEIN_OPERATIONAL_CONFIG: TeffeinConfig = {
   dinner: {
     startTime: '07:00 PM',
     endTime: '09:00 PM',
-    cutoffTimeHours: 16,
+    cutoffTimeHours: 17,
     cutoffTimeMinutes: 30,
-    cutoffLabel: '04:30 PM'
+    cutoffLabel: '05:30 PM'
   },
   maxAdvanceBookingDays: 6,
   closedDates: [],

@@ -44,7 +44,8 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
   const [newLabel, setNewLabel] = useState<AddressLabel>('Home');
   const [newName, setNewName] = useState(selectedAddress.fullName || 'Jayendrasinh Parmar');
   const [newPhone, setNewPhone] = useState(selectedAddress.phone || '9825014820');
-  const [newAddressLine, setNewAddressLine] = useState('');
+  const [newHouseNumber, setNewHouseNumber] = useState('');
+  const [newBuilding, setNewBuilding] = useState('');
   const [newArea, setNewArea] = useState('Kudasan');
   const [newPincode, setNewPincode] = useState('382421');
   const [newLandmark, setNewLandmark] = useState('');
@@ -55,8 +56,8 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
 
   const handleSaveNewAddress = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newName.trim() || !newPhone.trim() || !newAddressLine.trim()) {
-      setFormError('Please fill in your name, phone number, and address line.');
+    if (!newName.trim() || !newPhone.trim() || (!newHouseNumber.trim() && !newBuilding.trim())) {
+      setFormError('Please fill in your name, phone number, and house/building details.');
       return;
     }
 
@@ -85,17 +86,31 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
         break;
     }
 
+    const fullLineParts = [
+      newHouseNumber.trim(),
+      newBuilding.trim(),
+      newLandmark.trim() ? `Near ${newLandmark.trim()}` : '',
+      serviceCheck.areaName || newArea,
+      'Gandhinagar'
+    ].filter(Boolean);
+
+    const fullAddress = fullLineParts.join(', ');
+
     const newAddr: CustomerAddress = {
       id: 'addr-' + Date.now(),
       label: newLabel,
       fullName: newName.trim(),
       name: newName.trim(),
       phone: newPhone.trim(),
-      addressLine: newAddressLine.trim(),
-      addressLine1: newAddressLine.trim(),
+      houseNumber: newHouseNumber.trim() || undefined,
+      building: newBuilding.trim() || undefined,
+      addressLine: fullAddress,
+      addressLine1: fullAddress,
       area: serviceCheck.areaName || newArea,
       sector: serviceCheck.sectorOrZone || newArea,
-      landmark: newLandmark.trim(),
+      landmark: newLandmark.trim() || undefined,
+      city: 'Gandhinagar',
+      state: 'Gujarat',
       pincode: serviceCheck.pincode || newPincode,
       clusterId: serviceCheck.clusterId,
       clusterName: serviceCheck.clusterName,
@@ -321,21 +336,46 @@ export const AddressSelector: React.FC<AddressSelectorProps> = ({
             </div>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-stone-700 block mb-1">House / Flat / Office No. *</label>
+              <input
+                type="text"
+                value={newHouseNumber}
+                onChange={(e) => setNewHouseNumber(e.target.value)}
+                placeholder="e.g. Flat 302 / Cabin 4B"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0D6E44]"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-stone-700 block mb-1">Building / Society / Complex *</label>
+              <input
+                type="text"
+                value={newBuilding}
+                onChange={(e) => setNewBuilding(e.target.value)}
+                placeholder="e.g. Shivalik Residency / Infocity Tower 2"
+                className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0D6E44]"
+                required
+              />
+            </div>
+          </div>
+
           <div>
-            <label className="text-[11px] font-bold text-stone-700 block mb-1">Door / Flat / Desk / Room Details</label>
+            <label className="text-[11px] font-bold text-stone-700 block mb-1">Nearby Landmark (Optional)</label>
             <input
               type="text"
-              value={newAddressLine}
-              onChange={(e) => setNewAddressLine(e.target.value)}
-              placeholder="e.g. Flat 302, Shivalik Heights / Desk 4B Infocity Tower 2"
+              value={newLandmark}
+              onChange={(e) => setNewLandmark(e.target.value)}
+              placeholder="e.g. Behind TCS Garima Park / Near Reliance Petrol Pump"
               className="w-full px-3 py-2 rounded-xl bg-white border border-stone-300 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#0D6E44]"
-              required
             />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="text-[11px] font-bold text-stone-700 block mb-1">Gandhinagar Area / Sector</label>
+              <label className="text-[11px] font-bold text-stone-700 block mb-1">Gandhinagar Area / Sector *</label>
               <select
                 value={newArea}
                 onChange={(e) => setNewArea(e.target.value)}

@@ -595,97 +595,41 @@ export function parseGoogleAddressResult(
 }
 
 /**
- * Resilient reverse geocoding:
- * 1. Attempts Google Maps Geocoding if available and active.
- * 2. If Google Geocoding returns REQUEST_DENIED / billing unactivated, seamlessly falls back
- *    to OpenStreetMap Nominatim reverse lookup.
- * 3. If offline, accurately resolves to nearest Gandhinagar sector/hub geometry.
- * Never throws unhandled errors or exposes raw API failure codes to the user.
+ * Authoritative Google Maps Reverse Geocoding.
+ * Uses the official Google Maps Geocoding API.
+ * Returns structured address components or null if geocoding fails or location is not resolvable.
+ * Never calls unverified public scraping services or invents synthetic addresses.
  */
 export async function reverseGeocodeGoogle(
   lat: number,
   lng: number
-): Promise<ParsedGoogleAddress> {
-  // Step 1: OpenStreetMap Nominatim Reverse Geocoding (Free, instant, accurate, no billing requirement)
+): Promise<ParsedGoogleAddress | null> {
   try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3500);
-
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-      {
-        signal: controller.signal,
-        headers: {
-          'Accept-Language': 'en',
-          'User-Agent': 'TEFFEIN-Delivery-App/1.0'
-        }
-      }
-    );
-    clearTimeout(timer);
-
-    if (response.ok) {
-      const data = await response.json();
-      const addr = data.address || {};
-
-      const houseNumber = addr.house_number || '';
-      const building = addr.building || addr.amenity || addr.office || addr.residential || '';
-      const street = addr.road || addr.pedestrian || addr.footway || '';
-      const subdistrict = addr.suburb || addr.neighbourhood || addr.city_district || addr.quarter || '';
-      const city = addr.city || addr.town || addr.municipality || 'Gandhinagar';
-      const state = addr.state || 'Gujarat';
-      const pincode = addr.postcode || '';
-
-      // Check for sector matching
-      let sector = '';
-      const fullText = `${data.display_name} ${subdistrict} ${street}`;
-      const sectorMatch = fullText.match(/Sector\s*([0-9]{1,2}[A-Za-z]?)/i);
-      if (sectorMatch) {
-        sector = `Sector ${sectorMatch[1]}`;
-      } else {
-        sector = subdistrict || street || 'Gandhinagar';
-      }
-
-      const area = subdistrict || sector || 'Gandhinagar';
-
-      return {
-        placeId: data.place_id ? String(data.place_id) : undefined,
-        formattedAddress: data.display_name || `${sector}, Gandhinagar, Gujarat`,
-        houseNumber,
-        building,
-        street,
-        area,
-        sector,
-        city,
-        state,
-        pincode,
-        latitude: lat,
-        longitude: lng,
-        rawResult: data
-      };
+    const googleMaps = await loadGoogleMapsApi();
+    if (!googleMaps || !googleMaps.Geocoder) {
+      return null;
     }
-  } catch (_nominatimErr) {
-    // Silent fallthrough to local Gandhinagar directory geometry
+
+    const geocoder = new googleMaps.Geocoder();
+    const results = await new Promise<google.maps.GeocoderResult[] | null>((resolve) => {
+      geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+        if (status === google.maps.GeocoderStatus.OK && res && res.length > 0) {
+          resolve(res);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+
+    if (!results || results.length === 0) {
+      return null;
+    }
+
+    return parseGoogleAddressResult(results[0], lat, lng);
+  } catch (err) {
+    console.warn('[TEFFEIN Maps] Google Geocoder reverse lookup failed:', err);
+    return null;
   }
-
-  // Step 2: Nearest Gandhinagar Sector / Hub Coordinate Resolver (Offline & Fallback)
-  const nearest = getNearestGandhinagarHub(lat, lng);
-  const distanceKm = getDistanceKm(lat, lng, nearest.lat, nearest.lng);
-
-  return {
-    placeId: nearest.id,
-    formattedAddress: distanceKm < 0.5 ? nearest.formattedAddress : `${nearest.name}, Gandhinagar (${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E)`,
-    houseNumber: '',
-    building: distanceKm < 0.3 ? nearest.name : '',
-    street: '',
-    area: nearest.area,
-    sector: nearest.sector,
-    city: nearest.city,
-    state: 'Gujarat',
-    pincode: nearest.pincode,
-    latitude: lat,
-    longitude: lng,
-    rawResult: { nearest, distanceKm }
-  };
 }
 
 export interface UnifiedPrediction {

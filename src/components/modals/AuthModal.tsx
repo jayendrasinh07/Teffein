@@ -1,0 +1,292 @@
+import React, { useState } from 'react';
+import { 
+  X, 
+  Mail, 
+  Lock, 
+  User, 
+  Phone, 
+  GraduationCap, 
+  Briefcase, 
+  Home, 
+  Building2, 
+  ArrowRight, 
+  Loader2, 
+  CheckCircle2, 
+  AlertCircle,
+  ShieldCheck,
+  Sparkles
+} from 'lucide-react';
+import { useApp } from '../../context/AppContext';
+import { CustomerSegment } from '../../types';
+import { isSupabaseConfigured } from '../../services/supabaseClient';
+
+export const AuthModal: React.FC = () => {
+  const { 
+    isAuthModalOpen, 
+    setIsAuthModalOpen, 
+    signInUser, 
+    signUpUser, 
+    showToast 
+  } = useApp();
+
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [segment, setSegment] = useState<CustomerSegment>('worker');
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  if (!isAuthModalOpen) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+    setLoading(true);
+
+    try {
+      if (mode === 'signin') {
+        const { error } = await signInUser(email, password);
+        if (error) {
+          setErrorMessage(error.message || 'Invalid email or password.');
+          return;
+        }
+        showToast('Welcome Back!', 'You have successfully signed in to TEFFEIN.', 'success');
+        setIsAuthModalOpen(false);
+      } else {
+        if (!fullName.trim()) {
+          setErrorMessage('Please enter your full name.');
+          setLoading(false);
+          return;
+        }
+        if (!phone.trim() || phone.trim().length < 10) {
+          setErrorMessage('Please enter a valid 10-digit mobile number.');
+          setLoading(false);
+          return;
+        }
+        if (password.length < 6) {
+          setErrorMessage('Password must be at least 6 characters.');
+          setLoading(false);
+          return;
+        }
+
+        const { error } = await signUpUser(email, password, fullName, phone, segment);
+        if (error) {
+          setErrorMessage(error.message || 'Could not complete registration.');
+          return;
+        }
+        showToast('Account Created!', 'Welcome to TEFFEIN Gandhinagar. Your profile is ready.', 'success');
+        setIsAuthModalOpen(false);
+      }
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const segments: { id: CustomerSegment; label: string; icon: React.ReactNode; desc: string }[] = [
+    { id: 'worker', label: 'Office / Tech', icon: <Briefcase className="w-4 h-4" />, desc: 'Infocity & GIFT City' },
+    { id: 'student', label: 'Student / PG', icon: <GraduationCap className="w-4 h-4" />, desc: 'PDPU, DA-IICT, NIFT' },
+    { id: 'family', label: 'Family / Home', icon: <Home className="w-4 h-4" />, desc: 'Sectors 1–30' },
+    { id: 'corporate', label: 'Corporate', icon: <Building2 className="w-4 h-4" />, desc: 'Bulk / Team Meals' }
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-sm animate-fadeIn select-none">
+      <div className="bg-[#FAF8F5] text-stone-900 w-full max-w-md rounded-3xl shadow-2xl border border-stone-200 overflow-hidden relative">
+        
+        {/* Top Header */}
+        <div className="bg-gradient-to-r from-[#0D6E44] to-[#08482C] text-white px-6 py-6 relative">
+          <button
+            onClick={() => setIsAuthModalOpen(false)}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="flex items-center gap-2 mb-1 text-amber-300 text-xs font-bold uppercase tracking-wider">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>TEFFEIN Gandhinagar</span>
+          </div>
+
+          <h3 className="text-xl font-black tracking-tight">
+            {mode === 'signin' ? 'Sign in to your account' : 'Create your TEFFEIN account'}
+          </h3>
+          <p className="text-xs text-stone-200 mt-1">
+            {mode === 'signin' 
+              ? 'Access your meal subscriptions, saved addresses & orders.' 
+              : 'Daily fresh, hygienic home-style meals delivered to your doorstep.'}
+          </p>
+
+          {/* Mode Switcher Tabs */}
+          <div className="flex bg-black/20 p-1 rounded-xl mt-4">
+            <button
+              type="button"
+              onClick={() => { setMode('signin'); setErrorMessage(null); }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                mode === 'signin' ? 'bg-white text-[#0D6E44] shadow-xs' : 'text-stone-200 hover:text-white'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('signup'); setErrorMessage(null); }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
+                mode === 'signup' ? 'bg-white text-[#0D6E44] shadow-xs' : 'text-stone-200 hover:text-white'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+        </div>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+          
+          {/* Error Message */}
+          {errorMessage && (
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+              <div className="font-medium">{errorMessage}</div>
+            </div>
+          )}
+
+          {/* Sign Up Details */}
+          {mode === 'signup' && (
+            <>
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">Full Name</label>
+                <div className="relative">
+                  <User className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="text"
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="e.g. Jayendrasinh Parmar"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-sm text-stone-900 focus:ring-2 focus:ring-[#0D6E44] focus:border-transparent outline-none font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1">Mobile Number (For Delivery Partner)</label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="10-digit mobile number"
+                    className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-sm text-stone-900 focus:ring-2 focus:ring-[#0D6E44] focus:border-transparent outline-none font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1.5">I am ordering as</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {segments.map((seg) => (
+                    <button
+                      key={seg.id}
+                      type="button"
+                      onClick={() => setSegment(seg.id)}
+                      className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        segment === seg.id 
+                          ? 'border-[#0D6E44] bg-emerald-50 text-[#0D6E44] ring-1 ring-[#0D6E44]' 
+                          : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5 font-bold text-xs">
+                        {seg.icon}
+                        <span>{seg.label}</span>
+                      </div>
+                      <span className="text-[10px] text-stone-500 mt-1">{seg.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Email */}
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-1">Email Address</label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-sm text-stone-900 focus:ring-2 focus:ring-[#0D6E44] focus:border-transparent outline-none font-medium"
+              />
+            </div>
+          </div>
+
+          {/* Password */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-stone-700">Password</label>
+              {mode === 'signin' && (
+                <span className="text-[11px] text-[#0D6E44] hover:underline font-semibold cursor-pointer">
+                  Forgot password?
+                </span>
+              )}
+            </div>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-sm text-stone-900 focus:ring-2 focus:ring-[#0D6E44] focus:border-transparent outline-none font-medium"
+              />
+            </div>
+          </div>
+
+          {/* Submit CTA */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-sm font-black shadow-lg shadow-emerald-950/15 hover:shadow-xl transition-all cursor-pointer flex items-center justify-center gap-2 mt-2 disabled:opacity-60"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+                <span>{mode === 'signin' ? 'Signing in...' : 'Creating Account...'}</span>
+              </>
+            ) : (
+              <>
+                <span>{mode === 'signin' ? 'Sign In' : 'Complete Registration'}</span>
+                <ArrowRight className="w-4 h-4 text-amber-300" />
+              </>
+            )}
+          </button>
+
+          {/* Privacy & Trust Badge */}
+          <div className="flex items-center justify-center gap-1.5 text-[11px] text-stone-400 pt-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+            <span>Encrypted PostgreSQL & Supabase Auth</span>
+          </div>
+
+          {!isSupabaseConfigured() && (
+            <div className="text-center text-[10px] text-amber-700 bg-amber-50 rounded-xl p-2 border border-amber-200">
+              ⚡ <strong>Demo Mode Active</strong>: Instant login enabled for local preview. Connect Supabase keys in `.env` for live cloud database sync.
+            </div>
+          )}
+
+        </form>
+
+      </div>
+    </div>
+  );
+};

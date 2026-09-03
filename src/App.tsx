@@ -18,6 +18,8 @@ import { CorporateEnquiryModal } from './components/modals/CorporateEnquiryModal
 import { FeedbackModal } from './components/modals/FeedbackModal';
 import { AreaCheckerModal } from './components/modals/AreaCheckerModal';
 import { LocationSelectorModal } from './components/modals/LocationSelectorModal';
+import { LegalModal } from './components/modals/LegalModal';
+import { AuthModal } from './components/modals/AuthModal';
 import { DeveloperLocationDiagnostics } from './components/common/DeveloperLocationDiagnostics';
 
 // Pages
@@ -111,6 +113,8 @@ const MainContent: React.FC = () => {
       <CorporateEnquiryModal />
       <FeedbackModal />
       <AreaCheckerModal />
+      <LegalModal />
+      <AuthModal />
       <LocationSelectorModal 
         isOpen={isLocationModalOpen} 
         onClose={() => setIsLocationModalOpen(false)} 

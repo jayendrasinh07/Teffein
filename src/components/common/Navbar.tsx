@@ -7,7 +7,9 @@ import {
   User,
   ArrowRight,
   Crosshair,
-  AlertTriangle
+  AlertTriangle,
+  LogIn,
+  LogOut
 } from 'lucide-react';
 
 export const Navbar: React.FC = () => {
@@ -21,7 +23,11 @@ export const Navbar: React.FC = () => {
     detectedLocation,
     userRole,
     subscription,
-    oneTimeOrders
+    oneTimeOrders,
+    currentUser,
+    userProfile,
+    setIsAuthModalOpen,
+    signOutUser
   } = useApp();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -59,29 +65,29 @@ export const Navbar: React.FC = () => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           
           {/* LEFT: Brand Logo + Tagline */}
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0 shrink-0">
             <button
               id="brand-logo-btn"
               onClick={() => handleNavClick('home')}
-              className="flex items-center gap-2.5 text-left group focus:outline-none shrink-0 cursor-pointer"
+              className="flex items-center gap-2 sm:gap-2.5 text-left group focus:outline-none cursor-pointer"
               aria-label="TEFFEIN Home"
             >
-              <div className="w-10 h-10 rounded-2xl bg-[#0D6E44] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
-                <span className="font-black text-xl tracking-tighter text-amber-300 font-mono">T</span>
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#0D6E44] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
+                <span className="font-black text-lg sm:text-xl tracking-tighter text-amber-300 font-mono">T</span>
               </div>
-              <div className="flex flex-col justify-center">
-                <span className="font-black text-2xl tracking-tight text-stone-900 leading-none">
+              <div className="flex flex-col justify-center min-w-0">
+                <span className="font-black text-xl sm:text-2xl tracking-tight text-stone-900 leading-none">
                   TEFF<span className="text-[#0D6E44]">EIN</span>
                 </span>
-                <span className="text-[11px] font-semibold text-stone-500 tracking-tight leading-tight mt-1 whitespace-nowrap">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-stone-500 tracking-tight leading-tight mt-0.5 whitespace-nowrap hidden xs:inline-block">
                   Roz ka khana. Sahi khana.
                 </span>
               </div>
             </button>
           </div>
 
-          {/* CENTER: Navigation Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* CENTER: Navigation Links (Desktop) */}
+          <nav className="hidden lg:flex items-center gap-1">
             <button
               id="nav-home"
               onClick={() => handleNavClick('home')}
@@ -143,13 +149,13 @@ export const Navbar: React.FC = () => {
             </button>
           </nav>
 
-          {/* RIGHT: Compact Location + Optional Dashboard + Primary CTA */}
-          <div className="hidden sm:flex items-center gap-3">
+          {/* RIGHT: Desktop Actions (Location + Dashboard + Order Now) */}
+          <div className="hidden sm:flex items-center gap-2.5">
             {/* Small Location Chip */}
             <button
               id="location-checker-nav-btn"
               onClick={() => setIsLocationModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100/90 hover:bg-emerald-50 text-stone-700 hover:text-[#0D6E44] text-xs font-semibold border border-stone-200 transition-colors cursor-pointer max-w-[190px] truncate"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-[#0D6E44] text-xs font-semibold border border-stone-200 transition-colors cursor-pointer max-w-[170px] lg:max-w-[200px] truncate"
               title="Click to check or change your delivery location"
             >
               {isGps ? (
@@ -160,15 +166,29 @@ export const Navbar: React.FC = () => {
               <span className="truncate">{locationLabel}</span>
             </button>
 
-            {/* Dashboard (Only when logged in) */}
-            {isCustomerLoggedIn && (
+            {/* Account / Sign In */}
+            {currentUser ? (
+              <div className="flex items-center gap-1.5">
+                <button
+                  id="nav-dashboard-btn"
+                  onClick={() => handleNavClick('customer_dashboard')}
+                  className="px-3 py-2 rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title={userProfile?.fullName || currentUser.email || 'My Account'}
+                >
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 text-[#0D6E44] flex items-center justify-center font-black text-[10px]">
+                    {(userProfile?.fullName || currentUser.email || 'U').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="max-w-[100px] truncate">{userProfile?.fullName?.split(' ')[0] || 'Account'}</span>
+                </button>
+              </div>
+            ) : (
               <button
-                id="nav-dashboard-btn"
-                onClick={() => handleNavClick('customer_dashboard')}
+                id="nav-signin-btn"
+                onClick={() => setIsAuthModalOpen(true)}
                 className="px-3 py-2 rounded-xl text-xs font-bold text-stone-700 hover:bg-stone-100 flex items-center gap-1.5 transition-colors cursor-pointer"
               >
-                <User className="w-4 h-4 text-[#0D6E44]" />
-                <span>Dashboard</span>
+                <LogIn className="w-4 h-4 text-[#0D6E44]" />
+                <span>Sign In</span>
               </button>
             )}
 
@@ -176,36 +196,29 @@ export const Navbar: React.FC = () => {
             <button
               id="nav-order-now-btn"
               onClick={() => handleNavClick('order_once')}
-              className="px-5 py-2.5 rounded-xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0"
+              className="px-4.5 py-2.5 rounded-xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 shrink-0"
             >
-              <span>Order Now</span>
+              <span>Order a Meal</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* Mobile Right Controls: Location Chip + Order Now + Hamburger */}
-          <div className="flex md:hidden items-center gap-2">
+          {/* MOBILE RIGHT CONTROLS: [ Compact Location ] [ Menu ] (No overlapping Order Now button) */}
+          <div className="flex sm:hidden items-center gap-2 min-w-0">
             <button
+              id="mobile-location-header-btn"
               onClick={() => setIsLocationModalOpen(true)}
-              className="p-2 rounded-xl bg-stone-100 text-stone-700 text-xs font-semibold flex items-center gap-1 cursor-pointer max-w-[120px] truncate"
-              aria-label="Location"
+              className="px-2.5 py-1.5 rounded-full bg-stone-100/90 active:bg-emerald-50 text-stone-700 text-[11px] font-bold flex items-center gap-1 border border-stone-200 cursor-pointer max-w-[130px] truncate shrink min-w-0"
+              aria-label="Delivery Location"
             >
-              <MapPin className="w-3.5 h-3.5 text-[#0D6E44] shrink-0" />
+              <MapPin className="w-3 h-3 text-[#0D6E44] shrink-0" />
               <span className="truncate">{locationLabel}</span>
-            </button>
-
-            <button
-              id="mobile-nav-order-btn"
-              onClick={() => handleNavClick('order_once')}
-              className="px-3 py-2 rounded-xl bg-[#0D6E44] text-white text-xs font-black flex items-center gap-1 cursor-pointer"
-            >
-              <span>Order Now</span>
             </button>
 
             <button
               id="mobile-menu-toggle-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 rounded-xl bg-stone-100 text-stone-700 hover:text-stone-950 focus:outline-none cursor-pointer"
+              className="p-2 rounded-xl bg-stone-100 active:bg-stone-200 text-stone-700 hover:text-stone-950 focus:outline-none cursor-pointer shrink-0"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
@@ -217,12 +230,23 @@ export const Navbar: React.FC = () => {
 
       {/* Mobile Slide-Down Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-stone-200 bg-white px-4 py-5 space-y-3 shadow-lg animate-fadeIn">
+        <div className="lg:hidden border-t border-stone-200 bg-white px-4 py-5 space-y-4 shadow-xl animate-fadeIn">
+          {/* Primary Mobile Action */}
+          <button
+            id="mobile-menu-order-now-btn"
+            onClick={() => handleNavClick('order_once')}
+            className="w-full py-3.5 rounded-2xl bg-[#0D6E44] active:bg-[#08482C] text-white text-sm font-black shadow-md flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>🍱</span>
+            <span>Order a Fresh Meal (₹119)</span>
+            <ArrowRight className="w-4 h-4 text-amber-300" />
+          </button>
+
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => handleNavClick('home')}
-              className={`p-3 rounded-xl text-left text-xs font-bold ${
-                activeTab === 'home' ? 'bg-emerald-50 text-[#0D6E44]' : 'bg-stone-50 text-stone-700'
+              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
+                activeTab === 'home' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
               }`}
             >
               Home
@@ -230,26 +254,26 @@ export const Navbar: React.FC = () => {
 
             <button
               onClick={() => handleNavClick('todays_menu')}
-              className={`p-3 rounded-xl text-left text-xs font-bold ${
-                activeTab === 'todays_menu' ? 'bg-emerald-50 text-[#0D6E44]' : 'bg-stone-50 text-stone-700'
+              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
+                activeTab === 'todays_menu' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
               }`}
             >
-              Menu
+              Today's Menu
             </button>
 
             <button
               onClick={() => handleNavClick('meal_plans')}
-              className={`p-3 rounded-xl text-left text-xs font-bold ${
-                activeTab === 'meal_plans' ? 'bg-emerald-50 text-[#0D6E44]' : 'bg-stone-50 text-stone-700'
+              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
+                activeTab === 'meal_plans' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
               }`}
             >
-              Plans
+              Meal Plans
             </button>
 
             <button
               onClick={() => handleNavClick('how_it_works')}
-              className={`p-3 rounded-xl text-left text-xs font-bold ${
-                activeTab === 'how_it_works' ? 'bg-emerald-50 text-[#0D6E44]' : 'bg-stone-50 text-stone-700'
+              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
+                activeTab === 'how_it_works' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
               }`}
             >
               How It Works
@@ -257,34 +281,48 @@ export const Navbar: React.FC = () => {
 
             <button
               onClick={() => handleNavClick('corporate')}
-              className={`p-3 rounded-xl text-left text-xs font-bold ${
-                activeTab === 'corporate' ? 'bg-emerald-50 text-[#0D6E44]' : 'bg-stone-50 text-stone-700'
+              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
+                activeTab === 'corporate' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
               }`}
             >
               For Business
             </button>
 
             <button
-              onClick={() => handleNavClick('order_once')}
-              className={`p-3 rounded-xl text-left text-xs font-bold ${
-                activeTab === 'order_once' ? 'bg-emerald-50 text-[#0D6E44]' : 'bg-stone-50 text-stone-700'
+              onClick={() => handleNavClick('coverage')}
+              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
+                activeTab === 'coverage' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
               }`}
             >
-              Order a Meal
+              Delivery Coverage
             </button>
           </div>
 
-          {isCustomerLoggedIn && (
-            <div className="pt-2 border-t border-stone-100">
+          <div className="pt-2 border-t border-stone-100 space-y-2">
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setIsLocationModalOpen(true);
+              }}
+              className="w-full py-2.5 px-3 rounded-xl bg-stone-50 hover:bg-emerald-50 text-stone-700 hover:text-[#0D6E44] text-xs font-bold flex items-center justify-between border border-stone-200 transition-colors cursor-pointer"
+            >
+              <span className="flex items-center gap-1.5 truncate">
+                <MapPin className="w-3.5 h-3.5 text-[#0D6E44] shrink-0" />
+                <span className="truncate">Delivering to: {locationLabel}</span>
+              </span>
+              <span className="text-[11px] text-[#0D6E44] underline font-bold shrink-0">Change</span>
+            </button>
+
+            {isCustomerLoggedIn && (
               <button
                 onClick={() => handleNavClick('customer_dashboard')}
-                className="w-full py-2.5 rounded-xl bg-stone-100 text-stone-800 text-xs font-bold flex items-center justify-center gap-1.5"
+                className="w-full py-2.5 rounded-xl bg-stone-100 text-stone-800 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <User className="w-4 h-4 text-[#0D6E44]" />
                 <span>Customer Dashboard</span>
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </header>

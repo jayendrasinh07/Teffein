@@ -1,111 +1,160 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  Calendar, 
-  Clock, 
-  Utensils, 
-  MapPin, 
-  CreditCard, 
-  CheckCircle2, 
-  Sparkles, 
-  ShieldCheck, 
   ArrowRight, 
   ArrowLeft,
-  Smartphone,
-  QrCode,
-  Banknote,
-  Flame,
-  Droplet,
-  Plus,
-  Minus,
-  Check,
-  AlertCircle
+  Sparkles,
+  ShieldCheck,
+  Utensils,
+  Calendar,
+  MapPin,
+  Clock,
+  RotateCcw
 } from 'lucide-react';
 import { 
-  getMealDetailsForDate, 
-  calculateOrderPrice, 
-  createDefaultMealCustomization,
-  SingleMealCustomization,
-  ORDER_ADDON_CATALOG 
-} from '../services/orderCustomizationEngine';
+  StepProgressIndicator, 
+  ORDER_STEPS 
+} from '../components/order/StepProgressIndicator';
+import { Step1DateMealSlot } from '../components/order/Step1DateMealSlot';
+import { Step2DailyMenu } from '../components/order/Step2DailyMenu';
+import { Step3Customization } from '../components/order/Step3Customization';
+import { Step4Address } from '../components/order/Step4Address';
+import { Step5DeliverySlot } from '../components/order/Step5DeliverySlot';
+import { Step6OrderReview } from '../components/order/Step6OrderReview';
+import { OrderSuccessView } from '../components/order/OrderSuccessView';
+import { OrderTrackingView } from '../components/order/OrderTrackingView';
+
+import { 
+  menuService, 
+  DatabaseMeal, 
+  DatabaseMealCustomization, 
+  DatabaseDeliverySlot 
+} from '../services/menuService';
 import { 
   checkMealAvailability, 
   getOrderableDates, 
-  SAVED_CUSTOMER_ADDRESSES, 
-  TEFFEIN_OPERATIONAL_CONFIG 
+  SAVED_CUSTOMER_ADDRESSES 
 } from '../services/availabilityEngine';
-import { CustomerAddress, DeliverySlot, PaymentMethod, OneTimeOrder } from '../types';
-import { calculateDeliveryFeeForZone } from '../services/locationService';
-import { OrderMealShowcase } from '../components/order/OrderMealShowcase';
-import { OrderDateSlotSelector } from '../components/order/OrderDateSlotSelector';
-import { MultiMealCustomizer } from '../components/order/MultiMealCustomizer';
-import { AddOnSelector } from '../components/order/AddOnSelector';
-import { DeliverySlotSelector } from '../components/order/DeliverySlotSelector';
-import { AddressSelector } from '../components/order/AddressSelector';
-import { OrderSummaryDesktop } from '../components/order/OrderSummaryDesktop';
-import { OrderSummaryMobile } from '../components/order/OrderSummaryMobile';
-import { OrderConfirmedView } from '../components/order/OrderConfirmedView';
+import { CustomerAddress, DeliverySlot, OneTimeOrder } from '../types';
+import { IMAGES } from '../data/images';
 
 export const OrderOncePage: React.FC = () => {
   const { 
     createOneTimeOrder, 
-    showToast, 
+    activeDeliveryAddress, 
+    savedAddresses, 
+    currentUser,
+    userProfile,
     setActiveTab,
     setActiveTrackingOrder,
-    activeDeliveryAddress,
-    centralLocation,
-    savedAddresses,
-    setIsLocationModalOpen
+    activeTrackingOrder,
+    setIsAuthModalOpen
   } = useApp();
 
   const orderableDates = getOrderableDates();
 
-  // Wizard Steps: 1: Meal & Customization, 2: Delivery & Address, 3: Payment
+  // 1. Step Navigation State (1 to 6)
   const [currentStep, setCurrentStep] = useState<number>(1);
+  const [maxCompletedStep, setMaxCompletedStep] = useState<number>(1);
 
-  // Date & Meal Slot State
+  // 2. Centralized Order Draft State
   const [selectedDate, setSelectedDate] = useState<string>(orderableDates[0]?.dateStr || '');
   const [selectedMealSlot, setSelectedMealSlot] = useState<'lunch' | 'dinner'>('lunch');
 
-  // Quantity & Customization State
-  const [quantity, setQuantity] = useState<number>(1);
-  const [applySameCustomization, setApplySameCustomization] = useState<boolean>(true);
-  const [mealCustomizations, setMealCustomizations] = useState<SingleMealCustomization[]>([
-    createDefaultMealCustomization(0, 'Meal 1')
-  ]);
-  const [isCustomizingExpanded, setIsCustomizingExpanded] = useState<boolean>(false);
+  // Supabase Data State
+  const [dbMeals, setDbMeals] = useState<DatabaseMeal[]>([]);
+  const [dbCustomizations, setDbCustomizations] = useState<DatabaseMealCustomization[]>([]);
+  const [dbLunchSlots, setDbLunchSlots] = useState<DeliverySlot[]>([]);
+  const [dbDinnerSlots, setDbDinnerSlots] = useState<DeliverySlot[]>([]);
+  const [isLoadingMenu, setIsLoadingMenu] = useState<boolean>(true);
 
-  // Standalone Add-ons State
-  const [selectedAddons, setSelectedAddons] = useState<{ [id: string]: number }>({});
-
-  // Delivery & Address State (initialized from central/active address)
-  const [selectedAddress, setSelectedAddress] = useState<CustomerAddress>(() => {
-    return (activeDeliveryAddress as CustomerAddress) || SAVED_CUSTOMER_ADDRESSES[0];
+  // Step 2: Selected Meal
+  const [selectedMeal, setSelectedMeal] = useState<DatabaseMeal>({
+    id: 'meal-standard-thali',
+    name: 'Standard Gujarati Daily Thali',
+    description: 'Wholesome everyday home thali cooked in pure filtered groundnut oil with balanced spices.',
+    mealType: 'lunch',
+    dietType: 'standard_gujarati',
+    basePrice: 119,
+    isActive: true,
+    imageUrl: IMAGES.hero.mainThali
   });
+
+  // Step 3: Customization & Quantity
+  const [quantity, setQuantity] = useState<number>(1);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+  const [spiceLevel, setSpiceLevel] = useState<'Regular' | 'Less Spicy'>('Regular');
+  const [oilLevel, setOilLevel] = useState<'Standard' | 'Less Oil (Fit)'>('Standard');
+  const [dietVariant, setDietVariant] = useState<string>('Standard Gujarati');
+
+  // Step 4: Address
+  const [selectedAddress, setSelectedAddress] = useState<CustomerAddress>(() => {
+    return (activeDeliveryAddress as CustomerAddress) || (savedAddresses && savedAddresses[0]) || SAVED_CUSTOMER_ADDRESSES[0];
+  });
+
+  // Step 5: Delivery Slot
   const [selectedSlotId, setSelectedSlotId] = useState<string>('');
 
-  // Sync when activeDeliveryAddress changes in context
+  // Step 6: Order Notes & Submission
+  const [notes, setNotes] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
+
+  // Success & Tracking Views
+  const [confirmedOrder, setConfirmedOrder] = useState<OneTimeOrder | null>(null);
+  const [isTrackingMode, setIsTrackingMode] = useState<boolean>(false);
+
+  // Keep address updated if user selected active delivery address
   useEffect(() => {
     if (activeDeliveryAddress) {
       setSelectedAddress(activeDeliveryAddress as CustomerAddress);
     }
   }, [activeDeliveryAddress]);
 
-  // Payment State
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('UPI');
-  const [upiApp, setUpiApp] = useState<'gpay' | 'phonepe' | 'paytm' | 'other'>('gpay');
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  // Load menu items, customizations, and slots from Supabase
+  useEffect(() => {
+    let isMounted = true;
+    const loadSupabaseData = async () => {
+      setIsLoadingMenu(true);
+      try {
+        const [meals, customizations, lunchSlots, dinnerSlots] = await Promise.all([
+          menuService.getActiveMeals(),
+          menuService.getMealCustomizations(),
+          menuService.getDeliverySlots('lunch'),
+          menuService.getDeliverySlots('dinner')
+        ]);
 
-  // Confirmation State
-  const [confirmedOrder, setConfirmedOrder] = useState<OneTimeOrder | null>(null);
+        if (isMounted) {
+          if (meals && meals.length > 0) {
+            setDbMeals(meals);
+            // Default selected meal
+            const matchedMeal = meals.find((m) => m.mealType === selectedMealSlot) || meals[0];
+            setSelectedMeal(matchedMeal);
+          }
+          if (customizations && customizations.length > 0) {
+            setDbCustomizations(customizations);
+          }
+          if (lunchSlots && lunchSlots.length > 0) {
+            setDbLunchSlots(lunchSlots as any);
+          }
+          if (dinnerSlots && dinnerSlots.length > 0) {
+            setDbDinnerSlots(dinnerSlots as any);
+          }
+        }
+      } catch (err) {
+        console.warn('[TEFFEIN Order] Using robust fallback catalog:', err);
+      } finally {
+        if (isMounted) setIsLoadingMenu(false);
+      }
+    };
 
-  // Dynamic delivery fee calculation based on active zone
-  const deliveryFee = useMemo(() => {
-    const zoneId = (selectedAddress as any)?.zoneId || (centralLocation?.deliveryZoneId as any) || 'zone_a_core';
-    return calculateDeliveryFeeForZone(zoneId);
-  }, [selectedAddress, centralLocation]);
+    loadSupabaseData();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedMealSlot]);
 
-  // 1. Availability check
+  // Check Availability for selected Date & Meal Slot
   const availability = useMemo(() => {
     return checkMealAvailability({
       date: selectedDate,
@@ -113,483 +162,464 @@ export const OrderOncePage: React.FC = () => {
     });
   }, [selectedDate, selectedMealSlot]);
 
-  // Set default slot when availability changes
+  // Current active slots based on mealSlot
+  const currentAvailableSlots: DeliverySlot[] = useMemo(() => {
+    const dbSlots = selectedMealSlot === 'lunch' ? dbLunchSlots : dbDinnerSlots;
+    if (dbSlots && dbSlots.length > 0) return dbSlots;
+    return availability.availableSlots;
+  }, [selectedMealSlot, dbLunchSlots, dbDinnerSlots, availability.availableSlots]);
+
+  // Set default slot if none selected
   useEffect(() => {
-    if (availability.availableSlots && availability.availableSlots.length > 0) {
-      if (!selectedSlotId || !availability.availableSlots.some((s) => s.id === selectedSlotId)) {
-        setSelectedSlotId(availability.availableSlots[0].id);
+    if (currentAvailableSlots.length > 0) {
+      if (!selectedSlotId || !currentAvailableSlots.some((s) => s.id === selectedSlotId)) {
+        setSelectedSlotId(currentAvailableSlots[0].id);
       }
     }
-  }, [availability, selectedSlotId]);
+  }, [currentAvailableSlots, selectedSlotId]);
 
-  // 2. Fetch rich daily meal details (from WEEKLY_MENU and actual date)
-  const mealDetails = useMemo(() => {
-    return getMealDetailsForDate(selectedDate, selectedMealSlot);
-  }, [selectedDate, selectedMealSlot]);
+  // Selected DeliverySlot object
+  const activeSlotObj = useMemo(() => {
+    return currentAvailableSlots.find((s) => s.id === selectedSlotId) || currentAvailableSlots[0];
+  }, [currentAvailableSlots, selectedSlotId]);
 
-  // 3. Centralized Price Calculation
-  const pricing = useMemo(() => {
-    return calculateOrderPrice({
-      basePricePerMeal: 119,
-      quantity,
-      applySameCustomization,
-      mealCustomizations,
-      selectedAddons,
-      deliveryFee: deliveryFee,
-      discount: 0
-    });
-  }, [quantity, applySameCustomization, mealCustomizations, selectedAddons, deliveryFee]);
+  // Price calculations for Live Sticky Summary
+  const livePricing = useMemo(() => {
+    const mealsSubtotal = selectedMeal.basePrice * quantity;
+    let addonsTotal = 0;
+    const addonLineItems: { name: string; qty: number; total: number }[] = [];
 
-  // Current selected slot object
-  const currentSlot = useMemo(() => {
-    return availability.availableSlots.find((s) => s.id === selectedSlotId) || availability.availableSlots[0];
-  }, [availability, selectedSlotId]);
-
-  // Date label formatted
-  const dateLabel = useMemo(() => {
-    const found = orderableDates.find((d) => d.dateStr === selectedDate);
-    return found ? found.label : selectedDate;
-  }, [orderableDates, selectedDate]);
-
-  // Add-on toggle handler
-  const handleAddonToggle = (id: string, delta: number) => {
-    setSelectedAddons((prev) => {
-      const current = prev[id] || 0;
-      const next = Math.max(0, current + delta);
-      if (next === 0) {
-        const { [id]: _, ...rest } = prev;
-        return rest;
+    Object.entries(selectedAddons).forEach(([addonId, qty]: [string, number]) => {
+      if (qty > 0) {
+        const addon = dbCustomizations.find((c) => c.id === addonId);
+        const price = Number(addon?.price || 20);
+        const lineTotal = price * qty;
+        addonsTotal += lineTotal;
+        addonLineItems.push({
+          name: addon?.name || addonId,
+          qty,
+          total: lineTotal
+        });
       }
-      return { ...prev, [id]: next };
     });
-  };
 
-  // Next available recovery handler
-  const handleSelectNextAvailable = (date: string, slot: 'lunch' | 'dinner') => {
-    setSelectedDate(date);
-    setSelectedMealSlot(slot);
-    showToast(
-      'Updated to Next Open Slot',
-      `Switched to ${slot === 'lunch' ? 'Lunch' : 'Dinner'} on ${date}.`,
-      'info'
-    );
-  };
+    const deliveryFee = 0; // Free cluster delivery in Gandhinagar
+    const total = mealsSubtotal + addonsTotal + deliveryFee;
 
-  // Navigation flow
+    return {
+      mealsSubtotal,
+      addonsTotal,
+      addonLineItems,
+      deliveryFee,
+      total
+    };
+  }, [selectedMeal, quantity, selectedAddons, dbCustomizations]);
+
+  // Navigation handlers
   const handleNextStep = () => {
-    if (currentStep === 1) {
-      setCurrentStep(2);
+    setSubmissionError(null);
+    if (currentStep < 6) {
+      const next = currentStep + 1;
+      setCurrentStep(next);
+      setMaxCompletedStep((prev) => Math.max(prev, next));
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (currentStep === 2) {
-      setCurrentStep(3);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (currentStep === 3) {
-      handleFinalizeOrder();
     }
   };
 
   const handlePrevStep = () => {
+    setSubmissionError(null);
     if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
-  // Finalize Order
-  const handleFinalizeOrder = async () => {
-    setIsSubmitting(true);
-
-    const addonsList = Object.entries(selectedAddons).map(([id, qty]) => {
-      const a = ORDER_ADDON_CATALOG.find((item) => item.id === id);
-      return {
-        id,
-        name: a?.name || id,
-        price: a?.price || 0,
-        quantity: Number(qty) || 1
-      };
-    });
-
-    const primaryCustom = mealCustomizations[0] || createDefaultMealCustomization(0);
-
-    const customSummaries = pricing.customizationLineItems.map((c) => c.label);
-
-    const orderData: Omit<OneTimeOrder, 'id' | 'createdAt' | 'traceabilityMealId'> = {
-      userId: 'usr_guest_01',
-      userName: selectedAddress.fullName,
-      userPhone: selectedAddress.phone,
-      orderType: 'ONE_TIME',
-      mealId: `thali_${selectedMealSlot}_${mealDetails.dayName.toLowerCase()}`,
-      mealName: mealDetails.title,
-      mealImage: mealDetails.image,
-      scheduledDate: selectedDate,
-      scheduledDateLabel: dateLabel,
-      mealSlot: selectedMealSlot,
-      deliverySlotId: currentSlot?.id || 'slot_default',
-      deliverySlotLabel: currentSlot?.windowLabel || (selectedMealSlot === 'lunch' ? '12:15 PM – 01:15 PM' : '07:45 PM – 08:45 PM'),
-      quantity,
-      customizations: {
-        spiceLevel: primaryCustom.spiceLevel,
-        oilLevel: primaryCustom.oilLevel,
-        dietVariant: primaryCustom.dietVariant,
-        rotiCount: primaryCustom.rotiCount,
-        ricePortion: primaryCustom.ricePortion,
-        extraDal: primaryCustom.dalPortion === 'extra',
-        hasChaas: primaryCustom.hasChaas
-      },
-      mealCustomizations,
-      customizationSummary: customSummaries,
-      addOns: addonsList,
-      address: selectedAddress,
-      subtotal: pricing.mealsSubtotal,
-      addOnsTotal: pricing.addOnsTotal + pricing.customizationsTotal,
-      deliveryFee: pricing.deliveryFee,
-      discount: pricing.discount,
-      total: pricing.total,
-      paymentMethod,
-      paymentStatus: paymentMethod === 'CashOnDelivery' ? 'PENDING' : 'PAID',
-      orderStatus: 'CONFIRMED',
-      estimatedDeliveryTime: currentSlot?.windowLabel || '12:45 PM'
-    };
-
-    try {
-      const created = await createOneTimeOrder(orderData);
-      setIsSubmitting(false);
-      setConfirmedOrder(created);
+  const handleStepClick = (stepId: number) => {
+    if (stepId <= maxCompletedStep + 1) {
+      setCurrentStep(stepId);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      setIsSubmitting(false);
-      showToast('Order Failed', 'Could not complete order. Please retry.', 'error');
     }
   };
 
-  // If order is confirmed, show celebratory tracker view
+  const handleAddonQuantityChange = (addonId: string, newQty: number) => {
+    setSelectedAddons((prev) => {
+      const updated = { ...prev };
+      if (newQty <= 0) {
+        delete updated[addonId];
+      } else {
+        updated[addonId] = newQty;
+      }
+      return updated;
+    });
+  };
+
+  // Next Available Slot One-Click Action
+  const handleSelectNextAvailable = (nextDate: string, nextSlot: 'lunch' | 'dinner') => {
+    setSelectedDate(nextDate);
+    setSelectedMealSlot(nextSlot);
+  };
+
+  // Order Submission
+  const handleConfirmOrder = async () => {
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmissionError(null);
+
+    try {
+      // Map Add-ons for order record
+      const mappedAddOns = Object.entries(selectedAddons)
+        .filter(([_, qty]: [string, number]) => qty > 0)
+        .map(([addonId, qty]: [string, number]) => {
+          const addon = dbCustomizations.find((c) => c.id === addonId);
+          return {
+            id: addonId,
+            name: addon?.name || 'Extra Side Item',
+            price: Number(addon?.price || 20),
+            quantity: qty
+          };
+        });
+
+      // Format human-readable date label
+      const dateObj = new Date(selectedDate + 'T00:00:00');
+      const isToday = selectedDate === orderableDates[0]?.dateStr;
+      const isTomorrow = selectedDate === orderableDates[1]?.dateStr;
+      const scheduledDateLabel = isToday 
+        ? 'Today' 
+        : isTomorrow 
+        ? 'Tomorrow' 
+        : dateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
+
+      const newOrder = await createOneTimeOrder({
+        userId: currentUser.id,
+        userName: userProfile?.fullName || currentUser.email || selectedAddress.fullName || 'Customer',
+        userPhone: userProfile?.phone || selectedAddress.phone || '+91 98254 99120',
+        orderType: 'ONE_TIME',
+        mealId: selectedMeal.id,
+        mealName: selectedMeal.name,
+        mealImage: selectedMeal.imageUrl || IMAGES.hero.mainThali,
+        scheduledDate: selectedDate,
+        scheduledDateLabel,
+        mealSlot: selectedMealSlot,
+        deliverySlotId: selectedSlotId || 'slot-1',
+        deliverySlotLabel: activeSlotObj?.windowLabel || '12:00 PM – 12:30 PM',
+        quantity,
+        customizations: {
+          spiceLevel,
+          oilLevel,
+          dietVariant: dietVariant as any,
+          rotiCount: 4,
+          ricePortion: 'standard',
+          extraDal: false,
+          hasChaas: false
+        },
+        addOns: mappedAddOns,
+        address: selectedAddress,
+        subtotal: livePricing.mealsSubtotal,
+        addOnsTotal: livePricing.addonsTotal,
+        deliveryFee: 0,
+        discount: 0,
+        total: livePricing.total,
+        paymentMethod: 'UPI',
+        paymentStatus: 'PAID',
+        orderStatus: 'CONFIRMED',
+        estimatedDeliveryTime: activeSlotObj?.windowLabel || '12:00 PM – 12:30 PM'
+      });
+
+      setConfirmedOrder(newOrder);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (err: any) {
+      console.error('[TEFFEIN Order] Submission failed:', err);
+      setSubmissionError(err?.message || 'Order verification failed. Please check your delivery slot and retry.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // 1. Render Order Tracking View if active
+  if (isTrackingMode && confirmedOrder) {
+    return (
+      <div className="py-8 bg-[#FAF8F5] min-h-[85vh]">
+        <OrderTrackingView
+          order={confirmedOrder}
+          onBackToMenu={() => {
+            setIsTrackingMode(false);
+            setConfirmedOrder(null);
+            setCurrentStep(1);
+          }}
+        />
+      </div>
+    );
+  }
+
+  // 2. Render Order Success View if confirmed
   if (confirmedOrder) {
     return (
-      <main className="py-10 sm:py-16 bg-[#FAF8F5] min-h-screen">
-        <div className="max-w-4xl mx-auto px-4">
-          <OrderConfirmedView
-            order={confirmedOrder}
-            onOrderAnother={() => {
-              setConfirmedOrder(null);
-              setCurrentStep(1);
-              setQuantity(1);
-              setSelectedAddons({});
-            }}
-            onTrackOrder={() => {
-              setActiveTrackingOrder(confirmedOrder);
-              setActiveTab('delivery_tracking');
-            }}
-          />
-        </div>
-      </main>
+      <div className="py-8 bg-[#FAF8F5] min-h-[85vh] px-4 sm:px-6">
+        <OrderSuccessView
+          order={confirmedOrder}
+          onTrackOrder={() => setIsTrackingMode(true)}
+          onOrderAnother={() => {
+            setConfirmedOrder(null);
+            setCurrentStep(1);
+            setMaxCompletedStep(1);
+          }}
+        />
+      </div>
     );
   }
 
   return (
-    <main className="py-8 sm:py-12 bg-[#FAF8F5] min-h-screen text-stone-900 pb-28 lg:pb-16">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+    <div className="py-6 sm:py-10 bg-[#FAF8F5] min-h-[90vh]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         
-        {/* Top Breadcrumb & Step Tracker */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-stone-200/80 pb-4">
+        {/* Page Top Branding Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200/80 pb-4">
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-black uppercase tracking-wider text-[#0D6E44] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Gandhinagar Food-Tech Platform
+                Single Meal Order
               </span>
-              <span className="text-xs text-stone-400 font-semibold">•</span>
-              <span className="text-xs text-stone-500 font-semibold">
-                Aaj TEFFEIN mein kya mil raha hai?
+              <span className="text-xs font-semibold text-stone-500">
+                No subscription required
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-stone-900 mt-1 tracking-tight">
-              Order a Fresh Home-Style Meal
+              Order a Hot Home-Style Meal
             </h1>
           </div>
 
-          {/* Stepper Navigation */}
-          <div className="flex items-center gap-1.5 self-start sm:self-auto bg-white p-1.5 rounded-2xl border border-stone-200 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setCurrentStep(1)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                currentStep === 1
-                  ? 'bg-[#0D6E44] text-white shadow-2xs'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              1. Meal & Custom
-            </button>
-            <span className="text-stone-300">/</span>
-            <button
-              type="button"
-              onClick={() => {
-                if (availability.isAvailable) setCurrentStep(2);
-              }}
-              disabled={!availability.isAvailable}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                currentStep === 2
-                  ? 'bg-[#0D6E44] text-white shadow-2xs'
-                  : 'text-stone-600 hover:text-stone-900 disabled:opacity-40'
-              }`}
-            >
-              2. Delivery
-            </button>
-            <span className="text-stone-300">/</span>
-            <button
-              type="button"
-              onClick={() => {
-                if (availability.isAvailable) setCurrentStep(3);
-              }}
-              disabled={!availability.isAvailable}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer ${
-                currentStep === 3
-                  ? 'bg-[#0D6E44] text-white shadow-2xs'
-                  : 'text-stone-600 hover:text-stone-900 disabled:opacity-40'
-              }`}
-            >
-              3. Payment
-            </button>
+          <div className="flex items-center gap-2 text-xs text-stone-500 font-medium">
+            <ShieldCheck className="w-4 h-4 text-[#0D6E44]" />
+            <span>Pure Filtered Groundnut Oil • MP Sharbati Wheat</span>
           </div>
         </div>
 
-        {/* 2-Column Responsive Layout: Left Steps + Right Sticky Summary */}
+        {/* Multi-Step Visual Progress Indicator */}
+        <StepProgressIndicator
+          currentStep={currentStep}
+          onStepClick={handleStepClick}
+          maxCompletedStep={maxCompletedStep}
+        />
+
+        {/* Main 2-Column Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* LEFT COLUMN: Active Step Controls */}
+          {/* LEFT COLUMN: Active Step Component (8 Cols on LG) */}
           <div className="lg:col-span-8 space-y-6">
-
-            {/* BACK BUTTON IF IN STEP 2 OR 3 */}
-            {currentStep > 1 && (
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                className="flex items-center gap-1.5 text-xs font-black text-stone-600 hover:text-stone-900 cursor-pointer bg-white px-3 py-1.5 rounded-xl border border-stone-200 shadow-2xs"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Back to {currentStep === 2 ? 'Meal Selection' : 'Delivery Selection'}</span>
-              </button>
+            
+            {/* Step 1: Date & Meal Type */}
+            {currentStep === 1 && (
+              <Step1DateMealSlot
+                selectedDate={selectedDate}
+                onDateChange={setSelectedDate}
+                selectedMealSlot={selectedMealSlot}
+                onMealSlotChange={setSelectedMealSlot}
+                availability={availability}
+                onSelectNextAvailable={handleSelectNextAvailable}
+                lunchSlots={dbLunchSlots}
+                dinnerSlots={dbDinnerSlots}
+              />
             )}
 
-            {/* STEP 1: Meal Choice, Date/Slot, Customization & Add-ons */}
-            {currentStep === 1 && (
-              <div className="space-y-6">
-                
-                {/* Deliver to Confirmed Address Banner */}
-                <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs flex items-center justify-between">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-[#0D6E44] flex items-center justify-center shrink-0">
-                      <MapPin className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-[10px] font-bold uppercase tracking-wider text-stone-500">Deliver to:</div>
-                      <div className="text-sm font-black text-stone-900 flex items-center gap-1.5 truncate">
-                        <span>{activeDeliveryAddress?.label || 'Home'}</span>
-                        <span className="text-stone-300">•</span>
-                        <span>{activeDeliveryAddress?.sector || activeDeliveryAddress?.area || 'Gandhinagar'}</span>
-                      </div>
-                      <div className="text-xs text-stone-500 truncate">
-                        {activeDeliveryAddress?.addressLine1 || activeDeliveryAddress?.addressLine || 'Gandhinagar'}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsLocationModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-xl bg-stone-100 hover:bg-emerald-50 text-stone-700 hover:text-[#0D6E44] text-xs font-bold border border-stone-200 transition-colors cursor-pointer shrink-0"
-                  >
-                    Change
-                  </button>
+            {/* Step 2: Daily Menu Selection */}
+            {currentStep === 2 && (
+              <Step2DailyMenu
+                meals={dbMeals}
+                selectedMealId={selectedMeal.id}
+                onSelectMeal={(meal) => {
+                  setSelectedMeal(meal);
+                  handleNextStep();
+                }}
+                selectedDate={selectedDate}
+                mealSlot={selectedMealSlot}
+                isLoading={isLoadingMenu}
+              />
+            )}
+
+            {/* Step 3: Customization & Quantity */}
+            {currentStep === 3 && (
+              <Step3Customization
+                meal={selectedMeal}
+                quantity={quantity}
+                onQuantityChange={setQuantity}
+                selectedAddons={selectedAddons}
+                onAddonQuantityChange={handleAddonQuantityChange}
+                customizationCatalog={dbCustomizations}
+                spiceLevel={spiceLevel}
+                onSpiceLevelChange={setSpiceLevel}
+                oilLevel={oilLevel}
+                onOilLevelChange={setOilLevel}
+                dietVariant={dietVariant}
+                onDietVariantChange={setDietVariant}
+              />
+            )}
+
+            {/* Step 4: Delivery Address & Serviceability */}
+            {currentStep === 4 && (
+              <Step4Address
+                selectedAddress={selectedAddress}
+                onSelectAddress={setSelectedAddress}
+                savedAddresses={savedAddresses}
+              />
+            )}
+
+            {/* Step 5: Delivery Slot */}
+            {currentStep === 5 && (
+              <Step5DeliverySlot
+                slots={currentAvailableSlots}
+                selectedSlotId={selectedSlotId}
+                onSelectSlot={setSelectedSlotId}
+                mealSlot={selectedMealSlot}
+              />
+            )}
+
+            {/* Step 6: Final Review & Confirmation */}
+            {currentStep === 6 && (
+              <Step6OrderReview
+                meal={selectedMeal}
+                quantity={quantity}
+                selectedAddons={selectedAddons}
+                customizationCatalog={dbCustomizations}
+                spiceLevel={spiceLevel}
+                oilLevel={oilLevel}
+                dietVariant={dietVariant}
+                selectedDate={selectedDate}
+                mealSlot={selectedMealSlot}
+                selectedSlot={activeSlotObj}
+                selectedAddress={selectedAddress}
+                notes={notes}
+                onNotesChange={setNotes}
+                onConfirmOrder={handleConfirmOrder}
+                isSubmitting={isSubmitting}
+                errorMessage={submissionError}
+              />
+            )}
+
+            {/* Step Bottom Controls (Back & Next) */}
+            <div className="flex items-center justify-between pt-4 border-t border-stone-200">
+              {currentStep > 1 ? (
+                <button
+                  type="button"
+                  id="order-step-back-btn"
+                  onClick={handlePrevStep}
+                  className="px-5 py-3 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-xs sm:text-sm font-bold transition-all flex items-center gap-2 cursor-pointer shadow-2xs"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to {ORDER_STEPS[currentStep - 2]?.shortLabel || 'Previous'}</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveTab('home');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }}
+                  className="px-5 py-3 rounded-2xl bg-white hover:bg-stone-100 text-stone-600 border border-stone-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {currentStep < 6 && (
+                <button
+                  type="button"
+                  id="order-step-continue-btn"
+                  disabled={currentStep === 1 && !availability.isAvailable}
+                  onClick={handleNextStep}
+                  className="px-7 py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs sm:text-sm font-black shadow-md shadow-emerald-950/15 hover:shadow-lg transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <span>Continue to {ORDER_STEPS[currentStep]?.shortLabel || 'Next'}</span>
+                  <ArrowRight className="w-4 h-4 text-amber-300" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Desktop Sticky Live Order Summary (4 Cols on LG) */}
+          <div className="hidden lg:block lg:col-span-4">
+            <aside aria-label="Live Order Summary" className="sticky top-24 bg-white rounded-3xl p-6 border border-stone-200 shadow-md space-y-5">
+              <div className="border-b border-stone-150 pb-3">
+                <span className="text-[10px] font-black uppercase tracking-wider text-[#0D6E44] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Live Order Summary
+                </span>
+                <h3 className="text-base font-black text-stone-900 mt-2">
+                  {quantity}x {selectedMeal.name}
+                </h3>
+                <span className="text-xs text-stone-500 font-medium">
+                  {selectedDate === orderableDates[0]?.dateStr ? 'Today' : selectedDate} • {selectedMealSlot === 'lunch' ? 'Lunch' : 'Dinner'}
+                </span>
+              </div>
+
+              {/* Itemized Lines */}
+              <div className="space-y-2 text-xs">
+                <div className="flex items-center justify-between text-stone-800 font-bold">
+                  <span>{quantity}x Meal (₹{selectedMeal.basePrice}/meal)</span>
+                  <span className="font-mono">₹{livePricing.mealsSubtotal}</span>
                 </div>
 
-                {/* 1. Date & Slot Segmented Selector */}
-                <OrderDateSlotSelector
-                  selectedDate={selectedDate}
-                  onDateChange={setSelectedDate}
-                  selectedMealSlot={selectedMealSlot}
-                  onMealSlotChange={setSelectedMealSlot}
-                  availability={availability}
-                  onSelectNextAvailable={handleSelectNextAvailable}
-                />
+                {livePricing.addonLineItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-stone-600 pl-2 border-l-2 border-emerald-300">
+                    <span>{item.name} (×{item.qty})</span>
+                    <span className="font-mono">+₹{item.total}</span>
+                  </div>
+                ))}
 
-                {/* 2. Today's Meal Showcase with Food Photography & What's Included */}
-                <OrderMealShowcase
-                  mealDetails={mealDetails}
-                  basePrice={119}
-                  onCustomizeClick={() => setIsCustomizingExpanded(!isCustomizingExpanded)}
-                  isCustomizing={isCustomizingExpanded}
-                />
-
-                {/* 3. Multi-Meal & Quantity Customizer */}
-                <MultiMealCustomizer
-                  quantity={quantity}
-                  onQuantityChange={setQuantity}
-                  applySameCustomization={applySameCustomization}
-                  onApplySameChange={setApplySameCustomization}
-                  mealCustomizations={mealCustomizations}
-                  onCustomizationsChange={setMealCustomizations}
-                  mealDetails={mealDetails}
-                  isExpanded={isCustomizingExpanded}
-                  onToggleExpand={() => setIsCustomizingExpanded(!isCustomizingExpanded)}
-                />
-
-                {/* 4. Standalone Add-ons */}
-                <AddOnSelector
-                  selectedAddons={selectedAddons}
-                  onAddonToggle={handleAddonToggle}
-                />
-              </div>
-            )}
-
-            {/* STEP 2: Delivery Slot & Address Selector */}
-            {currentStep === 2 && (
-              <div className="space-y-6 animate-in fade-in duration-300">
-                {/* Delivery Time Window */}
-                <DeliverySlotSelector
-                  slots={availability.availableSlots}
-                  selectedSlotId={selectedSlotId}
-                  onSelectSlot={setSelectedSlotId}
-                  mealSlot={selectedMealSlot}
-                />
-
-                {/* Saved / New Address */}
-                <AddressSelector
-                  selectedAddress={selectedAddress}
-                  onSelectAddress={setSelectedAddress}
-                />
-              </div>
-            )}
-
-            {/* STEP 3: Payment Method & Review */}
-            {currentStep === 3 && (
-              <div className="bg-white rounded-3xl p-5 sm:p-7 border border-stone-200 shadow-sm space-y-6 animate-in fade-in duration-300">
-                <div className="border-b border-stone-150 pb-4">
-                  <span className="text-xs font-black uppercase tracking-wider text-[#0D6E44] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    Step 3 of 3
+                <div className="flex items-center justify-between text-stone-600 pt-2 border-t border-stone-100">
+                  <span className="flex items-center gap-1">
+                    <span>Cluster Delivery</span>
+                    <span className="text-[9px] bg-emerald-100 text-[#0D6E44] font-black px-1.5 py-0.2 rounded">FREE</span>
                   </span>
-                  <h2 className="text-xl sm:text-2xl font-black text-stone-900 mt-1">
-                    Select Payment Method
-                  </h2>
-                  <p className="text-xs text-stone-500 mt-0.5">
-                    Fast, encrypted checkout • 100% money-back quality guarantee
+                  <span className="font-black text-[#0D6E44]">₹0</span>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-stone-200 text-sm font-black text-stone-900">
+                  <span>Estimated Total</span>
+                  <span className="text-lg font-mono text-[#0D6E44]">₹{livePricing.total}</span>
+                </div>
+              </div>
+
+              {/* Selected Delivery Snapshot */}
+              {selectedAddress && (
+                <div className="p-3 bg-[#FAF8F5] rounded-xl border border-stone-200/80 text-[11px] text-stone-600 space-y-1">
+                  <div className="flex items-center gap-1 font-black text-stone-900">
+                    <MapPin className="w-3.5 h-3.5 text-[#0D6E44]" />
+                    <span>Delivering to {selectedAddress.area || 'Gandhinagar'}</span>
+                  </div>
+                  <p className="line-clamp-1 text-stone-500">
+                    {selectedAddress.addressLine || 'Gandhinagar'}
                   </p>
                 </div>
+              )}
 
-                {/* Payment Option Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {/* UPI Button */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('UPI')}
-                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      paymentMethod === 'UPI'
-                        ? 'bg-emerald-50/70 border-[#0D6E44] ring-2 ring-[#0D6E44]/20 shadow-sm'
-                        : 'bg-[#FAF8F5] border-stone-200 hover:border-stone-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Smartphone className={`w-4 h-4 ${paymentMethod === 'UPI' ? 'text-[#0D6E44]' : 'text-stone-500'}`} />
-                      <span className="text-xs font-black text-stone-900">Instant UPI</span>
-                    </div>
-                    <span className="text-[10px] text-stone-500 mt-2 block">GPay / PhonePe / Paytm</span>
-                  </button>
-
-                  {/* Card / NetBanking */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('Card')}
-                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      paymentMethod === 'Card'
-                        ? 'bg-emerald-50/70 border-[#0D6E44] ring-2 ring-[#0D6E44]/20 shadow-sm'
-                        : 'bg-[#FAF8F5] border-stone-200 hover:border-stone-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <CreditCard className={`w-4 h-4 ${paymentMethod === 'Card' ? 'text-[#0D6E44]' : 'text-stone-500'}`} />
-                      <span className="text-xs font-black text-stone-900">Cards / NetBanking</span>
-                    </div>
-                    <span className="text-[10px] text-stone-500 mt-2 block">Debit / Credit / NetBanking</span>
-                  </button>
-
-                  {/* Cash On Delivery */}
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('CashOnDelivery')}
-                    className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
-                      paymentMethod === 'CashOnDelivery'
-                        ? 'bg-emerald-50/70 border-[#0D6E44] ring-2 ring-[#0D6E44]/20 shadow-sm'
-                        : 'bg-[#FAF8F5] border-stone-200 hover:border-stone-300'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Banknote className={`w-4 h-4 ${paymentMethod === 'CashOnDelivery' ? 'text-[#0D6E44]' : 'text-stone-500'}`} />
-                      <span className="text-xs font-black text-stone-900">Cash on Delivery</span>
-                    </div>
-                    <span className="text-[10px] text-stone-500 mt-2 block">Pay upon meal arrival</span>
-                  </button>
-                </div>
-
-                {/* UPI App Selection or QR */}
-                {paymentMethod === 'UPI' && (
-                  <div className="p-4 sm:p-5 rounded-2xl bg-stone-50 border border-stone-200 space-y-3">
-                    <span className="text-xs font-black text-stone-800 uppercase tracking-wider block">
-                      Choose UPI App
-                    </span>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {(['gpay', 'phonepe', 'paytm', 'other'] as const).map((app) => (
-                        <button
-                          key={app}
-                          type="button"
-                          onClick={() => setUpiApp(app)}
-                          className={`py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                            upiApp === app
-                              ? 'bg-[#0D6E44] text-white border-[#0D6E44]'
-                              : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-100'
-                          }`}
-                        >
-                          {app === 'gpay' && 'Google Pay'}
-                          {app === 'phonepe' && 'PhonePe'}
-                          {app === 'paytm' && 'Paytm'}
-                          {app === 'other' && 'Any UPI ID'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT COLUMN: Sticky Order Summary for Desktop */}
-          <div className="hidden lg:block lg:col-span-4">
-            <OrderSummaryDesktop
-              mealDetails={mealDetails}
-              dateLabel={dateLabel}
-              mealSlot={selectedMealSlot}
-              pricing={pricing}
-              selectedSlot={currentSlot}
-              selectedAddress={selectedAddress}
-              currentStep={currentStep}
-              onContinue={handleNextStep}
-              isSubmitting={isSubmitting}
-              isAvailable={availability.isAvailable}
-            />
+              {/* Step Context CTA */}
+              {currentStep < 6 ? (
+                <button
+                  type="button"
+                  disabled={currentStep === 1 && !availability.isAvailable}
+                  onClick={handleNextStep}
+                  className="w-full py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <span>Proceed to {ORDER_STEPS[currentStep]?.shortLabel || 'Next'}</span>
+                  <ArrowRight className="w-4 h-4 text-amber-300" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={handleConfirmOrder}
+                  className="w-full py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <span>Confirm Order • ₹{livePricing.total}</span>
+                </button>
+              )}
+            </aside>
           </div>
         </div>
-
-        {/* MOBILE STICKY BOTTOM BAR & DRAWER */}
-        <OrderSummaryMobile
-          mealDetails={mealDetails}
-          dateLabel={dateLabel}
-          mealSlot={selectedMealSlot}
-          pricing={pricing}
-          selectedSlot={currentSlot}
-          selectedAddress={selectedAddress}
-          currentStep={currentStep}
-          onContinue={handleNextStep}
-          isSubmitting={isSubmitting}
-          isAvailable={availability.isAvailable}
-        />
       </div>
-    </main>
+    </div>
   );
 };

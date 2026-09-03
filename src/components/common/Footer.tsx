@@ -1,207 +1,405 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
-  UtensilsCrossed, 
   MapPin, 
   Phone, 
   Mail, 
   ShieldCheck, 
-  Heart, 
-  ExternalLink,
-  MessageCircle,
-  Clock,
-  Sparkles
+  ArrowRight,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { BRAND_CONFIG } from '../../data/config';
 
 export const Footer: React.FC = () => {
-  const { setActiveTab, setIsCorporateModalOpen, setIsAreaCheckerOpen, setIsSubscribeModalOpen } = useApp();
+  const { 
+    setActiveTab, 
+    openLegalModal, 
+    setIsAreaCheckerOpen 
+  } = useApp();
+
+  // Mobile accordion states (default open or collapsible)
+  const [openSections, setOpenSections] = useState<{ [key: string]: boolean }>({
+    explore: false,
+    forYou: false,
+    help: false
+  });
+
+  const toggleSection = (section: string) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const handleNav = (tab: any) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   return (
-    <footer className="bg-[#151C18] text-stone-300 pt-16 pb-12 border-t border-stone-800">
+    <footer id="teffein-public-footer" className="bg-[#121815] text-stone-300 pt-12 pb-8 border-t border-stone-800/80 font-sans">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Main Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 pb-12 border-b border-stone-800/80">
-          {/* Brand Col */}
-          <div className="lg:col-span-2 space-y-4">
+        
+        {/* Main 4-Column Layout (Desktop) / Stacked Accordion (Mobile) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8 pb-10 border-b border-stone-800/70">
+          
+          {/* COLUMN 1 — BRAND (Span 4 on LG) */}
+          <div className="lg:col-span-4 space-y-4">
+            {/* Brand Logo & Name */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0D6E44] to-[#08482C] flex items-center justify-center text-white shadow-md shadow-emerald-950/40">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#0D6E44] to-[#08482C] flex items-center justify-center text-white shadow-md shadow-emerald-950/40 shrink-0">
                 <span className="font-black text-xl text-amber-300 font-mono">T</span>
               </div>
               <div>
-                <span className="font-black text-2xl tracking-tight text-white font-sans">
+                <span className="font-black text-2xl tracking-tight text-white font-sans block leading-none">
                   TEFF<span className="text-emerald-400">EIN</span>
                 </span>
-                <p className="text-xs text-stone-400 font-medium">Roz ka khana. Sahi khana.</p>
+                <span className="text-xs text-stone-400 font-medium block mt-1">
+                  Roz ka khana. Sahi khana.
+                </span>
               </div>
             </div>
 
-            <p className="text-sm text-stone-400 leading-relaxed max-w-sm">
-              Modern healthy home-food subscription platform for students, workers, and professionals in Gandhinagar, Gujarat. Freshly cooked, controlled oil, punctual cluster delivery.
+            {/* Short Description */}
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed max-w-sm">
+              Fresh home-style meals for students, workers and professionals in Gandhinagar.
             </p>
 
-            <div className="pt-2 flex flex-col gap-2 text-xs text-stone-300">
-              <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-                <span>Central Kitchen: Sector 25 GIDC Estate, Gandhinagar - 382024, Gujarat, India</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Lunch: 12:00 – 1:00 PM • Dinner: 7:30 – 8:30 PM</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Helpline: {BRAND_CONFIG.phone} (7:00 AM – 9:30 PM)</span>
+            {/* Primary Action CTA */}
+            <div className="pt-1">
+              <button
+                id="footer-cta-order-meal"
+                onClick={() => handleNav('order_once')}
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0D6E44] hover:bg-[#0A5434] active:bg-[#084229] text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/30 hover:shadow-emerald-900/40 transition-all cursor-pointer min-h-[44px]"
+              >
+                <span>Order a Meal</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Delivery Area Note */}
+            <div className="pt-2 flex items-start gap-2 text-xs text-stone-400 leading-normal">
+              <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <span>Currently delivering across selected areas of Gandhinagar.</span>{' '}
+                <button
+                  type="button"
+                  onClick={() => setIsAreaCheckerOpen(true)}
+                  className="text-emerald-400 hover:text-emerald-300 font-semibold underline underline-offset-2 ml-1 cursor-pointer transition-colors"
+                >
+                  View Delivery Areas
+                </button>
               </div>
             </div>
 
-            <div className="pt-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-stone-900 border border-stone-700/80 text-xs text-emerald-400 font-medium">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>{BRAND_CONFIG.fssaiNumber}</span>
+            {/* Compact Support Contact */}
+            <div className="pt-2 border-t border-stone-800/60 space-y-1 text-xs">
+              <span className="text-stone-400 block font-medium">Need help?</span>
+              <div className="flex flex-wrap items-center gap-3 text-stone-300">
+                <a
+                  href={`tel:${BRAND_CONFIG.phone.replace(/[^0-9+]/g, '')}`}
+                  className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1 font-semibold text-stone-200"
+                >
+                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{BRAND_CONFIG.phone}</span>
+                </a>
+                <span className="text-stone-600 hidden sm:inline">•</span>
+                <a
+                  href={`mailto:${BRAND_CONFIG.email}`}
+                  className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1 text-stone-300"
+                >
+                  <Mail className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>{BRAND_CONFIG.email}</span>
+                </a>
               </div>
             </div>
           </div>
 
-          {/* Quick Navigation */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-sm uppercase tracking-wider text-white">Public Pages</h4>
-            <ul className="space-y-2 text-sm text-stone-400">
-              <li>
-                <button onClick={() => setActiveTab('home')} className="hover:text-emerald-400 transition-colors">
-                  Home Overview
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('todays_menu')} className="hover:text-emerald-400 transition-colors">
-                  Weekly Rotating Menu
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('meal_plans')} className="hover:text-emerald-400 transition-colors">
-                  Subscription Plans & Pricing
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('how_it_works')} className="hover:text-emerald-400 transition-colors">
-                  How It Works (4-Step Flow)
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('quality_hygiene')} className="hover:text-emerald-400 transition-colors">
-                  Food Quality & Hygiene
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('about_us')} className="hover:text-emerald-400 transition-colors">
-                  About TEFFEIN
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('faq')} className="hover:text-emerald-400 transition-colors">
-                  Frequently Asked Questions
-                </button>
-              </li>
-            </ul>
+          {/* COLUMN 2 — EXPLORE (Span 3 on LG) */}
+          <div className="lg:col-span-3 border-t md:border-t-0 border-stone-800/60 pt-4 md:pt-0">
+            {/* Desktop Header */}
+            <h4 className="hidden md:block font-bold text-xs uppercase tracking-wider text-white mb-3">
+              Explore
+            </h4>
+
+            {/* Mobile Collapsible Trigger */}
+            <button
+              type="button"
+              onClick={() => toggleSection('explore')}
+              className="md:hidden w-full flex items-center justify-between py-2 text-left font-bold text-xs uppercase tracking-wider text-white cursor-pointer min-h-[44px]"
+              aria-expanded={openSections.explore}
+            >
+              <span>Explore</span>
+              {openSections.explore ? (
+                <ChevronUp className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-stone-400" />
+              )}
+            </button>
+
+            {/* Links List */}
+            <nav
+              aria-label="Explore navigation"
+              className={`${openSections.explore ? 'block' : 'hidden'} md:block mt-2 md:mt-0`}
+            >
+              <ul className="space-y-2.5 text-xs sm:text-sm text-stone-400">
+                <li>
+                  <button
+                    onClick={() => handleNav('home')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Home
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('todays_menu')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Today's Menu
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('meal_plans')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Plans
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('how_it_works')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    How It Works
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('quality_standards')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Food Quality
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('why_us')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    About TEFFEIN
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
 
-          {/* Target Segments */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-sm uppercase tracking-wider text-white">Target Solutions</h4>
-            <ul className="space-y-2 text-sm text-stone-400">
-              <li>
-                <button onClick={() => setActiveTab('students')} className="hover:text-emerald-400 transition-colors flex items-center gap-1">
-                  <span>For Students & PGs</span>
-                  <span className="text-[10px] bg-emerald-900/80 text-emerald-300 px-1.5 py-0.5 rounded">Popular</span>
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('workers')} className="hover:text-emerald-400 transition-colors">
-                  For Workers & Employees
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('corporate')} className="hover:text-emerald-400 transition-colors">
-                  For Companies & Factories (B2B)
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setIsAreaCheckerOpen(true)} className="hover:text-emerald-400 transition-colors">
-                  Gandhinagar Area Coverage
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setIsCorporateModalOpen(true)} className="hover:text-emerald-400 transition-colors">
-                  Request Corporate Demo
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('contact')} className="hover:text-emerald-400 transition-colors">
-                  Contact Support Team
-                </button>
-              </li>
-            </ul>
+          {/* COLUMN 3 — FOR YOU (Span 2 or 3 on LG) */}
+          <div className="lg:col-span-2 border-t md:border-t-0 border-stone-800/60 pt-4 md:pt-0">
+            {/* Desktop Header */}
+            <h4 className="hidden md:block font-bold text-xs uppercase tracking-wider text-white mb-3">
+              For You
+            </h4>
+
+            {/* Mobile Collapsible Trigger */}
+            <button
+              type="button"
+              onClick={() => toggleSection('forYou')}
+              className="md:hidden w-full flex items-center justify-between py-2 text-left font-bold text-xs uppercase tracking-wider text-white cursor-pointer min-h-[44px]"
+              aria-expanded={openSections.forYou}
+            >
+              <span>For You</span>
+              {openSections.forYou ? (
+                <ChevronUp className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-stone-400" />
+              )}
+            </button>
+
+            {/* Links List */}
+            <nav
+              aria-label="Customer categories navigation"
+              className={`${openSections.forYou ? 'block' : 'hidden'} md:block mt-2 md:mt-0`}
+            >
+              <ul className="space-y-2.5 text-xs sm:text-sm text-stone-400">
+                <li>
+                  <button
+                    onClick={() => handleNav('students')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Students & PGs
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('workers')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Workers & Employees
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('corporate')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    For Companies
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('coverage')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Delivery Areas
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('order_once')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer font-medium text-emerald-400"
+                  >
+                    Order a Meal
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
 
-          {/* Operational Portals (Admin & Operations) */}
-          <div className="space-y-3">
-            <h4 className="font-bold text-sm uppercase tracking-wider text-white">Platform Portals</h4>
-            <ul className="space-y-2 text-sm text-stone-400">
-              <li>
-                <button onClick={() => setActiveTab('customer_dashboard')} className="hover:text-emerald-400 transition-colors">
-                  Customer Dashboard
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('my_subscription')} className="hover:text-emerald-400 transition-colors">
-                  My Subscription Manager
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('meal_preferences')} className="hover:text-emerald-400 transition-colors">
-                  Meal Preferences & Diet
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('delivery_tracking')} className="hover:text-emerald-400 transition-colors">
-                  Cluster Route Tracking
-                </button>
-              </li>
-              <li className="pt-2 border-t border-stone-800">
-                <button onClick={() => setActiveTab('admin_dashboard')} className="text-rose-400 hover:text-rose-300 transition-colors font-medium">
-                  Admin Analytics Hub
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('kitchen_operations')} className="text-amber-400 hover:text-amber-300 transition-colors font-medium">
-                  Kitchen Production Ops
-                </button>
-              </li>
-              <li>
-                <button onClick={() => setActiveTab('corporate_accounts')} className="text-indigo-400 hover:text-indigo-300 transition-colors font-medium">
-                  Corporate B2B Accounts
-                </button>
-              </li>
-            </ul>
+          {/* COLUMN 4 — HELP & SUPPORT (Span 3 on LG) */}
+          <div className="lg:col-span-3 border-t md:border-t-0 border-stone-800/60 pt-4 md:pt-0">
+            {/* Desktop Header */}
+            <h4 className="hidden md:block font-bold text-xs uppercase tracking-wider text-white mb-3">
+              Help & Support
+            </h4>
+
+            {/* Mobile Collapsible Trigger */}
+            <button
+              type="button"
+              onClick={() => toggleSection('help')}
+              className="md:hidden w-full flex items-center justify-between py-2 text-left font-bold text-xs uppercase tracking-wider text-white cursor-pointer min-h-[44px]"
+              aria-expanded={openSections.help}
+            >
+              <span>Help & Support</span>
+              {openSections.help ? (
+                <ChevronUp className="w-4 h-4 text-emerald-400" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-stone-400" />
+              )}
+            </button>
+
+            {/* Links List */}
+            <nav
+              aria-label="Support navigation"
+              className={`${openSections.help ? 'block' : 'hidden'} md:block mt-2 md:mt-0`}
+            >
+              <ul className="space-y-2.5 text-xs sm:text-sm text-stone-400">
+                <li>
+                  <button
+                    onClick={() => openLegalModal('faq')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    FAQs
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => handleNav('contact')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Contact Us
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegalModal('delivery')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Delivery Information
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegalModal('refund')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Cancellation & Refund
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegalModal('privacy')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Privacy Policy
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => openLegalModal('terms')}
+                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
+                  >
+                    Terms & Conditions
+                  </button>
+                </li>
+              </ul>
+            </nav>
           </div>
+
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-500">
-          <div className="flex items-center gap-2">
+        {/* Bottom Bar: Copyright & Subtle Trust / Legal Links */}
+        <div className="pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-stone-500">
+          
+          {/* Copyright & Location */}
+          <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1 text-center md:text-left">
             <span>© 2026 TEFFEIN Technologies Pvt. Ltd.</span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>Gandhinagar, Gujarat</span>
-            <span>•</span>
-            <span className="text-stone-400 font-medium">Vision: {BRAND_CONFIG.vision}</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <span className="text-stone-400 flex items-center gap-1">
-              Made with <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> for healthy routines in Gujarat
+            
+            {/* Subtle FSSAI Tag */}
+            <span className="hidden sm:inline">•</span>
+            <span className="inline-flex items-center gap-1 text-stone-400 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span>FSSAI Lic. 20726038000412</span>
             </span>
           </div>
+
+          {/* Quick Legal Links */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-stone-400 text-xs">
+            <button
+              onClick={() => openLegalModal('privacy')}
+              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
+            >
+              Privacy Policy
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => openLegalModal('terms')}
+              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
+            >
+              Terms of Service
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => openLegalModal('refund')}
+              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
+            >
+              Cancellation & Refund
+            </button>
+            <span>•</span>
+            <button
+              onClick={() => handleNav('contact')}
+              className="hover:text-emerald-400 transition-colors cursor-pointer py-1"
+            >
+              Contact Support
+            </button>
+          </div>
+
         </div>
+
       </div>
     </footer>
   );

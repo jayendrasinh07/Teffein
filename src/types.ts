@@ -218,6 +218,8 @@ export interface CustomerAddress {
   fullName: string;
   name?: string;
   phone: string;
+  houseNumber?: string;
+  building?: string;
   addressLine: string;
   addressLine1?: string;
   area: string;

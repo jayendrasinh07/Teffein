@@ -238,7 +238,7 @@ export async function reverseGeocodeCoordinates(
   let placeId = '';
   let rawGeocode: any = null;
 
-  // 1. Primary: Official Google Maps Geocoding API
+  // 1. Primary & Authoritative: Official Google Maps Geocoding API
   try {
     const googleResult = await reverseGeocodeGoogle(latitude, longitude);
     if (googleResult) {
@@ -248,88 +248,18 @@ export async function reverseGeocodeCoordinates(
       building = googleResult.building || '';
       area = googleResult.area || '';
       sector = googleResult.sector || googleResult.area || '';
-      city = googleResult.city || 'Gandhinagar';
-      state = googleResult.state || 'Gujarat';
+      city = googleResult.city || '';
+      state = googleResult.state || '';
       pincode = googleResult.pincode || '';
       displayName = googleResult.formattedAddress || (area ? `${area}, ${city}` : `${latitude.toFixed(4)}° N, ${longitude.toFixed(4)}° E`);
       rawGeocode = googleResult.rawResult || null;
     }
   } catch (googleErr) {
-    console.warn('[TEFFEIN Maps] Google Geocoder reverse lookup failed or API key error, trying network fallback:', googleErr);
-
-    // 2. Fallback: OpenStreetMap Nominatim
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
-
-      const endpoint = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`;
-      const res = await fetch(endpoint, {
-        signal: controller.signal,
-        headers: {
-          'Accept-Language': 'en',
-          'User-Agent': 'TeffeinApp/1.0 (Daily Meal Subscription Service)'
-        }
-      });
-
-      clearTimeout(timeoutId);
-
-      if (res.ok) {
-        const data = await res.json();
-        rawGeocode = data;
-        const addr = data.address || {};
-
-        houseNumber = addr.house_number || '';
-        building = addr.building || addr.amenity || '';
-        area = 
-          addr.suburb || 
-          addr.neighbourhood || 
-          addr.residential || 
-          addr.road || 
-          addr.quarter || 
-          addr.subdistrict || 
-          addr.village || 
-          addr.town || 
-          addr.city_district || 
-          '';
-
-        city = 
-          addr.city || 
-          addr.town || 
-          addr.village || 
-          addr.state_district || 
-          addr.county || 
-          'Gandhinagar';
-
-        state = addr.state || 'Gujarat';
-        pincode = addr.postcode || '';
-
-        // Check if area or road mentions sector
-        const sectorMatch = (data.display_name || '').match(/Sector\s*([0-9]{1,2}[A-Za-z]?)/i);
-        if (sectorMatch) {
-          sector = `Sector ${sectorMatch[1]}`;
-        } else {
-          sector = area;
-        }
-
-        formattedAddress = data.display_name || (area ? `${area}, ${city}` : '');
-        if (area && city) {
-          displayName = `${area}, ${city}`;
-        } else if (data.display_name) {
-          const parts = data.display_name.split(',').map((p: string) => p.trim());
-          displayName = parts.slice(0, 3).join(', ');
-        }
-      }
-    } catch (err) {
-      console.warn('[TEFFEIN GPS] Secondary geocode network lookup timed out or failed:', err);
-    }
+    console.warn('[TEFFEIN Maps] Google Geocoder reverse lookup failed:', googleErr);
   }
 
-  // If geocoding could not resolve names, display raw coordinates cleanly without faking
+  // If geocoding could not resolve names, do not fake sector or synthetic addresses
   if (!displayName) {
-    area = `GPS Location`;
-    sector = area;
-    city = 'Gandhinagar';
-    state = 'Gujarat';
     displayName = `${latitude.toFixed(5)}° N, ${longitude.toFixed(5)}° E`;
     formattedAddress = displayName;
   }

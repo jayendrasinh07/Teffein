@@ -35,21 +35,19 @@ export const HeroSection: React.FC = () => {
           
           {/* LEFT COLUMN: Copy & Clear CTAs */}
           <div className="lg:col-span-7 space-y-5 text-left">
-            {/* Small Eyebrow */}
+            {/* Subtle Location Context */}
             <div className="flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-900/5 border border-emerald-700/20 text-[#0D6E44] text-xs font-black tracking-wider uppercase">
-                <span className="w-2 h-2 rounded-full bg-[#0D6E44] animate-pulse" />
-                HOME-STYLE MEALS • GANDHINAGAR
-              </span>
-
-              <button
-                onClick={() => setIsLocationModalOpen(true)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 text-[11px] font-semibold transition-colors cursor-pointer"
-                title="Check your sector delivery coverage"
-              >
-                <MapPin className="w-3 h-3 text-[#0D6E44]" />
-                <span>{currentArea} (Change)</span>
-              </button>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-stone-700">
+                <MapPin className="w-3.5 h-3.5 text-[#0D6E44] shrink-0" />
+                <span>Delivering to <strong className="text-stone-900 font-black">{currentArea}</strong></span>
+                <button
+                  type="button"
+                  onClick={() => setIsLocationModalOpen(true)}
+                  className="text-[11px] font-bold text-[#0D6E44] hover:text-[#08482C] underline ml-1 cursor-pointer"
+                >
+                  Change
+                </button>
+              </div>
             </div>
 
             {/* Headline */}
@@ -60,7 +58,7 @@ export const HeroSection: React.FC = () => {
 
             {/* Short supporting text */}
             <p className="text-base sm:text-lg text-stone-600 font-normal leading-relaxed max-w-lg">
-              Fresh home-style meals for {currentArea}.
+              Fresh home-style meals for your everyday routine. Cooked daily in pure groundnut oil, delivered hot to your doorstep across Gandhinagar.
             </p>
 
             {/* Action Buttons */}
@@ -90,9 +88,21 @@ export const HeroSection: React.FC = () => {
             </div>
 
             {/* Trust Line */}
-            <div className="pt-1 flex items-center gap-2 text-xs sm:text-sm text-stone-500 font-medium">
-              <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
-              <span>No subscription required • Order single meals anytime</span>
+            <div className="pt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-stone-500 font-medium">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
+                <span>No subscription required</span>
+              </span>
+              <span className="text-stone-300 hidden sm:inline">•</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
+                <span>Freshly cooked</span>
+              </span>
+              <span className="text-stone-300 hidden sm:inline">•</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
+                <span>No junk-focused menu</span>
+              </span>
             </div>
           </div>
 

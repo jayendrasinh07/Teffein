@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import confetti from 'canvas-confetti';
+import { User } from '@supabase/supabase-js';
 import { 
   UserRole, 
   CustomerSegment, 
@@ -39,7 +40,7 @@ import {
   getCachedLocation, 
   setCachedLocation, 
   getSavedAddresses, 
-  saveAddressesToStorage,
+  saveAddressesToStorage, 
   DEFAULT_SAVED_ADDRESSES,
   checkAreaServiceability,
   calculateDeliveryFeeForZone,
@@ -47,6 +48,11 @@ import {
   validateOrderPayload,
   getDefaultAddressId
 } from '../services/locationService';
+import { authService, AuthProfile } from '../services/authService';
+import { addressService } from '../services/addressService';
+import { orderService } from '../services/orderService';
+import { isSupabaseConfigured } from '../services/supabaseClient';
+import { UserRoleType, CustomerSegmentType } from '../types/database.types';
 
 export type ActiveTab = 
   // Public
@@ -171,6 +177,25 @@ interface AppContextType {
   isAreaCheckerOpen: boolean;
   setIsAreaCheckerOpen: (open: boolean) => void;
 
+  // Legal & Help Modal
+  isLegalModalOpen: boolean;
+  setIsLegalModalOpen: (open: boolean) => void;
+  legalModalTab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq';
+  setLegalModalTab: (tab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq') => void;
+  openLegalModal: (tab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq') => void;
+
+  // Supabase Authentication & User Profile
+  currentUser: User | null;
+  userProfile: AuthProfile | null;
+  userRolesList: UserRoleType[];
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  isSupabaseConnected: boolean;
+  signInUser: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUpUser: (email: string, password: string, fullName: string, phone: string, segment?: CustomerSegmentType) => Promise<{ error: Error | null }>;
+  signOutUser: () => Promise<void>;
+  refreshUserProfile: () => Promise<void>;
+
   // Live Data
   feedbacks: CustomerFeedback[];
   kitchenBatches: KitchenBatch[];
@@ -252,6 +277,101 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isCorporateModalOpen, setIsCorporateModalOpen] = useState<boolean>(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState<boolean>(false);
   const [isAreaCheckerOpen, setIsAreaCheckerOpen] = useState<boolean>(false);
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
+  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms' | 'refund' | 'delivery' | 'faq'>('privacy');
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+
+  // Supabase Auth & Profile State
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<AuthProfile | null>(null);
+  const [userRolesList, setUserRolesList] = useState<UserRoleType[]>(['customer']);
+  const isSupabaseConnected = isSupabaseConfigured();
+
+  const refreshUserProfile = useCallback(async () => {
+    const user = await authService.getCurrentUser();
+    setCurrentUser(user);
+    if (user) {
+      const [profile, roles] = await Promise.all([
+        authService.getProfile(user.id),
+        authService.getUserRoles(user.id)
+      ]);
+      setUserProfile(profile);
+      setUserRolesList(roles);
+      if (roles.includes('admin')) {
+        setUserRole('admin');
+      } else if (roles.includes('kitchen')) {
+        setUserRole('kitchen_lead');
+      } else if (roles.includes('delivery')) {
+        setUserRole('delivery_fleet');
+      } else if (roles.includes('corporate')) {
+        setUserRole('corporate_lead');
+      } else {
+        setUserRole('customer');
+      }
+
+      // Sync user addresses from Supabase database
+      const dbAddresses = await addressService.getUserAddresses(user.id);
+      if (dbAddresses && dbAddresses.length > 0) {
+        setSavedAddresses(dbAddresses);
+        const def = dbAddresses.find(a => a.isDefault) || dbAddresses[0];
+        setActiveDeliveryAddress(def);
+        setDefaultAddressIdState(def.id);
+      }
+    } else {
+      setUserProfile(null);
+      setUserRolesList(['customer']);
+    }
+  }, []);
+
+  // Auth Lifecycle Initializer
+  useEffect(() => {
+    refreshUserProfile();
+
+    const { data: { subscription: authSub } } = authService.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        refreshUserProfile();
+      } else {
+        setCurrentUser(null);
+        setUserProfile(null);
+        setUserRolesList(['customer']);
+      }
+    });
+
+    return () => {
+      authSub?.unsubscribe();
+    };
+  }, [refreshUserProfile]);
+
+  const signInUser = async (email: string, password: string) => {
+    const res = await authService.signIn(email, password);
+    if (!res.error) {
+      await refreshUserProfile();
+    }
+    return res;
+  };
+
+  const signUpUser = async (email: string, password: string, fullName: string, phone: string, segment: CustomerSegmentType = 'individual') => {
+    const res = await authService.signUp(email, password, fullName, phone, segment);
+    if (!res.error) {
+      await refreshUserProfile();
+    }
+    return res;
+  };
+
+  const signOutUser = async () => {
+    await authService.signOut();
+    setCurrentUser(null);
+    setUserProfile(null);
+    setUserRolesList(['customer']);
+    setUserRole('guest');
+    showToast('Signed Out', 'You have been safely signed out.', 'info');
+  };
+
+  const openLegalModal = useCallback((tab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq' = 'privacy') => {
+    setLegalModalTab(tab);
+    setIsLegalModalOpen(true);
+  }, []);
 
   // Toasts
   const [toasts, setToasts] = useState<ToastState[]>([]);
@@ -631,6 +751,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOneTimeOrders((prev) => [newOrder, ...prev]);
     setActiveTrackingOrder(newOrder);
 
+    // Persist to Supabase if authenticated
+    if (userProfile?.id || currentUser?.id) {
+      orderService.createOrder({
+        userId: userProfile?.id || currentUser?.id || '',
+        address: orderData.address as any,
+        orderDate: orderData.scheduledDate,
+        mealType: orderData.mealSlot,
+        deliverySlotId: orderData.deliverySlotId,
+        deliverySlotName: orderData.deliverySlotLabel,
+        mealName: orderData.mealName,
+        quantity: orderData.quantity,
+        basePricePerMeal: orderData.subtotal / Math.max(1, orderData.quantity),
+        mealCustomizations: (orderData.mealCustomizations as any) || [],
+        deliveryFee: orderData.deliveryFee,
+        paymentMethod: orderData.paymentMethod
+      }).catch((err) => console.warn('[TEFFEIN] Supabase order sync error:', err));
+    }
+
     // Launch celebratory confetti
     try {
       confetti({
@@ -936,6 +1074,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         submitCustomerFeedback,
         isAreaCheckerOpen,
         setIsAreaCheckerOpen,
+        isLegalModalOpen,
+        setIsLegalModalOpen,
+        legalModalTab,
+        setLegalModalTab,
+        openLegalModal,
         feedbacks,
         kitchenBatches,
         advanceKitchenBatch,
@@ -943,6 +1086,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         toasts,
         showToast,
         removeToast,
+        // Auth & Supabase
+        currentUser,
+        userProfile,
+        userRolesList,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        isSupabaseConnected,
+        signInUser,
+        signUpUser,
+        signOutUser,
+        refreshUserProfile,
         // Location & Address Intelligence
         centralLocation,
         locationState,
