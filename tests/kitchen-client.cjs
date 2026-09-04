@@ -7,7 +7,7 @@ function load(file, exports, mocks = {}) {
     .replace(/import[\s\S]*?from ['"][^'"]+['"];?/g, '').replace(/export /g, '');
   return vm.runInNewContext(stripTypeScriptTypes(source) + `\n;({${exports}})`, { Date, Error, ...mocks });
 }
-const order = { id: 'order', order_number: 'TEF-test', order_date: '2026-09-04', meal_type: 'lunch', slot_label: '12:00:00 – 12:45:00', status: 'confirmed', created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z', notes: 'Less salt', items: [{ id: 'item', meal_name: 'Thali', quantity: 2, preferences: { spiceLevel: 'Less Spicy', oilLevel: 'Standard', dietType: 'jain_satvik' }, addons: [{ id: 'addon', name: 'Roti', quantity: 3 }] }] };
+const order = { id: 'order', order_number: 'TEF-test', customer_name: 'Test Customer', order_date: '2026-09-04', meal_type: 'lunch', slot_label: '12:00:00 – 12:45:00', status: 'confirmed', created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z', notes: 'Less salt', items: [{ id: 'item', meal_name: 'Thali', quantity: 2, preferences: { spiceLevel: 'Less Spicy', oilLevel: 'Standard', dietType: 'jain_satvik' }, addons: [{ id: 'addon', name: 'Roti', quantity: 3 }] }] };
 const calls = [];
 let response = { data: [order], error: null };
 const service = load('kitchenService', 'kitchenService,KitchenError,parseKitchenOrder', {
@@ -78,3 +78,4 @@ const deferred = () => { let resolve, reject; const promise = new Promise((a, b)
   queue.dispose();
   console.log('PASS: kitchen contract, duplicate clicks, uncertain writes, stale polls, account/filter changes, offline and revoked access');
 })().catch(error => { console.error(error); process.exitCode = 1; });
+

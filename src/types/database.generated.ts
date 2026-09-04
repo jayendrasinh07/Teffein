@@ -247,6 +247,38 @@ export type Database = {
         }
         Relationships: []
       }
+      kitchen_order_signals: {
+        Row: {
+          changed_at: string
+          meal_type: string
+          order_date: string
+          order_id: string
+          status: string
+        }
+        Insert: {
+          changed_at?: string
+          meal_type: string
+          order_date: string
+          order_id: string
+          status: string
+        }
+        Update: {
+          changed_at?: string
+          meal_type?: string
+          order_date?: string
+          order_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kitchen_order_signals_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meal_customizations: {
         Row: {
           created_at: string
@@ -665,11 +697,12 @@ export type Database = {
           start_time: string
         }[]
       }
+      get_kitchen_catalog: { Args: never; Returns: Json }
+      get_kitchen_menu: { Args: { p_menu_date: string }; Returns: Json }
       get_kitchen_orders: {
         Args: { p_meal_type: string; p_order_date: string }
         Returns: Json
       }
-      get_kitchen_menu: { Args: { p_menu_date: string }; Returns: Json }
       is_admin: { Args: { check_user_id: string }; Returns: boolean }
       place_order_secure: {
         Args: {
@@ -687,6 +720,19 @@ export type Database = {
         Returns: Json
       }
       quote_delivery_address: { Args: { p_address_id: string }; Returns: Json }
+      save_kitchen_meal: {
+        Args: {
+          p_base_price: number
+          p_description: string
+          p_diet_type: string
+          p_image_url: string
+          p_is_active: boolean
+          p_meal_id: string
+          p_meal_type: string
+          p_name: string
+        }
+        Returns: Json
+      }
       save_kitchen_menu: {
         Args: { p_meal_ids: string[]; p_menu_date: string; p_publish: boolean }
         Returns: Json

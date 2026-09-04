@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChefHat,
   Clock3,
+  Package,
   RefreshCw,
   Soup,
   UtensilsCrossed,
@@ -14,6 +15,7 @@ import { kitchenService, type KitchenOrder } from '../../services/kitchenService
 import { istDate } from '../../services/availabilityEngine';
 
 interface KitchenOverviewProps {
+  onOpenCatalog: () => void;
   onOpenMenu: () => void;
   onOpenOrders: () => void;
 }
@@ -29,7 +31,7 @@ const countPortions = (orders: KitchenOrder[]) =>
     0,
   );
 
-export const KitchenOverview = ({ onOpenMenu, onOpenOrders }: KitchenOverviewProps) => {
+export const KitchenOverview = ({ onOpenCatalog, onOpenMenu, onOpenOrders }: KitchenOverviewProps) => {
   const today = useMemo(() => istDate(new Date()), []);
   const [data, setData] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -119,9 +121,14 @@ export const KitchenOverview = ({ onOpenMenu, onOpenOrders }: KitchenOverviewPro
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Today's production</p>
               <h2 className="mt-1 text-xl font-bold text-stone-900">Menu plan</h2>
             </div>
-            <button type="button" onClick={onOpenMenu} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">
-              Manage menu
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={onOpenCatalog} className="flex items-center gap-2 rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50">
+                <Package size={16} /> Meal catalog
+              </button>
+              <button type="button" onClick={onOpenMenu} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">
+                Daily menu
+              </button>
+            </div>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
