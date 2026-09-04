@@ -9,13 +9,13 @@ export const TodaysMenuPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         <div className="text-center max-w-3xl mx-auto">
           <span className="text-xs font-extrabold uppercase tracking-widest text-[#107048] bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
-            Weekly Rotational Thali
+            Published Daily Menu
           </span>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-stone-900 mt-4 tracking-tight">
-            Fresh & Wholesome Gujarati Home Food
+            Fresh Meals Chosen by Our Kitchen
           </h1>
           <p className="text-stone-600 text-base mt-3 leading-relaxed">
-            Every dish is cooked fresh daily in our Gandhinagar kitchen with zero excess oil, zero artificial colors, and pure wholesome ingredients.
+            Browse the exact meals and prices published by our Gandhinagar kitchen for the next seven days.
           </p>
         </div>
 
