@@ -102,3 +102,143 @@ END $$;
 RESET ROLE;
 ROLLBACK;
 SELECT 'PASS: kitchen authorization, projection, snapshots, filters, transitions, retries, audit, revocation and customer isolation' AS result;
+
+-- Catalog management, customer identification, and RLS-protected realtime signals.
+BEGIN;
+DO $$
+DECLARE
+  owner_id UUID := gen_random_uuid();
+  staff_id UUID := gen_random_uuid();
+  outsider_id UUID := gen_random_uuid();
+  order_id UUID := gen_random_uuid();
+  item_id UUID := gen_random_uuid();
+  service_date DATE := (clock_timestamp() AT TIME ZONE 'Asia/Kolkata')::date + 1;
+BEGIN
+  INSERT INTO auth.users(id, email, raw_user_meta_data) VALUES
+    (owner_id, owner_id || '@example.invalid', '{}'),
+    (staff_id, staff_id || '@example.invalid', '{}'),
+    (outsider_id, outsider_id || '@example.invalid', '{}');
+  INSERT INTO public.user_roles(user_id, role) VALUES (staff_id, 'kitchen');
+
+  INSERT INTO public.orders(
+    id, user_id, order_number, idempotency_key, request_payload,
+    order_date, meal_type, status, address_snapshot
+  ) VALUES (
+    order_id, owner_id, 'TEF-CATALOG-TEST', gen_random_uuid(), '{}',
+    service_date, 'lunch', 'confirmed',
+    jsonb_build_object(
+      'recipient_name', 'Realtime Customer',
+      'recipient_phone', '9999999999',
+      'formatted_address', 'Private address',
+      'slotLabel', '12:00:00 – 12:45:00'
+    )
+  );
+  INSERT INTO public.order_items(
+    id, order_id, meal_name_snapshot, preparation_preferences, quantity, unit_price, line_total
+  ) VALUES (
+    item_id, order_id, 'Snapshot Thali', '{"spiceLevel":"Regular","oilLevel":"Standard","dietType":"standard_gujarati"}', 2, 100, 200
+  );
+
+  PERFORM set_config('test.kitchen_catalog', jsonb_build_object(
+    'owner', owner_id,
+    'staff', staff_id,
+    'outsider', outsider_id,
+    'order', order_id,
+    'date', service_date
+  )::text, true);
+END $$;
+
+SET LOCAL ROLE anon;
+DO $$ BEGIN
+  BEGIN PERFORM public.get_kitchen_catalog(); RAISE EXCEPTION 'Anonymous catalog access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM public.save_kitchen_meal(NULL, 'Unsafe meal', '', '', 'lunch', 'standard_gujarati', 99, true); RAISE EXCEPTION 'Anonymous catalog write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM count(*) FROM public.kitchen_order_signals; RAISE EXCEPTION 'Anonymous signal access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  f JSONB := current_setting('test.kitchen_catalog')::jsonb;
+  catalog JSONB;
+  queue JSONB;
+  meal_id UUID;
+  signal_count BIGINT;
+  affected_rows INTEGER;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', f->>'outsider', true);
+  BEGIN PERFORM public.get_kitchen_catalog(); RAISE EXCEPTION 'Customer catalog access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM public.save_kitchen_meal(NULL, 'Unsafe meal', '', '', 'lunch', 'standard_gujarati', 99, true); RAISE EXCEPTION 'Customer catalog write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  SELECT count(*) INTO signal_count FROM public.kitchen_order_signals;
+  IF signal_count <> 0 THEN RAISE EXCEPTION 'Customer received kitchen signals'; END IF;
+
+  PERFORM set_config('request.jwt.claim.sub', f->>'staff', true);
+  catalog := public.save_kitchen_meal(
+    NULL, 'Catalog Test Thali', 'Created by Kitchen', '',
+    'both', 'standard_gujarati', 125.50, true
+  );
+  SELECT (entry->>'id')::uuid INTO meal_id
+  FROM jsonb_array_elements(catalog) entry
+  WHERE entry->>'name' = 'Catalog Test Thali';
+  IF meal_id IS NULL THEN RAISE EXCEPTION 'Kitchen meal was not created: %', catalog; END IF;
+
+  catalog := public.save_kitchen_meal(
+    meal_id, 'Catalog Test Thali Updated', 'Updated by Kitchen', '',
+    'lunch', 'jain_satvik', 139.75, false
+  );
+  IF NOT EXISTS (
+    SELECT 1 FROM jsonb_array_elements(catalog) entry
+    WHERE entry->>'id' = meal_id::text
+      AND entry->>'name' = 'Catalog Test Thali Updated'
+      AND entry->>'base_price' = '139.75'
+      AND entry->>'is_active' = 'false'
+  ) THEN RAISE EXCEPTION 'Kitchen meal update failed: %', catalog; END IF;
+
+  BEGIN PERFORM public.save_kitchen_meal(meal_id, 'Bad price', '', '', 'lunch', 'standard_gujarati', 10.999, true); RAISE EXCEPTION 'Invalid price accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+  UPDATE public.meals SET base_price = 1 WHERE id = meal_id;
+  GET DIAGNOSTICS affected_rows = ROW_COUNT;
+  IF affected_rows <> 0 THEN RAISE EXCEPTION 'Kitchen bypassed catalog RPC'; END IF;
+  BEGIN PERFORM count(*) FROM private.kitchen_catalog_events; RAISE EXCEPTION 'Catalog audit exposed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+
+  queue := public.get_kitchen_orders((f->>'date')::date, 'lunch');
+  IF queue#>>'{0,customer_name}' <> 'Realtime Customer'
+     OR queue#>>'{0,items,0,meal_name}' <> 'Snapshot Thali'
+     OR queue#>>'{0,items,0,quantity}' <> '2' THEN
+    RAISE EXCEPTION 'Kitchen customer/order projection failed: %', queue;
+  END IF;
+  IF (queue->0) ?| ARRAY['user_id', 'recipient_phone', 'formatted_address', 'address_snapshot', 'payment_status', 'grand_total'] THEN
+    RAISE EXCEPTION 'Kitchen projection exposed private fields: %', queue;
+  END IF;
+
+  SELECT count(*) INTO signal_count FROM public.kitchen_order_signals
+  WHERE order_id = (f->>'order')::uuid
+    AND order_date = (f->>'date')::date
+    AND meal_type = 'lunch'
+    AND status = 'confirmed';
+  IF signal_count <> 1 THEN RAISE EXCEPTION 'Realtime insert signal missing'; END IF;
+
+  PERFORM public.update_kitchen_order_status((f->>'order')::uuid, 'confirmed', 'preparing');
+  IF (SELECT status FROM public.kitchen_order_signals WHERE order_id = (f->>'order')::uuid) <> 'preparing' THEN
+    RAISE EXCEPTION 'Realtime status signal was not updated';
+  END IF;
+END $$;
+RESET ROLE;
+
+DO $$
+DECLARE
+  f JSONB := current_setting('test.kitchen_catalog')::jsonb;
+  v_meal_id UUID;
+BEGIN
+  SELECT id INTO v_meal_id FROM public.meals WHERE name = 'Catalog Test Thali Updated';
+  IF (SELECT count(*) FROM private.kitchen_catalog_events e WHERE e.meal_id = v_meal_id) <> 2 THEN
+    RAISE EXCEPTION 'Catalog audit count is incorrect';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM private.kitchen_catalog_events
+    WHERE meal_id = v_meal_id AND (actor_id IS DISTINCT FROM (f->>'staff')::uuid OR after_state IS NULL)
+  ) THEN RAISE EXCEPTION 'Catalog audit actor or snapshot is incorrect'; END IF;
+END $$;
+
+ROLLBACK;
+SELECT 'PASS: kitchen catalog RPC, audit trail, customer name projection and realtime signal isolation' AS result;
+

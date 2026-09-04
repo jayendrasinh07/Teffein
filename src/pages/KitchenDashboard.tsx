@@ -8,29 +8,36 @@ import {
   Clock3,
   LayoutDashboard,
   LogOut,
+  Package,
   RefreshCw,
   ShieldCheck,
+  UserRound,
   UtensilsCrossed,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { KitchenOverview } from '../components/kitchen/KitchenOverview';
+import { KitchenCatalogManager } from '../components/kitchen/KitchenCatalogManager';
 import { KitchenMenuPlanner } from '../components/kitchen/KitchenMenuPlanner';
 import { istDate } from '../services/availabilityEngine';
-import type { KitchenOrder, KitchenShift, KitchenStatus } from '../services/kitchenService';
+import { kitchenService, type KitchenOrder, type KitchenRealtimeStatus, type KitchenShift, type KitchenStatus } from '../services/kitchenService';
 import { createKitchenQueue, emptyKitchenQueue, type KitchenQueueState } from '../services/kitchenQueue';
 
-type KitchenWorkspace = 'overview' | 'menu' | 'orders';
+type KitchenWorkspace = 'overview' | 'catalog' | 'menu' | 'orders';
 
 const pageCopy: Record<KitchenWorkspace, { eyebrow: string; title: string; description: string }> = {
   overview: { eyebrow: 'Control centre', title: 'Kitchen overview', description: "Today's menu, production load, and order progress in one place." },
-  menu: { eyebrow: 'Daily planning', title: 'Menu planning', description: 'Choose approved meals and publish the full lunch and dinner menu.' },
-  orders: { eyebrow: 'Live operations', title: 'Order queue', description: 'Move confirmed orders through preparing and ready states.' },
+  catalog: { eyebrow: 'Menu administration', title: 'Meal catalog', description: 'Add meals, update prices and details, or pause availability.' },
+  menu: { eyebrow: 'Daily planning', title: 'Daily menu', description: 'Choose catalog meals and publish the full lunch and dinner menu.' },
+  orders: { eyebrow: 'Live operations', title: 'Live orders', description: 'See who ordered what and move meals through preparing and ready.' },
 };
 
 const navigation: Array<{ id: KitchenWorkspace; label: string; icon: typeof ChefHat }> = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'menu', label: 'Menu Planning', icon: CalendarDays },
-  { id: 'orders', label: 'Order Queue', icon: ClipboardList },
+  { id: 'catalog', label: 'Meal Catalog', icon: Package },
+  { id: 'menu', label: 'Daily Menu', icon: CalendarDays },
+  { id: 'orders', label: 'Live Orders', icon: ClipboardList },
 ];
 
 const stages: { status: KitchenStatus; title: string; hint: string; color: string }[] = [
@@ -63,6 +70,7 @@ export const KitchenDashboard: React.FC = () => {
   const [workspace, setWorkspace] = useState<KitchenWorkspace>('overview');
   const [date, setDate] = useState(() => istDate(new Date()));
   const [shift, setShift] = useState<KitchenShift>('lunch');
+  const [realtimeStatus, setRealtimeStatus] = useState<KitchenRealtimeStatus>('connecting');
   const scope = `${currentUser?.id ?? ''}:${date}:${shift}`;
   const [view, setView] = useState<{ scope: string; state: KitchenQueueState }>(() => ({ scope, state: emptyKitchenQueue() }));
   const queue = useRef<{ scope: string; controller: ReturnType<typeof createKitchenQueue> } | null>(null);
@@ -74,11 +82,18 @@ export const KitchenDashboard: React.FC = () => {
     queue.current = { scope, controller };
     void controller.refresh();
     const refresh = () => { if (document.visibilityState === 'visible') void controller.refresh(); };
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = kitchenService.subscribe(date, shift, refresh, setRealtimeStatus);
+    } catch {
+      setRealtimeStatus('fallback');
+    }
     const timer = window.setInterval(refresh, 15_000);
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
     return () => {
       controller.dispose();
+      unsubscribe();
       window.clearInterval(timer);
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
@@ -103,7 +118,7 @@ export const KitchenDashboard: React.FC = () => {
             </span>
           </button>
           <span className="rounded-full border border-emerald-300/25 bg-emerald-950/30 px-3 py-1 text-xs font-bold text-emerald-100 lg:mt-5 lg:inline-flex lg:items-center lg:gap-1.5">
-            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-300" />Live
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-300" />Kitchen only
           </span>
         </div>
 
@@ -146,7 +161,8 @@ export const KitchenDashboard: React.FC = () => {
         </header>
 
         <div className="mx-auto max-w-7xl p-4 sm:p-6 lg:p-10">
-          {workspace === 'overview' && <KitchenOverview onOpenMenu={() => setWorkspace('menu')} onOpenOrders={() => setWorkspace('orders')} />}
+          {workspace === 'overview' && <KitchenOverview onOpenCatalog={() => setWorkspace('catalog')} onOpenMenu={() => setWorkspace('menu')} onOpenOrders={() => setWorkspace('orders')} />}
+          {workspace === 'catalog' && <KitchenCatalogManager />}
           {workspace === 'menu' && <KitchenMenuPlanner />}
           {workspace === 'orders' && (
             <>
@@ -163,7 +179,10 @@ export const KitchenDashboard: React.FC = () => {
                   <button type="button" onClick={() => setDate(istDate(new Date()))} className="min-h-11 px-2 text-sm font-bold text-[#0D6E44] underline underline-offset-4">Today</button>
                 </div>
                 <div className="flex items-center justify-between gap-4 xl:justify-end">
-                  <div className="text-sm text-stone-600"><span className="font-black text-stone-900">{portions(state.orders)} portions</span> across {state.orders.length} orders<p className="mt-1 text-xs">{state.lastUpdated ? `Updated ${time(state.lastUpdated)} IST · refreshes every 15s` : 'Waiting for the latest queue'}</p></div>
+                  <div className="text-sm text-stone-600"><span className="font-black text-stone-900">{portions(state.orders)} portions</span> across {state.orders.length} orders<p className="mt-1 text-xs">{state.lastUpdated ? `Updated ${time(state.lastUpdated)} IST · ${realtimeStatus === 'live' ? 'live updates on' : '15s backup refresh'}` : 'Waiting for the latest queue'}</p></div>
+                  <span className={`hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold sm:flex ${realtimeStatus === 'live' ? 'bg-emerald-50 text-emerald-800' : 'bg-amber-50 text-amber-800'}`}>
+                    {realtimeStatus === 'live' ? <Wifi size={14} /> : <WifiOff size={14} />}{realtimeStatus === 'live' ? 'Realtime' : realtimeStatus === 'connecting' ? 'Connecting' : 'Backup mode'}
+                  </span>
                   <button type="button" onClick={() => void activeQueue?.refresh()} disabled={state.loading || !!state.busyId} className="flex min-h-11 items-center gap-2 rounded-xl border border-stone-200 bg-white px-4 text-sm font-bold text-stone-700 disabled:opacity-50"><RefreshCw size={16} className={state.loading ? 'animate-spin' : ''} />Refresh</button>
                 </div>
               </section>
@@ -181,6 +200,7 @@ export const KitchenDashboard: React.FC = () => {
                       {!stageOrders.length && <div className="rounded-xl border border-dashed border-stone-300 px-4 py-10 text-center text-sm text-stone-500">{state.loading && !state.lastUpdated ? 'Loading…' : state.error ? 'Queue unavailable. Try refreshing.' : 'No orders here for this service.'}</div>}
                       <div className="space-y-4">{stageOrders.map(order => (
                         <article key={order.id} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+                          <p className="flex items-center gap-2 text-sm font-black text-stone-900"><UserRound size={16} className="text-[#0D6E44]" />{order.customer_name}</p>
                           <p className="break-all font-mono text-[11px] font-semibold text-stone-500">{order.order_number}</p>
                           <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-stone-900"><Clock3 size={15} />{slotWindow(order.slot_label) || 'Delivery window unavailable'}</p>
                           <div className="mt-4 space-y-4">{order.items.map(item => (

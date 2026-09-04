@@ -2,9 +2,11 @@ import { getSupabaseClient } from './supabaseClient';
 
 export type KitchenStatus = 'confirmed' | 'preparing' | 'ready';
 export type KitchenShift = 'lunch' | 'dinner';
+export type KitchenRealtimeStatus = 'connecting' | 'live' | 'fallback';
 export interface KitchenOrder {
   id: string;
   order_number: string;
+  customer_name: string;
   order_date: string;
   meal_type: KitchenShift;
   slot_label: string;
@@ -35,6 +37,7 @@ export class KitchenError extends Error {
 export function parseKitchenOrder(value: unknown): KitchenOrder {
   const o = value as KitchenOrder;
   if (!o || typeof o.id !== 'string' || typeof o.order_number !== 'string'
+    || typeof o.customer_name !== 'string' || o.customer_name.trim().length === 0
     || typeof o.order_date !== 'string' || !['lunch', 'dinner'].includes(o.meal_type)
     || !['confirmed', 'preparing', 'ready'].includes(o.status)
     || typeof o.slot_label !== 'string' || typeof o.created_at !== 'string'
@@ -49,6 +52,8 @@ export function parseKitchenOrder(value: unknown): KitchenOrder {
   }
   return o;
 }
+
+let channelSequence = 0;
 
 export const kitchenService = {
   async list(date: string, shift: KitchenShift): Promise<KitchenOrder[]> {
@@ -72,4 +77,42 @@ export const kitchenService = {
     if (result.id !== order.id || result.status !== next) throw new KitchenError('INVALID_RESPONSE');
     return result;
   },
+
+  subscribe(
+    date: string,
+    shift: KitchenShift,
+    onChange: () => void,
+    onStatus: (status: KitchenRealtimeStatus) => void,
+  ): () => void {
+    const client = getSupabaseClient();
+    let active = true;
+    onStatus('connecting');
+    const channel = client
+      .channel(`kitchen-orders-${date}-${shift}-${++channelSequence}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'kitchen_order_signals',
+          filter: `order_date=eq.${date}`,
+        },
+        payload => {
+          const row = (payload.new && Object.keys(payload.new).length ? payload.new : payload.old) as { meal_type?: string };
+          if (active && row?.meal_type === shift) onChange();
+        },
+      )
+      .subscribe(status => {
+        if (!active) return;
+        if (status === 'SUBSCRIBED') onStatus('live');
+        else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') onStatus('fallback');
+        else onStatus('connecting');
+      });
+
+    return () => {
+      active = false;
+      void client.removeChannel(channel);
+    };
+  },
 };
+
