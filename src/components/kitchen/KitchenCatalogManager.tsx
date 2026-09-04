@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -73,7 +73,7 @@ export const KitchenCatalogManager = () => {
       : meals;
   }, [meals, query]);
 
-  const save = async (event: React.FormEvent) => {
+  const save = async (event: FormEvent) => {
     event.preventDefault();
     if (!editor || saving) return;
     setSaving(true);
