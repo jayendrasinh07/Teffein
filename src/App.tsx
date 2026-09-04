@@ -50,8 +50,27 @@ import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
 const MainContent: React.FC = () => {
   const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen } = useApp();
 
+  if (activeTab === 'kitchen_dashboard') {
+    const hasKitchenAccess = !!currentUser && userRolesList.some(role => role === 'kitchen' || role === 'admin');
+    return (
+      <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
+        {hasKitchenAccess ? (
+          <KitchenDashboard />
+        ) : (
+          <main className="flex min-h-screen items-center justify-center px-6">
+            <div className="max-w-md rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-sm">
+              <h1 className="text-2xl font-black text-stone-900">Kitchen access required</h1>
+              <p className="mt-3 text-sm text-stone-600">Sign in with an authorized kitchen account to open this workspace.</p>
+            </div>
+          </main>
+        )}
+        <ToastContainer />
+      </div>
+    );
+  }
+
   const renderActivePage = () => {
-    const requiredRoles: Partial<Record<typeof activeTab,string[]>> = {admin_dashboard:['admin'],kitchen_dashboard:['kitchen','admin'],delivery_dashboard:['delivery','admin'],corporate_admin_dashboard:['corporate','admin']};
+    const requiredRoles: Partial<Record<typeof activeTab,string[]>> = {admin_dashboard:['admin'],delivery_dashboard:['delivery','admin'],corporate_admin_dashboard:['corporate','admin']};
     const allowed=requiredRoles[activeTab];
     if(allowed&&(!currentUser||!userRolesList.some(role=>allowed.includes(role))))return <div className="p-10 text-center">Sign in with an authorized account to open this workspace.</div>;
     switch (activeTab) {
@@ -89,8 +108,6 @@ const MainContent: React.FC = () => {
         return <OrderHistoryPage />;
       case 'admin_dashboard':
         return <AdminDashboard />;
-      case 'kitchen_dashboard':
-        return <KitchenDashboard />;
       case 'delivery_dashboard':
         return <DeliveryDashboard />;
       case 'corporate_admin_dashboard':
@@ -118,11 +135,11 @@ const MainContent: React.FC = () => {
       <AreaCheckerModal />
       <LegalModal />
       <AuthModal />
-      <LocationSelectorModal 
-        isOpen={isLocationModalOpen} 
-        onClose={() => setIsLocationModalOpen(false)} 
+      <LocationSelectorModal
+        isOpen={isLocationModalOpen}
+        onClose={() => setIsLocationModalOpen(false)}
       />
-      <DeveloperLocationDiagnostics />
+      {(import.meta as any).env?.DEV && <DeveloperLocationDiagnostics />}
     </div>
   );
 };
@@ -134,3 +151,4 @@ export default function App() {
     </AppProvider>
   );
 }
+
