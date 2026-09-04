@@ -164,6 +164,7 @@ DECLARE
   queue JSONB;
   meal_id UUID;
   signal_count BIGINT;
+  affected_rows INTEGER;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', f->>'outsider', true);
   BEGIN PERFORM public.get_kitchen_catalog(); RAISE EXCEPTION 'Customer catalog access'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
@@ -194,7 +195,9 @@ BEGIN
   ) THEN RAISE EXCEPTION 'Kitchen meal update failed: %', catalog; END IF;
 
   BEGIN PERFORM public.save_kitchen_meal(meal_id, 'Bad price', '', '', 'lunch', 'standard_gujarati', 10.999, true); RAISE EXCEPTION 'Invalid price accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
-  BEGIN UPDATE public.meals SET base_price = 1 WHERE id = meal_id; RAISE EXCEPTION 'Kitchen bypassed catalog RPC'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  UPDATE public.meals SET base_price = 1 WHERE id = meal_id;
+  GET DIAGNOSTICS affected_rows = ROW_COUNT;
+  IF affected_rows <> 0 THEN RAISE EXCEPTION 'Kitchen bypassed catalog RPC'; END IF;
   BEGIN PERFORM count(*) FROM private.kitchen_catalog_events; RAISE EXCEPTION 'Catalog audit exposed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
 
   queue := public.get_kitchen_orders((f->>'date')::date, 'lunch');
