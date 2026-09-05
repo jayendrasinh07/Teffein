@@ -116,6 +116,19 @@ export const authService = {
     } catch (err: any) {
       console.error('[TEFFEIN Auth] Password recovery request failed:', err);
       return { error: err };
+      async requestPasswordReset(email: string): Promise<{ error: Error | null }> {
+    if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
+
+    try {
+      const client = getSupabaseClient();
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      console.error('[TEFFEIN Auth] Password recovery request failed:', err);
+      return { error: err };
     }
   },
 
@@ -133,23 +146,10 @@ export const authService = {
     }
   },
 
-try {
-      const client = getSupabaseClient();
-      const { data: { user }, error } = await client.auth.getUser();
-      if (error || !user) return null;
-      return user;
-    } catch (err) {
-      console.warn('[TEFFEIN Auth] Failed to fetch current user:', err);
-      return null;
-    }
+}
   },
 
-  /**
-   * Fetches public profile for a user
-   */
-  async getProfile(userId: string): Promise<AuthProfile | null> {
-    if (!isSupabaseConfigured()) { return null; }
-
+  
     try {
       const client = getSupabaseClient();
       const { data, error } = await client
