@@ -46,9 +46,19 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { KitchenDashboard } from './pages/KitchenDashboard';
 import { DeliveryDashboard } from './pages/DeliveryDashboard';
 import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
+import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 
 const MainContent: React.FC = () => {
   const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen, setIsAuthModalOpen } = useApp();
+
+  if (activeTab === 'password_recovery') {
+    return (
+      <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
+        <PasswordRecoveryPage />
+        <ToastContainer />
+      </div>
+    );
+  }
 
   if (activeTab === 'kitchen_dashboard') {
     const hasKitchenAccess = !!currentUser && userRolesList.some(role => role === 'kitchen' || role === 'admin');
@@ -159,4 +169,3 @@ export default function App() {
     </AppProvider>
   );
 }
-

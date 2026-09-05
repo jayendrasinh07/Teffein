@@ -80,6 +80,36 @@ export const authService = {
     }
   },
 
+  async requestPasswordReset(email: string): Promise<{ error: Error | null }> {
+    if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
+
+    try {
+      const client = getSupabaseClient();
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`
+      });
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      console.error('[TEFFEIN Auth] Password recovery request failed:', err);
+      return { error: err };
+    }
+  },
+
+  async updatePassword(password: string): Promise<{ error: Error | null }> {
+    if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
+
+    try {
+      const client = getSupabaseClient();
+      const { error } = await client.auth.updateUser({ password });
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      console.error('[TEFFEIN Auth] Password update failed:', err);
+      return { error: err };
+    }
+  },
+
   /**
    * Signs out current user
    */
