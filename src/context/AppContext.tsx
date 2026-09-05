@@ -211,8 +211,10 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const isKitchenPath = () => window.location.pathname.replace(/\/+$/, '') === '/kitchen';
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>('home');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => isKitchenPath() ? 'kitchen_dashboard' : 'home');
   const [userRole, setUserRole] = useState<UserRole>('guest');
   const [subscription, setSubscription] = useState<UserSubscription>(INITIAL_USER_SUBSCRIPTION);
 
@@ -351,6 +353,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [toasts, setToasts] = useState<ToastState[]>([]);
 
   useEffect(() => { for(const key of ['teffein_user_role','teffein_onetime_orders','teffein_saved_customer_orders','teffein_saved_addresses','teffein_mock_auth_session','teffein_sub'])localStorage.removeItem(key); }, []);
+
+  useEffect(() => {
+    const handlePopState = () => setActiveTab(isKitchenPath() ? 'kitchen_dashboard' : 'home');
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'kitchen_dashboard' && !isKitchenPath()) window.history.pushState(null, '', '/kitchen');
+    if (activeTab !== 'kitchen_dashboard' && isKitchenPath()) window.history.pushState(null, '', '/');
+  }, [activeTab]);
 
   // Window scroll to top on tab change
   useEffect(() => {

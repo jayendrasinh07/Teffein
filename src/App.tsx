@@ -48,7 +48,7 @@ import { DeliveryDashboard } from './pages/DeliveryDashboard';
 import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
 
 const MainContent: React.FC = () => {
-  const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen } = useApp();
+  const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen, setIsAuthModalOpen } = useApp();
 
   if (activeTab === 'kitchen_dashboard') {
     const hasKitchenAccess = !!currentUser && userRolesList.some(role => role === 'kitchen' || role === 'admin');
@@ -61,9 +61,17 @@ const MainContent: React.FC = () => {
             <div className="max-w-md rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-sm">
               <h1 className="text-2xl font-black text-stone-900">Kitchen access required</h1>
               <p className="mt-3 text-sm text-stone-600">Sign in with an authorized kitchen account to open this workspace.</p>
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className="mt-6 rounded-xl bg-[#0D6E44] px-5 py-3 text-sm font-bold text-white hover:bg-[#095a37]"
+              >
+                Sign in to Kitchen
+              </button>
             </div>
           </main>
         )}
+        <AuthModal />
         <ToastContainer />
       </div>
     );
