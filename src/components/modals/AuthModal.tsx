@@ -145,9 +145,47 @@ export const AuthModal: React.FC = () => {
         </div>
 
         {/* Form Body */}
+        import { authService } from '../../services/authService';    showToast,
+    activeTab
+          const isKitchenSignIn = activeTab === 'kitchen_dashboard';
+          const isSignIn = isKitchenSignIn || mode === 'signin';
+            const handleForgotPassword = async () => {
+    setErrorMessage(null);
+    setInfoMessage(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setErrorMessage('Enter your email address first.');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await authService.requestPasswordReset(normalizedEmail);
+    setLoading(false);
+    if (error) {
+      setErrorMessage(error.message || 'Could not send the reset link. Please try again.');
+      return;
+    }
+    setInfoMessage('If this email has a TEFFEIN account, a secure reset link has been sent.');
+  };
+
+{isKitchenSignIn ? 'Kitchen sign in' : mode === 'signin' ? 'Sign in to your account' : 'Create your TEFFEIN account'}{isKitchenSignIn
+              ? 'Access menu planning and live order operations.'
+              : mode === 'signin'          {!isKitchenSignIn && <div className="flex bg-black/20 p-1 rounded-xl mt-4">onClick={() => { setMode('signin'); setErrorMessage(null); setInfoMessage(null); }}onClick={() => { setMode('signup'); setErrorMessage(null); setInfoMessage(null); }}const [infoMessage, setInfoMessage] = useState<string | null>(null);      if (isSignIn) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-          
-          {/* Error Message */}
+                    {infoMessage && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5" role="status">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="font-medium">{infoMessage}</div>
+            </div>
+          )}
+
+          {!isSignIn && (              {isSignIn && (                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="text-[11px] text-[#0D6E44] hover:underline font-semibold cursor-pointer disabled:opacity-60"
+                >}
+                          </button><span>{isSignIn ? 'Signing in...' : 'Creating Account...'}</span><span>{isSignIn ? 'Sign In' : 'Complete Registration'}</span>
           {errorMessage && (
             <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
