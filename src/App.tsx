@@ -80,6 +80,16 @@ const MainContent: React.FC = () => {
   const renderActivePage = () => {
     const requiredRoles: Partial<Record<typeof activeTab,string[]>> = {admin_dashboard:['admin'],delivery_dashboard:['delivery','admin'],corporate_admin_dashboard:['corporate','admin']};
     const allowed=requiredRoles[activeTab];
+      if (activeTab === 'password_recovery') {
+    return (
+      <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
+        <PasswordRecoveryPage />
+        <ToastContainer />
+      </div>
+    );
+  }
+
+import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
     if(allowed&&(!currentUser||!userRolesList.some(role=>allowed.includes(role))))return <div className="p-10 text-center">Sign in with an authorized account to open this workspace.</div>;
     switch (activeTab) {
       case 'home':
