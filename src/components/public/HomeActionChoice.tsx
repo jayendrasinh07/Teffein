@@ -52,7 +52,7 @@ export const HomeActionChoice: React.FC = () => {
             </div>
 
             <div className="pt-6 mt-6 border-t border-stone-200/80 flex items-center justify-between">
-              <span className="text-xs font-bold text-stone-700">From ₹119 / meal</span>
+              <span className="text-xs font-bold text-stone-700">Live menu pricing</span>
               <button
                 id="home-action-order-once"
                 onClick={() => {

@@ -301,7 +301,7 @@ export const CustomerDashboard: React.FC = () => {
                 onClick={() => setIsOrderOnceModalOpen(true)}
                 className="w-full py-2.5 rounded-xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Order Single Thali (₹119)</span>
+                <span>Order Single Meal</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>

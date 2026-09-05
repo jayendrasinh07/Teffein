@@ -140,8 +140,8 @@ export const HeroSection: React.FC = () => {
                   </div>
 
                   <div className="text-right shrink-0 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
-                    <span className="text-[10px] uppercase block text-emerald-800 font-bold leading-tight">From</span>
-                    <span className="text-base font-black text-[#0D6E44] leading-tight">₹119</span>
+                    <span className="text-[10px] uppercase block text-emerald-800 font-bold leading-tight">Live</span>
+                    <span className="text-base font-black text-[#0D6E44] leading-tight">Menu</span>
                   </div>
                 </div>
 
