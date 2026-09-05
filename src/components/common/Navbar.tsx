@@ -243,7 +243,7 @@ export const Navbar: React.FC = () => {
             className="w-full py-3.5 rounded-2xl bg-[#0D6E44] active:bg-[#08482C] text-white text-sm font-black shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>🍱</span>
-            <span>Order a Fresh Meal (₹119)</span>
+            <span>Order a Fresh Meal</span>
             <ArrowRight className="w-4 h-4 text-amber-300" />
           </button>
 

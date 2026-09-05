@@ -31,7 +31,7 @@ export const MobileBottomBar: React.FC = () => {
         >
           <span>🍱</span>
           <span>Order a Meal</span>
-          <span className="bg-emerald-800/80 px-1.5 py-0.5 rounded text-[10px] text-amber-300 ml-0.5">₹119</span>
+          <span className="bg-emerald-800/80 px-1.5 py-0.5 rounded text-[10px] text-amber-300 ml-0.5">Live price</span>
         </button>
 
         {/* Secondary Subscription CTA */}
