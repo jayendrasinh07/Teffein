@@ -80,43 +80,7 @@ export const authService = {
     }
   },
 
-  /**
-   * Signs out current user
-   */
-  async signOut(): Promise<{ error: Error | null }> {
-    if (!isSupabaseConfigured()) { return {error:null}; }
-
-    try {
-      const client = getSupabaseClient();
-      const { error } = await client.auth.signOut();
-      if (error) throw error;
-      return { error: null };
-    } catch (err: any) {
-      console.error('[TEFFEIN Auth] Sign out error:', err);
-      return { error: err };
-    }
-  },
-
-  /**
-   * Gets current active auth user
-   */
-  async getCurrentUser(): Promise<User | null> {
-    if (!isSupabaseConfigured()) { return null; }
-
-      async requestPasswordReset(email: string): Promise<{ error: Error | null }> {
-    if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
-
-    try {
-      const client = getSupabaseClient();
-      const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`
-      });
-      if (error) throw error;
-      return { error: null };
-    } catch (err: any) {
-      console.error('[TEFFEIN Auth] Password recovery request failed:', err);
-      return { error: err };
-      async requestPasswordReset(email: string): Promise<{ error: Error | null }> {
+  async requestPasswordReset(email: string): Promise<{ error: Error | null }> {
     if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
 
     try {
@@ -146,10 +110,46 @@ export const authService = {
     }
   },
 
-}
+  /**
+   * Signs out current user
+   */
+  async signOut(): Promise<{ error: Error | null }> {
+    if (!isSupabaseConfigured()) { return {error:null}; }
+
+    try {
+      const client = getSupabaseClient();
+      const { error } = await client.auth.signOut();
+      if (error) throw error;
+      return { error: null };
+    } catch (err: any) {
+      console.error('[TEFFEIN Auth] Sign out error:', err);
+      return { error: err };
+    }
   },
 
-  
+  /**
+   * Gets current active auth user
+   */
+  async getCurrentUser(): Promise<User | null> {
+    if (!isSupabaseConfigured()) { return null; }
+
+    try {
+      const client = getSupabaseClient();
+      const { data: { user }, error } = await client.auth.getUser();
+      if (error || !user) return null;
+      return user;
+    } catch (err) {
+      console.warn('[TEFFEIN Auth] Failed to fetch current user:', err);
+      return null;
+    }
+  },
+
+  /**
+   * Fetches public profile for a user
+   */
+  async getProfile(userId: string): Promise<AuthProfile | null> {
+    if (!isSupabaseConfigured()) { return null; }
+
     try {
       const client = getSupabaseClient();
       const { data, error } = await client
