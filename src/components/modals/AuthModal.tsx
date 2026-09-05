@@ -19,6 +19,7 @@ import {
 import { useApp } from '../../context/AppContext';
 import { CustomerSegment } from '../../types';
 import { isSupabaseConfigured } from '../../services/supabaseClient';
+import { authService } from '../../services/authService';
 
 export const AuthModal: React.FC = () => {
   const { 
@@ -26,10 +27,13 @@ export const AuthModal: React.FC = () => {
     setIsAuthModalOpen, 
     signInUser, 
     signUpUser, 
-    showToast 
+    showToast,
+    activeTab
   } = useApp();
+  const isKitchenSignIn = activeTab === 'kitchen_dashboard';
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const isSignIn = isKitchenSignIn || mode === 'signin';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -37,6 +41,7 @@ export const AuthModal: React.FC = () => {
   const [segment, setSegment] = useState<CustomerSegment>('worker');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   if (!isAuthModalOpen) return null;
 
@@ -46,7 +51,7 @@ export const AuthModal: React.FC = () => {
     setLoading(true);
 
     try {
-      if (mode === 'signin') {
+      if (isSignIn) {
         const { error } = await signInUser(email, password);
         if (error) {
           setErrorMessage(error.message || 'Invalid email or password.');
@@ -86,6 +91,25 @@ export const AuthModal: React.FC = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    setErrorMessage(null);
+    setInfoMessage(null);
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setErrorMessage('Enter your email address first.');
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await authService.requestPasswordReset(normalizedEmail);
+    setLoading(false);
+    if (error) {
+      setErrorMessage(error.message || 'Could not send the reset link. Please try again.');
+      return;
+    }
+    setInfoMessage('If this email has a TEFFEIN account, a secure reset link has been sent.');
+  };
+
   const segments: { id: CustomerSegment; label: string; icon: React.ReactNode; desc: string }[] = [
     { id: 'worker', label: 'Office / Tech', icon: <Briefcase className="w-4 h-4" />, desc: 'Infocity & GIFT City' },
     { id: 'student', label: 'Student / PG', icon: <GraduationCap className="w-4 h-4" />, desc: 'PDPU, DA-IICT, NIFT' },
@@ -113,19 +137,21 @@ export const AuthModal: React.FC = () => {
           </div>
 
           <h3 className="text-xl font-black tracking-tight">
-            {mode === 'signin' ? 'Sign in to your account' : 'Create your TEFFEIN account'}
+            {isKitchenSignIn ? 'Kitchen sign in' : mode === 'signin' ? 'Sign in to your account' : 'Create your TEFFEIN account'}
           </h3>
           <p className="text-xs text-stone-200 mt-1">
-            {mode === 'signin' 
+            {isKitchenSignIn
+              ? 'Access menu planning and live order operations.'
+              : mode === 'signin'
               ? 'Access your meal subscriptions, saved addresses & orders.' 
               : 'Daily fresh, hygienic home-style meals delivered to your doorstep.'}
           </p>
 
           {/* Mode Switcher Tabs */}
-          <div className="flex bg-black/20 p-1 rounded-xl mt-4">
+          {!isKitchenSignIn && <div className="flex bg-black/20 p-1 rounded-xl mt-4">
             <button
               type="button"
-              onClick={() => { setMode('signin'); setErrorMessage(null); }}
+              onClick={() => { setMode('signin'); setErrorMessage(null); setInfoMessage(null); }}
               className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 mode === 'signin' ? 'bg-white text-[#0D6E44] shadow-xs' : 'text-stone-200 hover:text-white'
               }`}
@@ -134,58 +160,20 @@ export const AuthModal: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => { setMode('signup'); setErrorMessage(null); }}
+              onClick={() => { setMode('signup'); setErrorMessage(null); setInfoMessage(null); }}
               className={`flex-1 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${
                 mode === 'signup' ? 'bg-white text-[#0D6E44] shadow-xs' : 'text-stone-200 hover:text-white'
               }`}
             >
               Create Account
             </button>
-          </div>
+          </div>}
         </div>
 
         {/* Form Body */}
-        import { authService } from '../../services/authService';    showToast,
-    activeTab
-          const isKitchenSignIn = activeTab === 'kitchen_dashboard';
-          const isSignIn = isKitchenSignIn || mode === 'signin';
-            const handleForgotPassword = async () => {
-    setErrorMessage(null);
-    setInfoMessage(null);
-    const normalizedEmail = email.trim().toLowerCase();
-    if (!normalizedEmail) {
-      setErrorMessage('Enter your email address first.');
-      return;
-    }
-
-    setLoading(true);
-    const { error } = await authService.requestPasswordReset(normalizedEmail);
-    setLoading(false);
-    if (error) {
-      setErrorMessage(error.message || 'Could not send the reset link. Please try again.');
-      return;
-    }
-    setInfoMessage('If this email has a TEFFEIN account, a secure reset link has been sent.');
-  };
-
-{isKitchenSignIn ? 'Kitchen sign in' : mode === 'signin' ? 'Sign in to your account' : 'Create your TEFFEIN account'}{isKitchenSignIn
-              ? 'Access menu planning and live order operations.'
-              : mode === 'signin'          {!isKitchenSignIn && <div className="flex bg-black/20 p-1 rounded-xl mt-4">onClick={() => { setMode('signin'); setErrorMessage(null); setInfoMessage(null); }}onClick={() => { setMode('signup'); setErrorMessage(null); setInfoMessage(null); }}const [infoMessage, setInfoMessage] = useState<string | null>(null);      if (isSignIn) {
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
-                    {infoMessage && (
-            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5" role="status">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-              <div className="font-medium">{infoMessage}</div>
-            </div>
-          )}
-
-          {!isSignIn && (              {isSignIn && (                <button
-                  type="button"
-                  onClick={handleForgotPassword}
-                  disabled={loading}
-                  className="text-[11px] text-[#0D6E44] hover:underline font-semibold cursor-pointer disabled:opacity-60"
-                >}
-                          </button><span>{isSignIn ? 'Signing in...' : 'Creating Account...'}</span><span>{isSignIn ? 'Sign In' : 'Complete Registration'}</span>
+          
+          {/* Error Message */}
           {errorMessage && (
             <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-900 text-xs flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
@@ -193,8 +181,15 @@ export const AuthModal: React.FC = () => {
             </div>
           )}
 
+          {infoMessage && (
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs flex items-start gap-2.5" role="status">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <div className="font-medium">{infoMessage}</div>
+            </div>
+          )}
+
           {/* Sign Up Details */}
-          {mode === 'signup' && (
+          {!isSignIn && (
             <>
               <div>
                 <label className="block text-xs font-bold text-stone-700 mb-1">Full Name</label>
@@ -272,10 +267,15 @@ export const AuthModal: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-bold text-stone-700">Password</label>
-              {mode === 'signin' && (
-                <span className="text-[11px] text-[#0D6E44] hover:underline font-semibold cursor-pointer">
+              {isSignIn && (
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  disabled={loading}
+                  className="text-[11px] text-[#0D6E44] hover:underline font-semibold cursor-pointer disabled:opacity-60"
+                >
                   Forgot password?
-                </span>
+                </button>
               )}
             </div>
             <div className="relative">
@@ -300,11 +300,11 @@ export const AuthModal: React.FC = () => {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
-                <span>{mode === 'signin' ? 'Signing in...' : 'Creating Account...'}</span>
+                <span>{isSignIn ? 'Signing in...' : 'Creating Account...'}</span>
               </>
             ) : (
               <>
-                <span>{mode === 'signin' ? 'Sign In' : 'Complete Registration'}</span>
+                <span>{isSignIn ? 'Sign In' : 'Complete Registration'}</span>
                 <ArrowRight className="w-4 h-4 text-amber-300" />
               </>
             )}
