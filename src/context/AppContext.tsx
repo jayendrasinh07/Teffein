@@ -80,6 +80,7 @@ export type ActiveTab =
   | 'order_history'
   | 'profile'
   | 'traceability'
+  | 'password_recovery'
   // Business / Admin
   | 'admin_dashboard'
   | 'kitchen_dashboard'
@@ -211,10 +212,15 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const isKitchenPath = () => window.location.pathname.replace(/\/+$/, '') === '/kitchen';
+const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
+const tabForPath = (): ActiveTab => currentPath() === '/kitchen'
+  ? 'kitchen_dashboard'
+  : currentPath() === '/reset-password'
+    ? 'password_recovery'
+    : 'home';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeTab, setActiveTab] = useState<ActiveTab>(() => isKitchenPath() ? 'kitchen_dashboard' : 'home');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(tabForPath);
   const [userRole, setUserRole] = useState<UserRole>('guest');
   const [subscription, setSubscription] = useState<UserSubscription>(INITIAL_USER_SUBSCRIPTION);
 
@@ -303,6 +309,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     refreshUserProfile();
 
     const { data: { subscription: authSub } } = authService.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') setActiveTab('password_recovery');
       if (session?.user) {
         if(authIdentity.current!==session.user.id){++authGeneration.current;clearCustomerData();authIdentity.current=session.user.id;}
         setCurrentUser(session.user);
@@ -355,14 +362,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { for(const key of ['teffein_user_role','teffein_onetime_orders','teffein_saved_customer_orders','teffein_saved_addresses','teffein_mock_auth_session','teffein_sub'])localStorage.removeItem(key); }, []);
 
   useEffect(() => {
-    const handlePopState = () => setActiveTab(isKitchenPath() ? 'kitchen_dashboard' : 'home');
+    const handlePopState = () => setActiveTab(tabForPath());
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   useEffect(() => {
-    if (activeTab === 'kitchen_dashboard' && !isKitchenPath()) window.history.pushState(null, '', '/kitchen');
-    if (activeTab !== 'kitchen_dashboard' && isKitchenPath()) window.history.pushState(null, '', '/');
+    const path = currentPath();
+    const destination = activeTab === 'kitchen_dashboard'
+      ? '/kitchen'
+      : activeTab === 'password_recovery'
+        ? '/reset-password'
+        : (path === '/kitchen' || path === '/reset-password') ? '/' : null;
+    if (destination && destination !== path) window.history.pushState(null, '', destination);
   }, [activeTab]);
 
   // Window scroll to top on tab change
@@ -464,19 +476,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const resolved = await reverseGeocodeCoordinates(geoResult.latitude, geoResult.longitude, geoResult.accuracy);
     console.log('Reverse geocoded address:', resolved.formattedAddress || resolved.displayName);
     console.log('Serviceability result:', resolved.serviceability);
-      | 'password_recovery'const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
-const tabForPath = (): ActiveTab => currentPath() === '/kitchen'
-  ? 'kitchen_dashboard'
-  : currentPath() === '/reset-password'
-    ? 'password_recovery'
-    : 'home';const [activeTab, setActiveTab] = useState<ActiveTab>(tabForPath);
-        if (event === 'PASSWORD_RECOVERY') setActiveTab('password_recovery');const handlePopState = () => setActiveTab(tabForPath());    const path = currentPath();
-    const destination = activeTab === 'kitchen_dashboard'
-      ? '/kitchen'
-      : activeTab === 'password_recovery'
-        ? '/reset-password'
-        : (path === '/kitchen' || path === '/reset-password') ? '/' : null;
-    if (destination && destination !== path) window.history.pushState(null, '', destination)
 
     processResolvedLocation(resolved);
     return resolved;
