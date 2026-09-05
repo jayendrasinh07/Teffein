@@ -464,6 +464,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const resolved = await reverseGeocodeCoordinates(geoResult.latitude, geoResult.longitude, geoResult.accuracy);
     console.log('Reverse geocoded address:', resolved.formattedAddress || resolved.displayName);
     console.log('Serviceability result:', resolved.serviceability);
+      | 'password_recovery'const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
+const tabForPath = (): ActiveTab => currentPath() === '/kitchen'
+  ? 'kitchen_dashboard'
+  : currentPath() === '/reset-password'
+    ? 'password_recovery'
+    : 'home';const [activeTab, setActiveTab] = useState<ActiveTab>(tabForPath);
+        if (event === 'PASSWORD_RECOVERY') setActiveTab('password_recovery');const handlePopState = () => setActiveTab(tabForPath());    const path = currentPath();
+    const destination = activeTab === 'kitchen_dashboard'
+      ? '/kitchen'
+      : activeTab === 'password_recovery'
+        ? '/reset-password'
+        : (path === '/kitchen' || path === '/reset-password') ? '/' : null;
+    if (destination && destination !== path) window.history.pushState(null, '', destination)
 
     processResolvedLocation(resolved);
     return resolved;
