@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, RefreshCw, Save, ShieldCheck, UserMinus, UserPlus, Users } from 'lucide-react';
 import {
   kitchenManagementService,
@@ -51,7 +52,7 @@ export const KitchenManagement = () => {
     }
   };
 
-  const addStaff = async (event: React.FormEvent) => {
+  const addStaff = async (event: FormEvent) => {
     event.preventDefault();
     if (await run('grant', () => kitchenManagementService.grantStaff(email), 'Kitchen access added.')) setEmail('');
   };
@@ -73,8 +74,8 @@ export const KitchenManagement = () => {
         {loading && !document && <p className="mt-5 text-sm text-stone-500">Loading delivery slots…</p>}
         <div className="mt-5 grid gap-4 xl:grid-cols-2">
           {document?.slots.map(slot => (
-            <SlotEditor key={slot.id} slot={slot} busy={busy === slot.id} disabled={!!busy}
-              onSave={(maxPortions, isActive) => run(slot.id, () => kitchenManagementService.saveSlot(slot.id, maxPortions, isActive), `${slot.name} updated.`)} />
+            <div key={slot.id}><SlotEditor slot={slot} busy={busy === slot.id} disabled={!!busy}
+              onSave={(maxPortions, isActive) => run(slot.id, () => kitchenManagementService.saveSlot(slot.id, maxPortions, isActive), `${slot.name} updated.`)} /></div>
           ))}
         </div>
       </section>
