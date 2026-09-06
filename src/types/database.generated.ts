@@ -702,6 +702,7 @@ export type Database = {
         }[]
       }
       get_kitchen_catalog: { Args: never; Returns: Json }
+      get_kitchen_management: { Args: never; Returns: Json }
       get_kitchen_menu: { Args: { p_menu_date: string }; Returns: Json }
       get_kitchen_orders: {
         Args: { p_meal_type: string; p_order_date: string }
@@ -728,6 +729,12 @@ export type Database = {
         Returns: Json
       }
       quote_delivery_address: { Args: { p_address_id: string }; Returns: Json }
+      grant_kitchen_access: { Args: { p_email: string }; Returns: Json }
+      revoke_kitchen_access: { Args: { p_user_id: string }; Returns: Json }
+      save_kitchen_delivery_slot: {
+        Args: { p_is_active: boolean; p_max_portions: number; p_slot_id: string }
+        Returns: Json
+      }
       save_kitchen_meal: {
         Args: {
           p_base_price: number
