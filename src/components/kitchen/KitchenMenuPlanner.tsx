@@ -10,9 +10,16 @@ const mealBelongsTo = (meal: KitchenMenuMeal, shift: 'lunch' | 'dinner') =>
 const formatUpdatedAt = (value: string | null) => value
   ? new Date(value).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })
   : 'Not saved yet';
+const longDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-IN', {
+  weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+});
+const shortDate = (value: string) => new Date(`${value}T12:00:00`).toLocaleDateString('en-IN', {
+  weekday: 'short', day: 'numeric', month: 'short',
+});
 
 export const KitchenMenuPlanner: React.FC = () => {
   const today = istDate(new Date());
+  const menuDays = useMemo(() => Array.from({ length: 7 }, (_, index) => addCalendarDays(today, index)), [today]);
   const [date, setDate] = useState(today);
   const [plan, setPlan] = useState<KitchenMenuPlan | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -90,6 +97,20 @@ export const KitchenMenuPlanner: React.FC = () => {
             <input type="date" value={date} min={today} max={addCalendarDays(today, 6)} onChange={event => event.target.value && setDate(event.target.value)}
               className="mt-2 block min-h-11 rounded-xl border border-stone-200 px-3 text-sm text-stone-900" />
           </label>
+        </div>
+
+        <div className="mt-5 border-t border-stone-100 pt-4">
+          <p className="text-sm font-black text-stone-900">Selected: {longDate(date)}</p>
+          <p className="mt-1 text-xs text-stone-500">Choose any day below. All dates use India Standard Time (IST).</p>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7" aria-label="Seven day menu dates">
+            {menuDays.map((menuDate, index) => (
+              <button key={menuDate} type="button" onClick={() => setDate(menuDate)} aria-pressed={date === menuDate}
+                className={`min-h-14 rounded-xl border px-3 py-2 text-left transition ${date === menuDate ? 'border-[#0D6E44] bg-emerald-50 text-emerald-950 ring-1 ring-[#0D6E44]' : 'border-stone-200 bg-white text-stone-700 hover:border-stone-300'}`}>
+                <span className="block text-[11px] font-black uppercase tracking-wide">{index === 0 ? 'Today' : index === 1 ? 'Tomorrow' : `Day ${index + 1}`}</span>
+                <span className="mt-0.5 block text-sm font-bold">{shortDate(menuDate)}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 pt-4 text-sm">

@@ -7,6 +7,13 @@ export interface KitchenOrder {
   id: string;
   order_number: string;
   customer_name: string;
+  customer_phone: string;
+  delivery_address: string;
+  delivery_area: string;
+  delivery_pincode: string;
+  delivery_instructions: string | null;
+  payment_status: 'pending' | 'processing' | 'paid' | 'failed' | 'refunded';
+  grand_total: number;
   order_date: string;
   meal_type: KitchenShift;
   slot_label: string;
@@ -36,8 +43,15 @@ export class KitchenError extends Error {
 // JSON RPCs are checked before anything becomes an actionable card.
 export function parseKitchenOrder(value: unknown): KitchenOrder {
   const o = value as KitchenOrder;
+  const total = Number(o?.grand_total);
   if (!o || typeof o.id !== 'string' || typeof o.order_number !== 'string'
     || typeof o.customer_name !== 'string' || o.customer_name.trim().length === 0
+    || typeof o.customer_phone !== 'string' || o.customer_phone.trim().length === 0
+    || typeof o.delivery_address !== 'string' || o.delivery_address.trim().length === 0
+    || typeof o.delivery_area !== 'string' || typeof o.delivery_pincode !== 'string'
+    || !(o.delivery_instructions === null || typeof o.delivery_instructions === 'string')
+    || !['pending', 'processing', 'paid', 'failed', 'refunded'].includes(o.payment_status)
+    || !Number.isFinite(total) || total < 0
     || typeof o.order_date !== 'string' || !['lunch', 'dinner'].includes(o.meal_type)
     || !['confirmed', 'preparing', 'ready'].includes(o.status)
     || typeof o.slot_label !== 'string' || typeof o.created_at !== 'string'
@@ -50,7 +64,7 @@ export function parseKitchenOrder(value: unknown): KitchenOrder {
         || typeof a.name !== 'string' || !Number.isInteger(a.quantity) || a.quantity < 1))) {
     throw new KitchenError('INVALID_RESPONSE');
   }
-  return o;
+  return { ...o, grand_total: total };
 }
 
 let channelSequence = 0;

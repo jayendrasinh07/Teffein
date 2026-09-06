@@ -7,7 +7,7 @@ function load(file, exports, mocks = {}) {
     .replace(/import[\s\S]*?from ['"][^'"]+['"];?/g, '').replace(/export /g, '');
   return vm.runInNewContext(stripTypeScriptTypes(source) + `\n;({${exports}})`, { Date, Error, ...mocks });
 }
-const order = { id: 'order', order_number: 'TEF-test', customer_name: 'Test Customer', order_date: '2026-09-04', meal_type: 'lunch', slot_label: '12:00:00 – 12:45:00', status: 'confirmed', created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z', notes: 'Less salt', items: [{ id: 'item', meal_name: 'Thali', quantity: 2, preferences: { spiceLevel: 'Less Spicy', oilLevel: 'Standard', dietType: 'jain_satvik' }, addons: [{ id: 'addon', name: 'Roti', quantity: 3 }] }] };
+const order = { id: 'order', order_number: 'TEF-test', customer_name: 'Test Customer', customer_phone: '9825014820', delivery_address: 'House 7, Sector 11, Gandhinagar', delivery_area: 'Sector 11', delivery_pincode: '382010', delivery_instructions: 'Call on arrival', payment_status: 'pending', grand_total: 119, order_date: '2026-09-04', meal_type: 'lunch', slot_label: '12:00:00 – 12:45:00', status: 'confirmed', created_at: '2026-09-03T10:00:00Z', updated_at: '2026-09-03T10:00:00Z', notes: 'Less salt', items: [{ id: 'item', meal_name: 'Thali', quantity: 2, preferences: { spiceLevel: 'Less Spicy', oilLevel: 'Standard', dietType: 'jain_satvik' }, addons: [{ id: 'addon', name: 'Roti', quantity: 3 }] }] };
 const calls = [];
 let response = { data: [order], error: null };
 const service = load('kitchenService', 'kitchenService,KitchenError,parseKitchenOrder', {
@@ -18,6 +18,8 @@ const deferred = () => { let resolve, reject; const promise = new Promise((a, b)
 (async () => {
   const rows = await service.kitchenService.list(order.order_date, 'lunch');
   assert.equal(rows[0].items[0].addons[0].quantity, 3);
+  assert.equal(rows[0].delivery_pincode, '382010');
+  assert.equal(rows[0].grand_total, 119);
   assert.equal(calls[0].name, 'get_kitchen_orders');
   response = { data: { ...order, status: 'preparing' }, error: null };
   await service.kitchenService.advance(order);
@@ -28,7 +30,7 @@ const deferred = () => { let resolve, reject; const promise = new Promise((a, b)
   await assert.rejects(service.kitchenService.list(order.order_date, 'lunch'), /authorized account/);
   response = { data: [{ ...order, meal_type: 'dinner' }], error: null };
   await assert.rejects(service.kitchenService.list(order.order_date, 'lunch'));
-  for (const invalid of [null, { ...order, items: [] }, { ...order, status: 'delivered' }, { ...order, items: [{ ...order.items[0], quantity: 0 }] }]) assert.throws(() => service.parseKitchenOrder(invalid));
+  for (const invalid of [null, { ...order, customer_phone: '' }, { ...order, payment_status: 'cash' }, { ...order, grand_total: -1 }, { ...order, items: [] }, { ...order, status: 'delivered' }, { ...order, items: [{ ...order.items[0], quantity: 0 }] }]) assert.throws(() => service.parseKitchenOrder(invalid));
 
   let state, listResult = [order], advanceCalls = 0, pendingWrite;
   let queue = createKitchenQueue(order.order_date, 'lunch', next => { state = next; }, {

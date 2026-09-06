@@ -104,5 +104,13 @@ export const kitchenCatalogService = {
     if (error) throw toError(error);
     return parseKitchenCatalog(data);
   },
+
+  async archive(mealId: string): Promise<KitchenCatalogMeal[]> {
+    const { data, error } = await getSupabaseClient().rpc('archive_kitchen_meal', {
+      p_meal_id: mealId,
+    });
+    if (error) throw toError(error);
+    return parseKitchenCatalog(data);
+  },
 };
 
