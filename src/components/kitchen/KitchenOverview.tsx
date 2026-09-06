@@ -13,6 +13,7 @@ import {
 import { kitchenMenuService, type KitchenMenuPlan } from '../../services/kitchenMenuService';
 import { kitchenService, type KitchenOrder } from '../../services/kitchenService';
 import { istDate } from '../../services/availabilityEngine';
+import { KitchenShiftControl } from './KitchenShiftControl';
 
 interface KitchenOverviewProps {
   onOpenCatalog: () => void;
@@ -170,6 +171,8 @@ export const KitchenOverview = ({ onOpenCatalog, onOpenMenu, onOpenOrders }: Kit
           )}
         </section>
       </div>
+
+      <KitchenShiftControl />
     </div>
   );
 };
