@@ -4,6 +4,7 @@ import { mapAddress } from './addressService';
 import { dietLabel } from './menuService';
 export interface CreateOrderPayload {userId:string;addressId:string;orderDate:string;mealType:'lunch'|'dinner';deliverySlotId:string;mealId:string;quantity:number;selectedAddons:Record<string,number>;notes?:string;preferences:{spiceLevel:string;oilLevel:string};}
 const pending=new Map<string,Promise<{order:OneTimeOrder|null;error:Error|null}>>();
+let customerOrderChannelSequence=0;
 export const toCustomerOrder=(r:any):OneTimeOrder=>{
  const i=r.order_items?.[0]; if(!r.id||!i||!r.address_snapshot)throw new Error('The server returned an incomplete order. Please refresh your order history.');
  const address=mapAddress(r.address_snapshot);const pref=i.preparation_preferences??{};
@@ -32,5 +33,14 @@ export const orderService={
   pending.set(storageKey,task);try{return await task;}finally{pending.delete(storageKey);}
  },
  async getUserOrders(userId:string):Promise<OneTimeOrder[]>{const {data,error}=await getSupabaseClient().from('orders').select('*,order_items(*,order_customizations(*))').eq('user_id',userId).order('created_at',{ascending:false});if(error)throw error;return(data??[]).map(toCustomerOrder);},
- async cancelOrder(id:string):Promise<OneTimeOrder>{const {data,error}=await getSupabaseClient().rpc('cancel_customer_order',{p_order_id:id});if(error)throw error;return toCustomerOrder(data);}
+ async cancelOrder(id:string):Promise<OneTimeOrder>{const {data,error}=await getSupabaseClient().rpc('cancel_customer_order',{p_order_id:id});if(error)throw error;return toCustomerOrder(data);},
+ subscribe(userId:string,onChange:()=>void):()=>void{
+  if(!userId)throw new Error('Customer identity is required.');
+  const client=getSupabaseClient();let active=true;
+  const channel=client.channel(`customer-orders-${userId}-${++customerOrderChannelSequence}`)
+   .on('postgres_changes',{event:'UPDATE',schema:'public',table:'orders',filter:`user_id=eq.${userId}`},()=>{if(active)onChange();})
+   .subscribe();
+  return()=>{active=false;void client.removeChannel(channel);};
+ }
 };
+
