@@ -53,8 +53,10 @@ BEGIN
  BEGIN PERFORM public.get_kitchen_orders((f->>'date')::date,'lunch'); RAISE EXCEPTION 'Missing identity allowed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  PERFORM set_config('request.jwt.claim.sub',f->>'staff',true);
  rows:=public.get_kitchen_orders((f->>'date')::date,'lunch');
- IF jsonb_array_length(rows)<>1 OR rows#>>'{0,id}'<>f->>'id' THEN RAISE EXCEPTION 'Queue filter failed: %',rows; END IF;
- result:=rows->0;
+ SELECT entry INTO result
+ FROM jsonb_array_elements(rows) AS entry
+ WHERE entry->>'id'=f->>'id';
+ IF result IS NULL THEN RAISE EXCEPTION 'Queue filter failed: %',rows; END IF;
  IF result->>'slot_label'<>'12:00:00 – 12:45:00' OR result#>>'{items,0,meal_name}'<>'Frozen kitchen thali'
  OR result#>>'{items,0,quantity}'<>'2' OR result#>>'{items,0,addons,0,name}'<>'Frozen roti'
  OR result#>>'{items,0,addons,0,quantity}'<>'3' OR result#>>'{items,0,preferences,spiceLevel}'<>'Less Spicy'
@@ -166,6 +168,7 @@ DECLARE
   f JSONB := current_setting('test.kitchen_catalog')::jsonb;
   catalog JSONB;
   queue JSONB;
+  queued_order JSONB;
   meal_id UUID;
   signal_count BIGINT;
   affected_rows INTEGER;
@@ -211,15 +214,19 @@ BEGIN
   END IF;
 
   queue := public.get_kitchen_orders((f->>'date')::date, 'lunch');
-  IF queue#>>'{0,customer_name}' <> 'Realtime Customer'
-     OR queue#>>'{0,customer_phone}' <> '9999999999'
-     OR queue#>>'{0,delivery_address}' <> 'Private address'
-     OR queue#>>'{0,payment_status}' <> 'pending'
-     OR queue#>>'{0,items,0,meal_name}' <> 'Snapshot Thali'
-     OR queue#>>'{0,items,0,quantity}' <> '2' THEN
+  SELECT entry INTO queued_order
+  FROM jsonb_array_elements(queue) AS entry
+  WHERE entry->>'id' = f->>'order';
+  IF queued_order IS NULL
+     OR queued_order->>'customer_name' <> 'Realtime Customer'
+     OR queued_order->>'customer_phone' <> '9999999999'
+     OR queued_order->>'delivery_address' <> 'Private address'
+     OR queued_order->>'payment_status' <> 'pending'
+     OR queued_order#>>'{items,0,meal_name}' <> 'Snapshot Thali'
+     OR queued_order#>>'{items,0,quantity}' <> '2' THEN
     RAISE EXCEPTION 'Kitchen customer/order projection failed: %', queue;
   END IF;
-  IF (queue->0) ?| ARRAY['user_id', 'address_snapshot', 'request_payload', 'address_id'] THEN
+  IF queued_order ?| ARRAY['user_id', 'address_snapshot', 'request_payload', 'address_id'] THEN
     RAISE EXCEPTION 'Kitchen projection exposed private fields: %', queue;
   END IF;
 

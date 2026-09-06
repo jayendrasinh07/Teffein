@@ -300,8 +300,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if(!currentUser)return;
     const owner=currentUser.id;let alive=true;
     const refresh=async()=>{try{const orders=await orderService.getUserOrders(owner);if(alive&&authIdentity.current===owner){setOneTimeOrders(orders);setActiveTrackingOrder(prev=>prev?orders.find(o=>o.id===prev.id)??null:null);}}catch{/* Keep the last confirmed server state during a temporary connection failure. */}};
+    let unsubscribe=()=>{};try{unsubscribe=orderService.subscribe(owner,()=>{void refresh();});}catch{/* The 15-second refresh remains active if realtime cannot connect. */}
     const timer=setInterval(refresh,15000);window.addEventListener('focus',refresh);
-    return()=>{alive=false;clearInterval(timer);window.removeEventListener('focus',refresh);};
+    return()=>{alive=false;unsubscribe();clearInterval(timer);window.removeEventListener('focus',refresh);};
   },[currentUser?.id]);
 
   // Auth Lifecycle Initializer

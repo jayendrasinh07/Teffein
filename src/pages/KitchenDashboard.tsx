@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
+  BellRing,
   CalendarDays,
   Check,
   ChefHat,
@@ -18,8 +19,11 @@ import {
   ShieldCheck,
   UserRound,
   UtensilsCrossed,
+  Volume2,
+  VolumeX,
   Wifi,
   WifiOff,
+  X,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { KitchenOverview } from '../components/kitchen/KitchenOverview';
@@ -29,6 +33,7 @@ import { KitchenManagement } from '../components/kitchen/KitchenManagement';
 import { istDate } from '../services/availabilityEngine';
 import { kitchenService, type KitchenOrder, type KitchenRealtimeStatus, type KitchenShift, type KitchenStatus } from '../services/kitchenService';
 import { createKitchenQueue, emptyKitchenQueue, type KitchenQueueState } from '../services/kitchenQueue';
+import { kitchenOrderAge, newConfirmedOrders } from '../services/kitchenAlertEngine';
 
 type KitchenWorkspace = 'overview' | 'catalog' | 'menu' | 'orders' | 'management';
 type KitchenSort = 'delivery' | 'oldest' | 'newest';
@@ -87,6 +92,22 @@ const searchableOrder = (order: KitchenOrder) => [
   order.customer_name, order.customer_phone, order.order_number, order.delivery_address,
   order.delivery_area, order.delivery_pincode, ...order.items.map(item => item.meal_name),
 ].join(' ').toLocaleLowerCase('en-IN');
+const initialSoundPreference = () => {
+  try { return localStorage.getItem('teffein_kitchen_sound') === 'on'; } catch { return false; }
+};
+const playAlertTone = () => {
+  try {
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = 'sine'; oscillator.frequency.setValueAtTime(880, context.currentTime);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.35);
+    oscillator.connect(gain); gain.connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + 0.36);
+    oscillator.addEventListener('ended', () => void context.close(), { once: true });
+  } catch { /* Visual alerts remain available when audio is unsupported. */ }
+};
 
 export const KitchenDashboard: React.FC = () => {
   const { currentUser, signOutUser, userRolesList } = useApp();
@@ -97,9 +118,13 @@ export const KitchenDashboard: React.FC = () => {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<KitchenSort>('delivery');
   const [realtimeStatus, setRealtimeStatus] = useState<KitchenRealtimeStatus>('connecting');
+  const [soundEnabled, setSoundEnabled] = useState(initialSoundPreference);
+  const [newOrderAlert, setNewOrderAlert] = useState<{ count: number; details: string } | null>(null);
+  const [clock, setClock] = useState(() => Date.now());
   const scope = `${currentUser?.id ?? ''}:${date}:${shift}`;
   const [view, setView] = useState<{ scope: string; state: KitchenQueueState }>(() => ({ scope, state: emptyKitchenQueue() }));
   const queue = useRef<{ scope: string; controller: ReturnType<typeof createKitchenQueue> } | null>(null);
+  const seenOrders = useRef<{ scope: string; primed: boolean; ids: Set<string> }>({ scope: '', primed: false, ids: new Set() });
   const state = view.scope === scope ? view.state : emptyKitchenQueue();
 
   useEffect(() => {
@@ -140,6 +165,36 @@ export const KitchenDashboard: React.FC = () => {
     };
   }, [scope, date, shift, workspace]);
 
+  useEffect(() => {
+    if (workspace !== 'orders') return;
+    setClock(Date.now());
+    const timer = window.setInterval(() => setClock(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [workspace]);
+
+  useEffect(() => {
+    if (workspace !== 'orders' || !state.lastUpdated) return;
+    const currentIds = new Set(state.orders.map(order => order.id));
+    const tracker = seenOrders.current;
+    if (tracker.scope !== scope || !tracker.primed) {
+      seenOrders.current = { scope, primed: true, ids: currentIds };
+      setNewOrderAlert(null);
+      return;
+    }
+    const arrivals = newConfirmedOrders(tracker.ids, state.orders);
+    seenOrders.current = { scope, primed: true, ids: new Set([...tracker.ids, ...currentIds]) };
+    if (!arrivals.length) return;
+    setNewOrderAlert({ count: arrivals.length, details: arrivals.slice(0, 3).map(order => `${order.customer_name} · ${order.order_number}`).join(' • ') });
+    if (soundEnabled) playAlertTone();
+  }, [scope, soundEnabled, state.lastUpdated, state.orders, workspace]);
+
+  useEffect(() => {
+    if (!newOrderAlert) return;
+    const previous = document.title;
+    document.title = `(${newOrderAlert.count}) New Kitchen order · TEFFEIN`;
+    return () => { document.title = previous; };
+  }, [newOrderAlert]);
+
   const activeQueue = queue.current?.scope === scope ? queue.current.controller : null;
   const page = pageCopy[workspace];
   const displayDate = useMemo(() => new Intl.DateTimeFormat('en-IN', {
@@ -159,6 +214,13 @@ export const KitchenDashboard: React.FC = () => {
     visibleOrders.forEach(order => order.items.forEach(item => totals.set(item.meal_name, (totals.get(item.meal_name) ?? 0) + item.quantity)));
     return [...totals.entries()].sort(([a], [b]) => a.localeCompare(b, 'en-IN'));
   }, [visibleOrders]);
+  const lateOrders = useMemo(() => visibleOrders.filter(order => kitchenOrderAge(order, clock)?.late), [clock, visibleOrders]);
+  const toggleSound = () => {
+    const next = !soundEnabled;
+    setSoundEnabled(next);
+    try { localStorage.setItem('teffein_kitchen_sound', next ? 'on' : 'off'); } catch { /* Session preference still works. */ }
+    if (next) playAlertTone();
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f6f2] lg:grid lg:grid-cols-[270px_minmax(0,1fr)]">
@@ -257,6 +319,8 @@ export const KitchenDashboard: React.FC = () => {
               </section>
 
               {state.error && <div role="alert" className="mt-4 flex gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900 print:hidden"><AlertCircle size={20} className="shrink-0" /><p>{state.error} {state.orders.length > 0 && 'Showing the last successful refresh. Status controls are paused.'}</p></div>}
+              {newOrderAlert && <div role="alert" className="mt-4 flex items-start gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-950 shadow-sm print:hidden"><BellRing size={22} className="mt-0.5 shrink-0 animate-pulse text-emerald-700" /><div className="min-w-0 flex-1"><p className="font-black">{newOrderAlert.count} new {newOrderAlert.count === 1 ? 'order' : 'orders'} received</p><p className="mt-1 break-words text-sm text-emerald-900/75">{newOrderAlert.details}</p></div><button type="button" onClick={() => setNewOrderAlert(null)} aria-label="Dismiss new order alert" className="rounded-lg p-2 text-emerald-800 hover:bg-emerald-100"><X size={18} /></button></div>}
+              {lateOrders.length > 0 && <div className="mt-4 flex gap-3 rounded-2xl border border-orange-200 bg-orange-50 p-4 text-sm font-bold text-orange-950 print:hidden"><AlertCircle size={20} className="shrink-0" />{lateOrders.length} {lateOrders.length === 1 ? 'order needs' : 'orders need'} attention based on Kitchen SLA.</div>}
               <p role="status" aria-live="polite" className="my-3 min-h-5 text-sm text-[#0D6E44] print:hidden">{state.notice ?? (state.loading && !state.lastUpdated ? 'Loading kitchen orders…' : '')}</p>
 
               <section aria-label="Order tools and production summary" className="mb-5 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm print:border-stone-400 print:shadow-none">
@@ -269,7 +333,7 @@ export const KitchenDashboard: React.FC = () => {
                       <option value="delivery">Delivery time first</option><option value="oldest">Oldest order first</option><option value="newest">Newest order first</option>
                     </select>
                   </label>
-                  <button type="button" onClick={() => window.print()} disabled={!visibleOrders.length} className="flex min-h-11 items-center justify-center gap-2 self-end rounded-xl bg-stone-900 px-4 text-sm font-bold text-white disabled:opacity-40"><Printer size={17} />Print packing list</button>
+                  <div className="flex items-end gap-2"><button type="button" onClick={toggleSound} aria-pressed={soundEnabled} className={`flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 text-sm font-bold ${soundEnabled ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-stone-200 bg-white text-stone-600'}`}>{soundEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}{soundEnabled ? 'Sound on' : 'Sound off'}</button><button type="button" onClick={() => window.print()} disabled={!visibleOrders.length} className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-stone-900 px-4 text-sm font-bold text-white disabled:opacity-40"><Printer size={17} />Print</button></div>
                 </div>
                 <div className="mt-4 border-t border-stone-100 pt-4 print:mt-0 print:border-0 print:pt-0">
                   <div className="flex flex-wrap items-center justify-between gap-2"><div><p className="text-xs font-black uppercase tracking-wider text-stone-500">Production summary</p><p className="mt-1 text-sm font-bold text-stone-900">{portions(visibleOrders)} portions · {visibleOrders.length} of {state.orders.length} orders</p></div>{search && <button type="button" onClick={() => setSearch('')} className="min-h-10 px-2 text-sm font-bold text-[#0D6E44] underline underline-offset-4 print:hidden">Clear search</button>}</div>
@@ -285,9 +349,9 @@ export const KitchenDashboard: React.FC = () => {
                       <div className="mb-4 flex items-center justify-between gap-2"><h2 className="text-lg font-black text-stone-900">{stage.title} <span className="ml-1 text-sm font-medium text-stone-500">{stageOrders.length}</span></h2><span className={`rounded-full px-3 py-1 text-xs font-bold ${stage.color}`}>{portions(stageOrders)} portions</span></div>
                       <p className="mb-4 text-xs text-stone-500">{stage.hint}</p>
                       {!stageOrders.length && <div className="rounded-xl border border-dashed border-stone-300 px-4 py-10 text-center text-sm text-stone-500">{state.loading && !state.lastUpdated ? 'Loading…' : state.error ? 'Queue unavailable. Try refreshing.' : 'No orders here for this service.'}</div>}
-                      <div className="space-y-4">{stageOrders.map(order => (
-                        <article key={order.id} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm print:break-inside-avoid print:shadow-none">
-                          <p className="flex items-center gap-2 text-sm font-black text-stone-900"><UserRound size={16} className="text-[#0D6E44]" />{order.customer_name}</p>
+                      <div className="space-y-4">{stageOrders.map(order => { const age = kitchenOrderAge(order, clock); return (
+                        <article key={order.id} className={`rounded-xl border bg-white p-4 shadow-sm print:break-inside-avoid print:shadow-none ${age?.critical ? 'border-red-300' : age?.late ? 'border-orange-300' : 'border-stone-200'}`}>
+                          <div className="flex flex-wrap items-center justify-between gap-2"><p className="flex items-center gap-2 text-sm font-black text-stone-900"><UserRound size={16} className="text-[#0D6E44]" />{order.customer_name}</p>{age && <span className={`rounded-full px-2.5 py-1 text-xs font-black ${age.critical ? 'bg-red-100 text-red-800' : age.late ? 'bg-orange-100 text-orange-800' : 'bg-stone-100 text-stone-600'}`}>{age.label}</span>}</div>
                           <p className="break-all font-mono text-[11px] font-semibold text-stone-500">{order.order_number}</p>
                           <p className="mt-2 flex items-center gap-1.5 text-sm font-bold text-stone-900"><Clock3 size={15} />{slotWindow(order.slot_label) || 'Delivery window unavailable'}</p>
                           <div className="mt-3 space-y-2 rounded-xl border border-stone-200 bg-stone-50 p-3">
@@ -310,7 +374,7 @@ export const KitchenDashboard: React.FC = () => {
                             <button type="button" disabled={!!state.busyId || !!state.error || !state.lastUpdated} onClick={() => void activeQueue?.advance(order.id)} className="mt-3 min-h-11 w-full rounded-xl bg-[#0D6E44] px-4 py-3 text-sm font-bold text-white transition hover:bg-[#095535] disabled:cursor-wait disabled:opacity-50 print:hidden">{state.busyId === order.id ? 'Saving…' : order.status === 'confirmed' ? 'Start preparing' : 'Mark ready'}</button>
                           )}
                         </article>
-                      ))}</div>
+                      );})}</div>
                     </section>
                   );
                 })}
