@@ -707,6 +707,10 @@ export type Database = {
         Args: { p_meal_type: string; p_order_date: string }
         Returns: Json
       }
+      get_kitchen_shift_brief: {
+        Args: { p_meal_type: string; p_service_date: string }
+        Returns: Json
+      }
       is_admin: { Args: { check_user_id: string }; Returns: boolean }
       place_order_secure: {
         Args: {
@@ -739,6 +743,15 @@ export type Database = {
       }
       save_kitchen_menu: {
         Args: { p_meal_ids: string[]; p_menu_date: string; p_publish: boolean }
+        Returns: Json
+      }
+      save_kitchen_shift_handover: {
+        Args: {
+          p_expected_updated_at?: string | null
+          p_meal_type: string
+          p_note: string
+          p_service_date: string
+        }
         Returns: Json
       }
       update_kitchen_order_status: {
@@ -881,4 +894,5 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
 
