@@ -8,6 +8,7 @@ import {
   Pencil,
   RefreshCw,
   Search,
+  Trash2,
   X,
 } from 'lucide-react';
 import { dietLabel } from '../../services/menuService';
@@ -51,6 +52,8 @@ export const KitchenCatalogManager = () => {
   const [notice, setNotice] = useState('');
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<KitchenCatalogMealInput | null>(null);
+  const [archiveTarget, setArchiveTarget] = useState<KitchenCatalogMeal | null>(null);
+  const [archiving, setArchiving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -88,6 +91,23 @@ export const KitchenCatalogManager = () => {
       setError((caught as Error).message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const archiveMeal = async () => {
+    if (!archiveTarget || archiving) return;
+    setArchiving(true);
+    setError('');
+    setNotice('');
+    try {
+      setMeals(await kitchenCatalogService.archive(archiveTarget.id));
+      setNotice(`“${archiveTarget.name}” was removed from the catalog. Existing orders remain unchanged.`);
+      setArchiveTarget(null);
+    } catch (caught) {
+      setError((caught as Error).message);
+      setArchiveTarget(null);
+    } finally {
+      setArchiving(false);
     }
   };
 
@@ -150,7 +170,10 @@ export const KitchenCatalogManager = () => {
                   <span className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${meal.isActive ? 'bg-emerald-50 text-emerald-800' : 'bg-stone-100 text-stone-600'}`}>
                     {meal.isActive ? <CheckCircle2 size={14} /> : <CircleOff size={14} />}{meal.isActive ? 'Active' : 'Inactive'}
                   </span>
-                  <button type="button" onClick={() => { setEditor(toInput(meal)); setNotice(''); }} className="flex min-h-10 items-center gap-2 rounded-lg border border-stone-200 px-3 text-sm font-bold text-stone-700 hover:bg-stone-50"><Pencil size={15} /> Edit</button>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => { setEditor(toInput(meal)); setNotice(''); }} className="flex min-h-10 items-center gap-2 rounded-lg border border-stone-200 px-3 text-sm font-bold text-stone-700 hover:bg-stone-50"><Pencil size={15} /> Edit</button>
+                    <button type="button" onClick={() => { setArchiveTarget(meal); setNotice(''); }} aria-label={`Delete ${meal.name}`} className="flex min-h-10 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm font-bold text-red-700 hover:bg-red-50"><Trash2 size={15} /> Delete</button>
+                  </div>
                 </div>
               </div>
             </article>
@@ -199,6 +222,21 @@ export const KitchenCatalogManager = () => {
                 <div className="flex gap-2"><button type="button" onClick={() => setEditor(null)} disabled={saving} className="min-h-11 rounded-xl border border-stone-300 px-5 text-sm font-bold text-stone-700">Cancel</button><button type="submit" disabled={saving} className="min-h-11 rounded-xl bg-[#0D6E44] px-5 text-sm font-black text-white disabled:opacity-50">{saving ? 'Saving…' : editor.id ? 'Save changes' : 'Add meal'}</button></div>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {archiveTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/50 p-4" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget && !archiving) setArchiveTarget(null); }}>
+          <div role="alertdialog" aria-modal="true" aria-labelledby="archive-meal-title" className="w-full max-w-md rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 text-red-700"><Trash2 size={22} /></div>
+            <h2 id="archive-meal-title" className="mt-4 text-xl font-black text-stone-900">Delete this meal?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600"><strong>{archiveTarget.name}</strong> will disappear from the catalog and future menu selection. Existing orders and their saved meal details will remain safe.</p>
+            <p className="mt-3 rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-900">If this meal is on a published current or future menu, remove it from that menu first.</p>
+            <div className="mt-6 flex justify-end gap-2">
+              <button type="button" onClick={() => setArchiveTarget(null)} disabled={archiving} className="min-h-11 rounded-xl border border-stone-300 px-5 text-sm font-bold text-stone-700">Cancel</button>
+              <button type="button" onClick={() => void archiveMeal()} disabled={archiving} className="min-h-11 rounded-xl bg-red-700 px-5 text-sm font-black text-white disabled:opacity-50">{archiving ? 'Deleting…' : 'Delete meal'}</button>
+            </div>
           </div>
         </div>
       )}

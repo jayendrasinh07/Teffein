@@ -325,6 +325,7 @@ export type Database = {
       }
       meals: {
         Row: {
+          archived_at: string | null
           base_price: number
           created_at: string
           description: string | null
@@ -338,6 +339,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
           base_price?: number
           created_at?: string
           description?: string | null
@@ -351,6 +353,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
           base_price?: number
           created_at?: string
           description?: string | null
@@ -682,6 +685,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_kitchen_meal: { Args: { p_meal_id: string }; Returns: Json }
       cancel_customer_order: { Args: { p_order_id: string }; Returns: Json }
       get_delivery_slot_availability: {
         Args: { p_meal_type: string; p_order_date: string }

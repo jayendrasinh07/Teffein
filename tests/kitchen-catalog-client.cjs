@@ -64,6 +64,13 @@ const meal = {
     },
   }));
 
+  response = { data: [], error: null };
+  const archived = await api.kitchenCatalogService.archive(meal.id);
+  assert.equal(archived.length, 0);
+  assert.equal(JSON.stringify(calls[2]), JSON.stringify({
+    name: 'archive_kitchen_meal', args: { p_meal_id: meal.id },
+  }));
+
   response = { data: null, error: { code: '42501', message: 'denied' } };
   await assert.rejects(api.kitchenCatalogService.list(), /authorized account/);
   console.log('PASS: kitchen catalog validation, exact RPC contracts and access errors');
