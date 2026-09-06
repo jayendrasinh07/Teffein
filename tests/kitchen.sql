@@ -261,3 +261,96 @@ END $$;
 ROLLBACK;
 SELECT 'PASS: kitchen catalog RPC, audited archive, operational customer projection and realtime signal isolation' AS result;
 
+BEGIN;
+DO $$
+DECLARE
+  owner_id UUID := gen_random_uuid();
+  staff_id UUID := gen_random_uuid();
+  outsider_id UUID := gen_random_uuid();
+  slot_id UUID;
+  order_id UUID := gen_random_uuid();
+  cancelled_id UUID := gen_random_uuid();
+  service_date DATE := (clock_timestamp() AT TIME ZONE 'Asia/Kolkata')::date + 2;
+BEGIN
+  INSERT INTO auth.users(id, email, raw_user_meta_data) VALUES
+    (owner_id, owner_id || '@example.invalid', '{}'),
+    (staff_id, staff_id || '@example.invalid', '{}'),
+    (outsider_id, outsider_id || '@example.invalid', '{}');
+  INSERT INTO public.user_roles(user_id, role) VALUES (staff_id, 'kitchen');
+  UPDATE public.profiles SET full_name = 'Shift Lead' WHERE id = staff_id;
+  INSERT INTO public.delivery_slots(name, meal_type, start_time, end_time, cutoff_time, max_orders)
+  VALUES ('Capacity test', 'lunch', '12:00', '12:45', '10:30', 4) RETURNING id INTO slot_id;
+  INSERT INTO public.orders(id, user_id, delivery_slot_id, order_number, idempotency_key, request_payload, order_date, meal_type, status)
+  VALUES
+    (order_id, owner_id, slot_id, 'TEF-CAPACITY', gen_random_uuid(), '{}', service_date, 'lunch', 'confirmed'),
+    (cancelled_id, owner_id, slot_id, 'TEF-CANCELLED', gen_random_uuid(), '{}', service_date, 'lunch', 'cancelled');
+  INSERT INTO public.order_items(order_id, meal_name_snapshot, preparation_preferences, quantity, unit_price, line_total)
+  VALUES
+    (order_id, 'Capacity Thali', '{}', 3, 100, 300),
+    (cancelled_id, 'Cancelled Thali', '{}', 10, 100, 1000);
+  PERFORM set_config('test.kitchen_shift', jsonb_build_object(
+    'staff', staff_id, 'outsider', outsider_id, 'date', service_date, 'slot', slot_id
+  )::text, true);
+END $$;
+
+SET LOCAL ROLE anon;
+DO $$ BEGIN
+  BEGIN PERFORM public.get_kitchen_shift_brief(current_date, 'lunch'); RAISE EXCEPTION 'Anonymous shift read'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM public.save_kitchen_shift_handover(current_date, 'lunch', 'Unsafe', NULL); RAISE EXCEPTION 'Anonymous handover write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+
+SET LOCAL ROLE authenticated;
+DO $$
+DECLARE
+  f JSONB := current_setting('test.kitchen_shift')::jsonb;
+  brief JSONB;
+  target JSONB;
+  saved JSONB;
+  first_version TIMESTAMPTZ;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', f->>'outsider', true);
+  BEGIN PERFORM public.get_kitchen_shift_brief((f->>'date')::date, 'lunch'); RAISE EXCEPTION 'Outsider shift read'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM public.save_kitchen_shift_handover((f->>'date')::date, 'lunch', 'Unsafe', NULL); RAISE EXCEPTION 'Outsider handover write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+
+  PERFORM set_config('request.jwt.claim.sub', f->>'staff', true);
+  brief := public.get_kitchen_shift_brief((f->>'date')::date, 'lunch');
+  SELECT entry INTO target FROM jsonb_array_elements(brief->'slots') entry
+  WHERE entry->>'id' = f->>'slot';
+  IF target IS NULL
+     OR target->>'max_portions' <> '4'
+     OR target->>'booked_portions' <> '3'
+     OR target->>'remaining_portions' <> '1'
+     OR target->>'utilization_percent' <> '75.0' THEN
+    RAISE EXCEPTION 'Capacity semantics failed: %', brief;
+  END IF;
+
+  saved := public.save_kitchen_shift_handover((f->>'date')::date, 'lunch', '  Check Jain portions  ', NULL);
+  IF saved#>>'{handover,note}' <> 'Check Jain portions'
+     OR saved#>>'{handover,updated_by}' <> 'Shift Lead'
+     OR saved#>>'{handover,updated_at}' IS NULL THEN
+    RAISE EXCEPTION 'Handover create failed: %', saved;
+  END IF;
+  first_version := (saved#>>'{handover,updated_at}')::timestamptz;
+  saved := public.save_kitchen_shift_handover((f->>'date')::date, 'lunch', 'Prep complete', first_version);
+  IF saved#>>'{handover,note}' <> 'Prep complete' THEN RAISE EXCEPTION 'Handover update failed'; END IF;
+  BEGIN
+    PERFORM public.save_kitchen_shift_handover((f->>'date')::date, 'lunch', 'Stale overwrite', first_version);
+    RAISE EXCEPTION 'Stale handover accepted';
+  EXCEPTION WHEN serialization_failure THEN NULL;
+  END;
+  BEGIN PERFORM count(*) FROM private.kitchen_shift_handovers; RAISE EXCEPTION 'Private handover exposed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  BEGIN PERFORM count(*) FROM private.kitchen_handover_events; RAISE EXCEPTION 'Private handover audit exposed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+END $$;
+RESET ROLE;
+
+DO $$
+DECLARE f JSONB := current_setting('test.kitchen_shift')::jsonb;
+BEGIN
+  IF (SELECT count(*) FROM private.kitchen_handover_events e JOIN private.kitchen_shift_handovers h ON h.id = e.handover_id WHERE h.service_date = (f->>'date')::date AND h.meal_type = 'lunch') <> 2 THEN RAISE EXCEPTION 'Handover audit count failed'; END IF;
+  IF EXISTS (SELECT 1 FROM private.kitchen_handover_events e JOIN private.kitchen_shift_handovers h ON h.id = e.handover_id WHERE h.service_date = (f->>'date')::date AND h.meal_type = 'lunch' AND e.actor_id IS DISTINCT FROM (f->>'staff')::uuid) THEN RAISE EXCEPTION 'Handover audit actor failed'; END IF;
+END $$;
+ROLLBACK;
+SELECT 'PASS: kitchen slot capacity, handover authorization, optimistic locking and private audit' AS result;
+
+
