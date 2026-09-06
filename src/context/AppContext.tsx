@@ -213,7 +213,7 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
-const tabForPath = (): ActiveTab => currentPath() === '/kitchen'
+const tabForPath = (): ActiveTab => (currentPath() === '/kitchen' || currentPath().startsWith('/kitchen/'))
   ? 'kitchen_dashboard'
   : currentPath() === '/reset-password'
     ? 'password_recovery'
@@ -369,11 +369,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const path = currentPath();
+    const isKitchenPath = path === '/kitchen' || path.startsWith('/kitchen/');
     const destination = activeTab === 'kitchen_dashboard'
-      ? '/kitchen'
+      ? (isKitchenPath ? null : '/kitchen')
       : activeTab === 'password_recovery'
         ? '/reset-password'
-        : (path === '/kitchen' || path === '/reset-password') ? '/' : null;
+        : (isKitchenPath || path === '/reset-password') ? '/' : null;
     if (destination && destination !== path) window.history.pushState(null, '', destination);
   }, [activeTab]);
 
@@ -451,7 +452,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (!geoResult.success || geoResult.latitude === undefined || geoResult.longitude === undefined) {
       const errType = geoResult.errorType || 'unavailable';
-      setLocationState(errType);
+      const locationErrorState: LocationState =
+        errType === 'permission-denied' || errType === 'timeout' ? errType : 'unavailable';
+      setLocationState(locationErrorState);
       setLocationErrorMessage(geoResult.errorMessage || 'Unable to detect GPS location.');
       setCentralLocation((prev) => ({
         ...prev,
@@ -914,6 +917,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         defaultAddressId,
         savedAddresses,
         detectUserLocation,
+        simulateLocationCoordinates,
         confirmDetectedAddress,
         selectDeliveryAddress,
         saveDeliveryAddress,
@@ -941,3 +945,4 @@ export const useApp = () => {
   }
   return context;
 };
+
