@@ -20,6 +20,7 @@ import { useApp } from '../../context/AppContext';
 import { CustomerSegment } from '../../types';
 import { isSupabaseConfigured } from '../../services/supabaseClient';
 import { authService } from '../../services/authService';
+import { getPasswordPolicyError, PASSWORD_REQUIREMENTS } from '../../utils/passwordPolicy';
 
 export const AuthModal: React.FC = () => {
   const { 
@@ -70,8 +71,9 @@ export const AuthModal: React.FC = () => {
           setLoading(false);
           return;
         }
-        if (password.length < 6) {
-          setErrorMessage('Password must be at least 6 characters.');
+        const passwordError = getPasswordPolicyError(password);
+        if (passwordError) {
+          setErrorMessage(passwordError);
           setLoading(false);
           return;
         }
@@ -289,6 +291,7 @@ export const AuthModal: React.FC = () => {
                 className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-sm text-stone-900 focus:ring-2 focus:ring-[#0D6E44] focus:border-transparent outline-none font-medium"
               />
             </div>
+            {!isSignIn && <p className="mt-1 text-[11px] text-stone-500">{PASSWORD_REQUIREMENTS}</p>}
           </div>
 
           {/* Submit CTA */}
@@ -328,3 +331,4 @@ export const AuthModal: React.FC = () => {
     </div>
   );
 };
+
