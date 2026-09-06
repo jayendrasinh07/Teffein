@@ -105,7 +105,7 @@ export const KitchenShiftControl = () => {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {shifts.flatMap(item => (briefs[item]?.slots ?? []).map(slot => (
-          <CapacityCard key={slot.id} slot={slot} shift={item} />
+          <div key={slot.id}><CapacityCard slot={slot} shift={item} /></div>
         )))}
       </div>
 
