@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, LockKeyhole } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/authService';
+import { getPasswordPolicyError, PASSWORD_REQUIREMENTS } from '../utils/passwordPolicy';
 
 export const PasswordRecoveryPage: React.FC = () => {
   const { setActiveTab, showToast } = useApp();
@@ -14,8 +15,9 @@ export const PasswordRecoveryPage: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMessage(null);
-    if (password.length < 8) {
-      setErrorMessage('Use at least 8 characters.');
+    const passwordError = getPasswordPolicyError(password);
+    if (passwordError) {
+      setErrorMessage(passwordError);
       return;
     }
     if (password !== confirmation) {
@@ -73,6 +75,7 @@ export const PasswordRecoveryPage: React.FC = () => {
                 onChange={(event) => setPassword(event.target.value)}
                 className="mt-1 w-full rounded-xl border border-stone-300 px-4 py-3 text-sm outline-none focus:border-transparent focus:ring-2 focus:ring-[#0D6E44]"
               />
+              <span className="mt-1 block font-normal text-stone-500">{PASSWORD_REQUIREMENTS}</span>
             </label>
             <label className="block text-xs font-bold text-stone-700">
               Confirm new password
@@ -106,3 +109,4 @@ export const PasswordRecoveryPage: React.FC = () => {
     </main>
   );
 };
+
