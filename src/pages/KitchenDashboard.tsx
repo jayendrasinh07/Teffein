@@ -43,7 +43,7 @@ const pageCopy: Record<KitchenWorkspace, { eyebrow: string; title: string; descr
   catalog: { eyebrow: 'Menu administration', title: 'Meal catalog', description: 'Add meals, update prices and details, or pause availability.' },
   menu: { eyebrow: 'Daily planning', title: 'Daily menu', description: 'Choose catalog meals and publish the full lunch and dinner menu.' },
   orders: { eyebrow: 'Live operations', title: 'Live orders', description: 'See who ordered what and move meals through preparing and ready.' },
-  management: { eyebrow: 'Admin controls', title: 'Management', description: 'Control delivery capacity and Kitchen staff access.' },
+  management: { eyebrow: 'Admin controls', title: 'Management', description: 'Control capacity, Kitchen staff access, and customer support requests.' },
 };
 
 const kitchenNavigation: Array<{ id: KitchenWorkspace; label: string; icon: typeof ChefHat }> = [

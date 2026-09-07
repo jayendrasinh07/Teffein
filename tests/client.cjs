@@ -18,14 +18,14 @@ const menu=moduleSource('menuService','mapDeliverySlot,dietLabel');
 const slot=menu.mapDeliverySlot({id:'slot',meal_type:'dinner',start_time:'19:30:00',end_time:'20:15:00',max_orders:200,booked_portions:199});
 assert.equal(slot.maxCapacity-slot.bookedCount,1);assert.equal(slot.windowLabel,'7:30 PM – 8:15 PM');
 const {mapAddress}=moduleSource('addressService','mapAddress');
-const row={id:'order',order_number:'TEF-test',user_id:'customer',order_date:'2026-09-04',meal_type:'lunch',status:'confirmed',payment_status:'pending',subtotal:200,customization_total:15,delivery_fee:25,discount:0,grand_total:240,notes:'Less salt',address_snapshot:{id:'addr',recipient_name:'A',recipient_phone:'0000000000',area:'Vavol',formatted_address:'House 7, Vavol',slotLabel:'12:00 – 12:45',deliveryFee:25},order_items:[{meal_id:'meal',meal_name_snapshot:'Thali',quantity:2,preparation_preferences:{spiceLevel:'Less Spicy',oilLevel:'Standard',dietType:'jain_satvik'},order_customizations:[{id:'extra',customization_name_snapshot:'Roti',quantity:1,unit_price:15}]}]};
+const row={id:'order',order_number:'TEF-test',user_id:'customer',order_date:'2026-09-04',meal_type:'lunch',status:'confirmed',payment_status:'pending',subtotal:200,customization_total:15,delivery_fee:25,discount:0,grand_total:240,notes:'Less salt',cancellation_reason:'schedule_changed',cancellation_note:'Work changed',cancelled_at:'2026-09-03T10:00:00Z',address_snapshot:{id:'addr',recipient_name:'A',recipient_phone:'0000000000',area:'Vavol',formatted_address:'House 7, Vavol',slotLabel:'12:00 – 12:45',deliveryFee:25},order_items:[{meal_id:'meal',meal_name_snapshot:'Thali',quantity:2,preparation_preferences:{spiceLevel:'Less Spicy',oilLevel:'Standard',dietType:'jain_satvik'},order_customizations:[{id:'extra',customization_name_snapshot:'Roti',quantity:1,unit_price:15}]}]};
 const storage=new Map();let calls=[];let fail=true;
 const {orderService,toCustomerOrder}=moduleSource('orderService','orderService,toCustomerOrder',{
   mapAddress,dietLabel:menu.dietLabel,
   sessionStorage:{getItem:k=>storage.get(k),setItem:(k,v)=>storage.set(k,v),removeItem:k=>storage.delete(k)},
   getSupabaseClient:()=>({rpc:async(name,args)=>{calls.push(args);await new Promise(resolve=>setTimeout(resolve,10));return fail?{data:null,error:new Error('Connection lost')}:{data:row,error:null};}}),
 });
-const mapped=toCustomerOrder(row);assert.equal(mapped.total,240);assert.equal(mapped.paymentStatus,'PENDING');assert.equal(mapped.notes,'Less salt');assert.equal(mapped.customizations.dietVariant,'Jain Satvik');assert.equal(mapped.address.addressLine,'House 7, Vavol');
+const mapped=toCustomerOrder(row);assert.equal(mapped.total,240);assert.equal(mapped.paymentStatus,'PENDING');assert.equal(mapped.notes,'Less salt');assert.equal(mapped.customizations.dietVariant,'Jain Satvik');assert.equal(mapped.address.addressLine,'House 7, Vavol');assert.equal(mapped.cancellationReason,'schedule_changed');
 assert.throws(()=>toCustomerOrder({id:'incomplete'}));
 (async()=>{
   const payload={userId:'customer',addressId:'addr',orderDate:'2026-09-04',mealType:'lunch',deliverySlotId:'slot',mealId:'meal',quantity:2,selectedAddons:{extra:1},notes:'Less salt',preferences:{spiceLevel:'Less Spicy',oilLevel:'Standard'}};
@@ -33,6 +33,9 @@ assert.throws(()=>toCustomerOrder({id:'incomplete'}));
   assert.equal(calls.length,1);assert.ok(first.every(r=>r.error&&!r.order));assert.equal(storage.size,1);
   fail=false;const retry=await orderService.createOrder(payload);
   assert.equal(retry.order.id,'order');assert.equal(calls[0].p_idempotency_key,calls[1].p_idempotency_key);assert.equal(calls[1].p_notes,'Less salt');assert.equal(calls[1].p_meal_id,'meal');assert.equal(calls[1].p_customizations[0].quantity,1);assert.equal(storage.size,0);
+  await orderService.cancelOrder('order','schedule_changed',' Work changed ');
+  assert.equal(JSON.stringify(calls[2]),JSON.stringify({p_order_id:'order',p_reason:'schedule_changed',p_note:'Work changed'}));
+  await assert.rejects(orderService.cancelOrder('order','other','no'));
   const context=readFileSync('src/context/AppContext.tsx','utf8');
   const handler=context.slice(context.indexOf('  const createOneTimeOrder ='),context.indexOf('  const reorderMeal ='));
   let resolveOrder;let storedOrders=[];let tracking=null;let toasts=0;
@@ -49,3 +52,4 @@ assert.throws(()=>toCustomerOrder({id:'incomplete'}));
   console.log('PASS: IST cutoff, portion adapter, server snapshots, failed checkout, duplicate clicks and uncertain retry');
   console.log('PASS: checkout confirmation waits for persistence; rejection and account switch do not publish success');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+

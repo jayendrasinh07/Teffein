@@ -1,25 +1,44 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { BRAND_CONFIG } from '../data/config';
-import { MapPin, Phone, Mail, MessageSquare, Send, Clock, Building2, CheckCircle2 } from 'lucide-react';
+import { MapPin, Phone, Mail, MessageSquare, Send, Clock, CheckCircle2 } from 'lucide-react';
+import { supportService, type SupportCategory, type SupportRequest } from '../services/supportService';
 
 export const ContactPage: React.FC = () => {
-  const { showToast } = useApp();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [queryType, setQueryType] = useState('subscription_support');
+  const { showToast, currentUser, setIsAuthModalOpen } = useApp();
+  const [queryType, setQueryType] = useState<SupportCategory>('account_help');
   const [message, setMessage] = useState('');
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedTicket, setSubmittedTicket] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [requests, setRequests] = useState<SupportRequest[]>([]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    let active = true;
+    if (!currentUser) { setRequests([]); return; }
+    void supportService.getMine().then(value => { if (active) setRequests(value); }).catch(() => undefined);
+    return () => { active = false; };
+  }, [currentUser?.id]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    showToast(
-      'Message Received',
-      `Thank you ${name}! Our Gandhinagar team will reply within 30 minutes.`,
-      'success'
-    );
+    if (!currentUser) {
+      setIsAuthModalOpen(true);
+      showToast('Sign in required', 'Sign in so the team can securely track and answer your request.', 'info');
+      return;
+    }
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      const request = await supportService.create(queryType, message);
+      const ticket = request.id.slice(0, 8).toUpperCase();
+      setRequests(previous => [request, ...previous]);
+      setSubmittedTicket(ticket);
+      showToast('Support request saved', `Ticket ${ticket} is now in the admin queue.`, 'success');
+    } catch (error) {
+      showToast('Support unavailable', error instanceof Error ? error.message : 'Try again.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -99,70 +118,39 @@ export const ContactPage: React.FC = () => {
           {/* Right Contact Form */}
           <div className="lg:col-span-7">
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-stone-200 shadow-xl">
-              {submitted ? (
+              {submittedTicket ? (
                 <div className="py-12 text-center space-y-3">
                   <div className="w-14 h-14 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-bold text-stone-900">Message Sent Successfully!</h3>
                   <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                    Thank you for reaching out. We will get back to you shortly at {phone || email}.
+                    Ticket {submittedTicket} is saved against {currentUser?.email}. Track updates by returning to this page.
                   </p>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <h3 className="font-bold text-lg text-stone-900 mb-2">Send Us an Enquiry</h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 mb-1">Your Full Name *</label>
-                      <input
-                        type="text"
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="e.g. Priyesh Patel"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 mb-1">Phone Number *</label>
-                      <input
-                        type="tel"
-                        required
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+91 98790 XXXXX"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                      />
-                    </div>
+                  <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-900">
+                    {currentUser ? <>Submitting from <strong>{currentUser.email}</strong>. Your account details are attached securely.</> : <><strong>Sign in required.</strong> We use your TEFFEIN account so the request can be tracked and answered securely.</>}
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 mb-1">Email Address</label>
-                      <input
-                        type="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="name@example.com"
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-stone-700 mb-1">Enquiry Type</label>
-                      <select
-                        value={queryType}
-                        onChange={(e) => setQueryType(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
-                      >
-                        <option value="subscription_support">Personal Subscription Support</option>
-                        <option value="corporate_catering">Corporate / Office Bulk Catering</option>
-                        <option value="hostel_tieup">Hostel / PG Warden Tie-up</option>
-                        <option value="dietary_customization">Dietary / Jain Satvik Query</option>
-                        <option value="general">Other Question</option>
-                      </select>
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-stone-700 mb-1">Enquiry Type</label>
+                    <select
+                      value={queryType}
+                      onChange={(e) => setQueryType(e.target.value as SupportCategory)}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white"
+                    >
+                      <option value="account_help">Account / subscription help</option>
+                      <option value="order_help">Order help</option>
+                      <option value="cancellation_help">Cancellation help</option>
+                      <option value="delivery_help">Delivery help</option>
+                      <option value="menu_question">Menu / dietary question</option>
+                      <option value="corporate">Corporate / bulk catering</option>
+                      <option value="other">Other question</option>
+                    </select>
                   </div>
 
                   <div>
@@ -170,6 +158,8 @@ export const ContactPage: React.FC = () => {
                     <textarea
                       rows={4}
                       required
+                      minLength={10}
+                      maxLength={2000}
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder="Tell us about your requirements, specific Gandhinagar sector, or meal questions..."
@@ -179,13 +169,18 @@ export const ContactPage: React.FC = () => {
 
                   <button
                     type="submit"
-                    className="w-full py-3.5 rounded-xl bg-[#107048] hover:bg-[#0A4E32] text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-colors"
+                    disabled={submitting || message.trim().length < 10}
+                    className="w-full py-3.5 rounded-xl bg-[#107048] hover:bg-[#0A4E32] text-white text-xs font-bold shadow-md flex items-center justify-center gap-2 transition-colors disabled:opacity-40"
                   >
                     <Send className="w-4 h-4" />
-                    <span>Send Message to Gandhinagar Team</span>
+                    <span>{submitting ? 'Saving request…' : currentUser ? 'Send to Admin Support Queue' : 'Sign In & Continue'}</span>
                   </button>
                 </form>
               )}
+              {currentUser && requests.length > 0 && <div className="mt-6 border-t border-stone-100 pt-5">
+                <h4 className="text-sm font-black text-stone-900">My recent requests</h4>
+                <div className="mt-3 space-y-2">{requests.slice(0, 5).map(request => <div key={request.id} className="flex items-start justify-between gap-3 rounded-xl bg-stone-50 p-3 text-xs"><div><p className="font-bold text-stone-800">{request.category.replace(/_/g, ' ')}</p><p className="mt-1 line-clamp-2 text-stone-500">{request.message}</p></div><span className={`shrink-0 rounded-full px-2 py-1 font-bold ${request.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' : request.status === 'in_progress' ? 'bg-amber-100 text-amber-900' : 'bg-blue-100 text-blue-800'}`}>{request.status.replace('_', ' ')}</span></div>)}</div>
+              </div>}
             </div>
           </div>
         </div>
@@ -193,3 +188,4 @@ export const ContactPage: React.FC = () => {
     </div>
   );
 };
+

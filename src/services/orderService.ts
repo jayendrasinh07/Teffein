@@ -1,5 +1,5 @@
 import { getSupabaseClient } from './supabaseClient';
-import { OneTimeOrder, PaymentStatus, OrderStatus } from '../types';
+import { CancellationReason, OneTimeOrder, PaymentStatus, OrderStatus } from '../types';
 import { mapAddress } from './addressService';
 import { dietLabel } from './menuService';
 export interface CreateOrderPayload {userId:string;addressId:string;orderDate:string;mealType:'lunch'|'dinner';deliverySlotId:string;mealId:string;quantity:number;selectedAddons:Record<string,number>;notes?:string;preferences:{spiceLevel:string;oilLevel:string};}
@@ -13,7 +13,8 @@ export const toCustomerOrder=(r:any):OneTimeOrder=>{
  customizations:{spiceLevel:pref.spiceLevel??'Regular',oilLevel:pref.oilLevel??'Standard',dietVariant:dietLabel(pref.dietType??'standard_gujarati')},
  addOns:(i.order_customizations??[]).map((c:any)=>({id:c.customization_id??c.id,name:c.customization_name_snapshot,price:Number(c.unit_price),quantity:c.quantity})),
  address:{...address,addressLine:address.addressLine??address.addressLine1},deliveryAddressSnapshot:address,deliveryZoneId:r.address_snapshot.zone_id??undefined,
- subtotal:Number(r.subtotal),addOnsTotal:Number(r.customization_total),deliveryFee:Number(r.delivery_fee),discount:Number(r.discount),total:Number(r.grand_total),paymentMethod:'CashOnDelivery',paymentStatus:r.payment_status.toUpperCase() as PaymentStatus,orderStatus:statuses[r.status],estimatedDeliveryTime:r.address_snapshot.slotLabel??'',createdAt:r.created_at,traceabilityMealId:'',notes:r.notes??''};
+ subtotal:Number(r.subtotal),addOnsTotal:Number(r.customization_total),deliveryFee:Number(r.delivery_fee),discount:Number(r.discount),total:Number(r.grand_total),paymentMethod:'CashOnDelivery',paymentStatus:r.payment_status.toUpperCase() as PaymentStatus,orderStatus:statuses[r.status],estimatedDeliveryTime:r.address_snapshot.slotLabel??'',createdAt:r.created_at,traceabilityMealId:'',notes:r.notes??'',
+ cancellationReason:r.cancellation_reason as CancellationReason|undefined,cancellationNote:r.cancellation_note??undefined,cancelledAt:r.cancelled_at??undefined};
 };
 export const orderService={
  async createOrder(p:CreateOrderPayload):Promise<{order:OneTimeOrder|null;error:Error|null}>{
@@ -33,7 +34,13 @@ export const orderService={
   pending.set(storageKey,task);try{return await task;}finally{pending.delete(storageKey);}
  },
  async getUserOrders(userId:string):Promise<OneTimeOrder[]>{const {data,error}=await getSupabaseClient().from('orders').select('*,order_items(*,order_customizations(*))').eq('user_id',userId).order('created_at',{ascending:false});if(error)throw error;return(data??[]).map(toCustomerOrder);},
- async cancelOrder(id:string):Promise<OneTimeOrder>{const {data,error}=await getSupabaseClient().rpc('cancel_customer_order',{p_order_id:id});if(error)throw error;return toCustomerOrder(data);},
+ async cancelOrder(id:string,reason:CancellationReason,note=''):Promise<OneTimeOrder>{
+  const cleanNote=note.trim();
+  if(!id||!['changed_mind','ordered_by_mistake','schedule_changed','address_issue','other'].includes(reason)
+   ||cleanNote.length>500||(reason==='other'&&cleanNote.length<5))throw new Error('Choose a valid cancellation reason.');
+  const {data,error}=await getSupabaseClient().rpc('cancel_customer_order',{p_order_id:id,p_reason:reason,p_note:cleanNote||null});
+  if(error)throw error;return toCustomerOrder(data);
+ },
  subscribe(userId:string,onChange:()=>void):()=>void{
   if(!userId)throw new Error('Customer identity is required.');
   const client=getSupabaseClient();let active=true;

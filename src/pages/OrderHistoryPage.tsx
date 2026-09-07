@@ -12,9 +12,19 @@ import {
   Utensils, 
   XCircle, 
   Plus,
-  ShoppingBag
+  ShoppingBag,
+  MessageCircle
 } from 'lucide-react';
-import { OneTimeOrder } from '../types';
+import { CancellationReason, OneTimeOrder } from '../types';
+import { supportService } from '../services/supportService';
+
+const cancellationOptions: Array<{ value: CancellationReason; label: string }> = [
+  { value: 'ordered_by_mistake', label: 'Ordered by mistake' },
+  { value: 'schedule_changed', label: 'My schedule changed' },
+  { value: 'address_issue', label: 'Delivery address issue' },
+  { value: 'changed_mind', label: 'Changed my mind' },
+  { value: 'other', label: 'Other reason' },
+];
 
 export const OrderHistoryPage: React.FC = () => {
   const { 
@@ -24,12 +34,42 @@ export const OrderHistoryPage: React.FC = () => {
     oneTimeOrders,
     reorderMeal,
     cancelOneTimeOrder,
-    setIsOrderOnceModalOpen
+    setIsOrderOnceModalOpen,
+    showToast
   } = useApp();
 
   const [filterType, setFilterType] = useState<'all' | 'one_time' | 'subscription'>('all');
+  const [cancelOrderId, setCancelOrderId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState<CancellationReason>('ordered_by_mistake');
+  const [cancelNote, setCancelNote] = useState('');
+  const [cancelBusy, setCancelBusy] = useState(false);
+  const [supportOrderId, setSupportOrderId] = useState<string | null>(null);
+  const [supportMessage, setSupportMessage] = useState('');
+  const [supportBusy, setSupportBusy] = useState(false);
 
   const subscriptionHistory: {id:string;date:string;slot:string;items:string;status:string;rating:number|null;temperature:string;van:string}[] = [];
+
+  const confirmCancellation = async () => {
+    if (!cancelOrderId || cancelBusy) return;
+    setCancelBusy(true);
+    const saved = await cancelOneTimeOrder(cancelOrderId, cancelReason, cancelNote);
+    setCancelBusy(false);
+    if (saved) { setCancelOrderId(null); setCancelNote(''); }
+  };
+
+  const sendOrderSupport = async () => {
+    if (!supportOrderId || supportBusy) return;
+    setSupportBusy(true);
+    try {
+      const request = await supportService.create('order_help', supportMessage, supportOrderId);
+      setSupportOrderId(null); setSupportMessage('');
+      showToast('Support request saved', `Ticket ${request.id.slice(0, 8).toUpperCase()} is now in the admin queue.`, 'success');
+    } catch (error) {
+      showToast('Support unavailable', error instanceof Error ? error.message : 'Support request could not be saved.', 'error');
+    } finally {
+      setSupportBusy(false);
+    }
+  };
 
   return (
     <div className="py-10 bg-[#FAF8F5] min-h-[85vh]">
@@ -164,13 +204,14 @@ export const OrderHistoryPage: React.FC = () => {
                               <span>{order.address.addressLine}, {order.address.area}</span>
                             </p>
                           </div>
+                          {order.orderStatus === 'CANCELLED' && order.cancellationReason && <p className="text-[11px] font-bold text-rose-700">Cancelled · {cancellationOptions.find(option => option.value === order.cancellationReason)?.label ?? 'Reason saved'}</p>}
                         </div>
 
                         {/* Actions */}
                         <div className="flex flex-wrap items-center gap-2.5 self-stretch md:self-auto shrink-0">
                           {isCancellable && (
                             <button
-                              onClick={() => cancelOneTimeOrder(order.id)}
+                              onClick={() => { setCancelOrderId(order.id); setCancelReason('ordered_by_mistake'); setCancelNote(''); }}
                               className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-xs font-bold text-rose-800 transition-colors flex items-center gap-1 cursor-pointer"
                             >
                               <XCircle className="w-3.5 h-3.5" />
@@ -178,7 +219,13 @@ export const OrderHistoryPage: React.FC = () => {
                             </button>
                           )}
 
-
+                          <button
+                            onClick={() => { setSupportOrderId(order.id); setSupportMessage(''); }}
+                            className="px-3 py-2 rounded-xl bg-white hover:bg-stone-100 border border-stone-300 text-xs font-bold text-stone-700 transition-colors flex items-center gap-1 cursor-pointer"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            <span>Support</span>
+                          </button>
 
                           <button
                             onClick={() => reorderMeal(order.id)}
@@ -263,6 +310,27 @@ export const OrderHistoryPage: React.FC = () => {
           )}
         </div>
       </div>
+
+      {cancelOrderId && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="cancel-order-title">
+        <div className="w-full rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-md sm:rounded-3xl sm:p-6">
+          <h2 id="cancel-order-title" className="text-xl font-black text-stone-900">Cancel this order?</h2>
+          <p className="mt-2 text-sm text-stone-600">Cancellation is available before the Kitchen cutoff. Your reason is saved for operations review.</p>
+          <label className="mt-5 block text-xs font-bold text-stone-700">Reason<select value={cancelReason} onChange={event => setCancelReason(event.target.value as CancellationReason)} className="mt-2 min-h-11 w-full rounded-xl border border-stone-300 bg-white px-3 text-sm">{cancellationOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          <label className="mt-4 block text-xs font-bold text-stone-700">Note {cancelReason === 'other' ? '(required)' : '(optional)'}<textarea rows={3} maxLength={500} value={cancelNote} onChange={event => setCancelNote(event.target.value)} placeholder="Add helpful details" className="mt-2 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" /></label>
+          <p className="mt-2 text-xs text-stone-500">Payment is still pending, so this action does not create a refund.</p>
+          <div className="mt-5 grid grid-cols-2 gap-3"><button type="button" disabled={cancelBusy} onClick={() => setCancelOrderId(null)} className="min-h-11 rounded-xl border border-stone-300 text-sm font-bold text-stone-700">Keep order</button><button type="button" disabled={cancelBusy || (cancelReason === 'other' && cancelNote.trim().length < 5)} onClick={() => void confirmCancellation()} className="min-h-11 rounded-xl bg-rose-700 text-sm font-bold text-white disabled:opacity-40">{cancelBusy ? 'Cancelling…' : 'Confirm cancellation'}</button></div>
+        </div>
+      </div>}
+
+      {supportOrderId && <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="order-support-title">
+        <div className="w-full rounded-t-3xl bg-white p-5 shadow-2xl sm:max-w-md sm:rounded-3xl sm:p-6">
+          <h2 id="order-support-title" className="text-xl font-black text-stone-900">Request order support</h2>
+          <p className="mt-2 text-sm text-stone-600">The admin team will see this request with the selected order number.</p>
+          <label className="mt-5 block text-xs font-bold text-stone-700">How can we help?<textarea autoFocus rows={5} minLength={10} maxLength={2000} value={supportMessage} onChange={event => setSupportMessage(event.target.value)} placeholder="Describe the issue in at least 10 characters" className="mt-2 w-full rounded-xl border border-stone-300 px-3 py-2 text-sm" /></label>
+          <div className="mt-5 grid grid-cols-2 gap-3"><button type="button" disabled={supportBusy} onClick={() => setSupportOrderId(null)} className="min-h-11 rounded-xl border border-stone-300 text-sm font-bold text-stone-700">Close</button><button type="button" disabled={supportBusy || supportMessage.trim().length < 10} onClick={() => void sendOrderSupport()} className="min-h-11 rounded-xl bg-emerald-700 text-sm font-bold text-white disabled:opacity-40">{supportBusy ? 'Sending…' : 'Send request'}</button></div>
+        </div>
+      </div>}
     </div>
   );
 };
+

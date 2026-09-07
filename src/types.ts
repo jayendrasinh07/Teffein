@@ -262,6 +262,8 @@ export interface MealAddOn {
   isPopular?: boolean;
 }
 
+export type CancellationReason = 'changed_mind' | 'ordered_by_mistake' | 'schedule_changed' | 'address_issue' | 'other';
+
 export interface OneTimeOrder {
   orderNumber?: string;
   notes?: string;
@@ -324,6 +326,9 @@ export interface OneTimeOrder {
   estimatedDeliveryTime: string;
   createdAt: string;
   traceabilityMealId: string;
+  cancellationReason?: CancellationReason;
+  cancellationNote?: string;
+  cancelledAt?: string;
 }
 
 export interface AvailabilityCheckResult {
