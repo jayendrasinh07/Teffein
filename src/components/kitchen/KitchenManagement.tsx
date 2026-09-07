@@ -6,6 +6,7 @@ import {
   type KitchenManagementDocument,
   type ManagedDeliverySlot,
 } from '../../services/kitchenManagementService';
+import { KitchenSupportQueue } from './KitchenSupportQueue';
 
 const formatTime = (value: string) => {
   const [hour, minute] = value.split(':').map(Number);
@@ -97,6 +98,8 @@ export const KitchenManagement = () => {
           ))}
         </div>
       </section>
+
+      <KitchenSupportQueue />
     </div>
   );
 };

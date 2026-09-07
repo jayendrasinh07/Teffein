@@ -13,6 +13,7 @@ import {
   CustomerFeedback,
   KitchenBatch,
   CorporateAccount,
+  CancellationReason,
   OneTimeOrder,
   OrderStatus,
   LocationState,
@@ -118,7 +119,7 @@ interface AppContextType {
   setIsOrderOnceModalOpen: (open: boolean) => void;
   createOneTimeOrder: (orderData: Omit<OneTimeOrder, 'id' | 'createdAt' | 'traceabilityMealId'>) => Promise<OneTimeOrder>;
   reorderMeal: (orderId: string) => void;
-  cancelOneTimeOrder: (orderId: string) => Promise<void>;
+  cancelOneTimeOrder: (orderId: string, reason: CancellationReason, note?: string) => Promise<boolean>;
   advanceOrderStatus: (orderId: string, nextStatus: OrderStatus) => void;
 
   // Interactive Operations
@@ -647,10 +648,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const reorderMeal = (_orderId:string) => {
     setActiveTab('order_once');showToast('Review your next order','Choose a published menu, delivery date and current prices.','info');
   };
-  const cancelOneTimeOrder = async (id:string) => {
+  const cancelOneTimeOrder = async (id:string,reason:CancellationReason,note='') => {
     const owner=currentUser?.id;
-    try{const order=await orderService.cancelOrder(id);if(authIdentity.current!==owner)return;setOneTimeOrders(prev=>prev.map(o=>o.id===id?order:o));setActiveTrackingOrder(prev=>prev?.id===id?order:prev);showToast('Order Cancelled','The cancellation was saved. No payment or refund was processed.','info');}
-    catch(error){showToast('Cancellation unavailable',(error as Error).message,'error');}
+    try{const order=await orderService.cancelOrder(id,reason,note);if(authIdentity.current!==owner)return false;setOneTimeOrders(prev=>prev.map(o=>o.id===id?order:o));setActiveTrackingOrder(prev=>prev?.id===id?order:prev);showToast('Order Cancelled','Kitchen capacity was released. No payment or refund was processed.','info');return true;}
+    catch(error){showToast('Cancellation unavailable',(error as Error).message,'error');return false;}
   };
   const advanceOrderStatus = (_orderId:string,_nextStatus:OrderStatus) => {showToast('Status not changed','Use the kitchen workflow to update preparation status.','info');};
 

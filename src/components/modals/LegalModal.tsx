@@ -193,7 +193,7 @@ export const LegalModal: React.FC = () => {
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">1. One-Time Meal Orders</h4>
                 <p className="text-stone-600">
-                  You can cancel a one-time meal anytime prior to kitchen dispatch (up to 2 hours before the slot delivery window). In case of eligible pre-dispatch cancellation, 100% of the amount is automatically refunded to your original payment method within 2–4 bank working days.
+                  A one-time meal with pending payment can be cancelled online while it is confirmed and before the Kitchen cutoff: 10:30 AM IST for lunch and 5:30 PM IST for dinner. No refund is created while online payments are disabled. Refund rules will be shown here before online payments launch.
                 </p>
               </div>
 
@@ -315,3 +315,4 @@ export const LegalModal: React.FC = () => {
     </div>
   );
 };
+

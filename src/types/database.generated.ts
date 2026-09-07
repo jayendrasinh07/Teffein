@@ -540,6 +540,9 @@ export type Database = {
         Row: {
           address_id: string | null
           address_snapshot: Json
+          cancellation_note: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           created_at: string
           customization_total: number
           delivery_fee: number
@@ -562,6 +565,9 @@ export type Database = {
         Insert: {
           address_id?: string | null
           address_snapshot?: Json
+          cancellation_note?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customization_total?: number
           delivery_fee?: number
@@ -584,6 +590,9 @@ export type Database = {
         Update: {
           address_id?: string | null
           address_snapshot?: Json
+          cancellation_note?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customization_total?: number
           delivery_fee?: number
@@ -686,7 +695,14 @@ export type Database = {
     }
     Functions: {
       archive_kitchen_meal: { Args: { p_meal_id: string }; Returns: Json }
-      cancel_customer_order: { Args: { p_order_id: string }; Returns: Json }
+      cancel_customer_order: {
+        Args: { p_note: string | null; p_order_id: string; p_reason: string }
+        Returns: Json
+      }
+      create_support_request: {
+        Args: { p_category: string; p_message: string; p_order_id: string | null }
+        Returns: Json
+      }
       get_delivery_slot_availability: {
         Args: { p_meal_type: string; p_order_date: string }
         Returns: {
@@ -712,6 +728,8 @@ export type Database = {
         Args: { p_meal_type: string; p_service_date: string }
         Returns: Json
       }
+      get_kitchen_support_requests: { Args: never; Returns: Json }
+      get_my_support_requests: { Args: never; Returns: Json }
       is_admin: { Args: { check_user_id: string }; Returns: boolean }
       place_order_secure: {
         Args: {
@@ -767,6 +785,10 @@ export type Database = {
           p_next_status: string
           p_order_id: string
         }
+        Returns: Json
+      }
+      update_kitchen_support_request: {
+        Args: { p_request_id: string; p_status: string }
         Returns: Json
       }
     }
