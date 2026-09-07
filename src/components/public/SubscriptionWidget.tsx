@@ -35,7 +35,7 @@ export const SubscriptionWidget: React.FC = () => {
   const tomorrowStr = tomorrow.toISOString().split('T')[0];
   const isTomorrowSkipped = subscription.skippedDates.includes(tomorrowStr);
 
-  const totalCycleMeals = subscription.totalMealsCount || 30;
+  const totalCycleMeals = subscription.totalDays || 30;
   const daysCompleted = Math.max(0, totalCycleMeals - subscription.daysRemaining);
   const progressPercent = Math.min(100, Math.round((daysCompleted / totalCycleMeals) * 100));
 

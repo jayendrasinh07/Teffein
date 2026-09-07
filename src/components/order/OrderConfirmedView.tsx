@@ -111,17 +111,17 @@ export const OrderConfirmedView: React.FC<OrderConfirmedViewProps> = ({
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Item Details</span>
               <p className="font-black text-stone-900 text-sm">
-                {order.quantity}x {order.mealSlot === 'lunch' ? 'Lunch' : 'Dinner'} ({order.dietVariant})
+                {order.quantity}x {order.mealSlot === 'lunch' ? 'Lunch' : 'Dinner'} ({order.customizations.dietVariant})
               </p>
               <p className="text-stone-500 text-[11px]">
-                {order.spicePreference} • {order.oilPreference} • 4+ Rotis & Rice
+                {order.customizations.spiceLevel} • {order.customizations.oilLevel} • 4+ Rotis & Rice
               </p>
             </div>
 
             <div className="text-right">
               <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Total Paid</span>
               <p className="text-lg font-black text-stone-900 font-mono">
-                ₹{order.totalAmount}
+                ₹{order.total}
               </p>
               <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
                 {order.paymentMethod}
@@ -132,8 +132,8 @@ export const OrderConfirmedView: React.FC<OrderConfirmedViewProps> = ({
           <div className="pt-2 border-t border-stone-200/80 flex items-start gap-2 text-stone-600">
             <MapPin className="w-4 h-4 text-[#0D6E44] shrink-0 mt-0.5" />
             <div>
-              <span className="font-bold text-stone-900">{order.customerAddress.fullName} ({order.customerAddress.label})</span>
-              <p className="text-[11px] text-stone-500">{order.customerAddress.addressLine}, {order.customerAddress.area}</p>
+              <span className="font-bold text-stone-900">{order.address.fullName} ({order.address.label})</span>
+              <p className="text-[11px] text-stone-500">{order.address.addressLine || order.address.addressLine1 || order.address.street}, {order.address.area}</p>
             </div>
           </div>
         </div>
