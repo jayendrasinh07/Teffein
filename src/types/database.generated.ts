@@ -722,6 +722,7 @@ export type Database = {
         Args: { p_end_date: string; p_start_date: string }
         Returns: Json
       }
+      get_client_error_summary: { Args: never; Returns: Json }
       get_kitchen_management: { Args: never; Returns: Json }
       get_kitchen_menu: { Args: { p_menu_date: string }; Returns: Json }
       get_kitchen_orders: {
@@ -749,6 +750,10 @@ export type Database = {
           p_quantity: number
         }
         Returns: Json
+      }
+      report_client_error: {
+        Args: { p_event_id: string; p_surface: string; p_error_kind?: string }
+        Returns: undefined
       }
       quote_delivery_address: { Args: { p_address_id: string }; Returns: Json }
       grant_kitchen_access: { Args: { p_email: string }; Returns: Json }

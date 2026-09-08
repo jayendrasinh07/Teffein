@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { AlertTriangle, Download, IndianRupee, Loader2, RefreshCw, ShoppingBag, UtensilsCrossed, XCircle } from 'lucide-react';
+import { AlertTriangle, Download, IndianRupee, Loader2, MonitorCheck, RefreshCw, ShoppingBag, UtensilsCrossed, XCircle } from 'lucide-react';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { istDate } from '../../services/availabilityEngine';
 import { kitchenAnalyticsService, type KitchenAnalyticsDocument } from '../../services/kitchenAnalyticsService';
+import { clientMonitoringService, type ClientErrorSummary } from '../../services/clientMonitoringService';
 
 const initialRange = () => {
   const end = istDate(new Date());
@@ -19,12 +20,16 @@ export const KitchenBusinessAnalytics: React.FC = () => {
   const [start, setStart] = useState(defaults.start);
   const [end, setEnd] = useState(defaults.end);
   const [report, setReport] = useState<KitchenAnalyticsDocument | null>(null);
+  const [clientErrors, setClientErrors] = useState<ClientErrorSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   const load = async () => {
     setLoading(true); setError('');
-    try { setReport(await kitchenAnalyticsService.get(start, end)); }
+    try {
+      setReport(await kitchenAnalyticsService.get(start, end));
+      try { setClientErrors(await clientMonitoringService.getSummary()); } catch { setClientErrors(null); }
+    }
     catch (cause) { setError((cause as Error).message); }
     finally { setLoading(false); }
   };
@@ -60,12 +65,13 @@ export const KitchenBusinessAnalytics: React.FC = () => {
       {loading && !report && <div className="flex min-h-64 items-center justify-center rounded-3xl border border-stone-200 bg-white"><Loader2 className="h-8 w-8 animate-spin text-emerald-700" /></div>}
 
       {report && <>
-        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <Metric icon={ShoppingBag} title="Total orders" value={String(report.summary.total_orders)} detail={`${report.summary.active_orders} active`} />
           <Metric icon={UtensilsCrossed} title="Portions booked" value={String(report.summary.total_portions)} detail="Cancelled excluded" />
           <Metric icon={IndianRupee} title="Booked value" value={money(report.summary.booked_value)} detail={`Average ${money(report.summary.average_order_value)}`} />
           <Metric icon={IndianRupee} title="Payment pending" value={money(report.summary.pending_value)} detail={`Paid ${money(report.summary.paid_value)}`} />
           <Metric icon={XCircle} title="Cancellation" value={`${report.summary.cancellation_rate}%`} detail={`${report.summary.cancelled_orders} orders`} />
+          <Metric icon={MonitorCheck} title="UI stability" value={clientErrors ? `${clientErrors.last_24h} crashes` : 'Unavailable'} detail={clientErrors ? `${clientErrors.last_7d} in 7 days` : 'Admin monitoring unavailable'} />
         </section>
 
         <section className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
