@@ -15,7 +15,7 @@ def sql(query, check=True):
 owner, staff, other_staff, order = [str(uuid.uuid4()) for _ in range(4)]
 
 def kitchen(actor, expected='confirmed', next_status='preparing'):
-    return f"begin;set local role authenticated;set local request.jwt.claim.sub='{actor}';select public.update_kitchen_order_status('{order}','{expected}','{next_status}')->>'status';select pg_sleep(0.2);commit;"
+    return f"begin;set local role authenticated;set local request.jwt.claim.sub='{actor}';set local request.jwt.claim.aal='aal2';select public.update_kitchen_order_status('{order}','{expected}','{next_status}')->>'status';select pg_sleep(0.2);commit;"
 
 try:
     sql(f"""insert into auth.users(id,email,raw_user_meta_data) values
@@ -39,7 +39,7 @@ try:
             holder.stdin.flush()
             assert holder.stdout.readline().strip() == order
             cancel = f"set local role authenticated;set local request.jwt.claim.sub='{owner}';select public.cancel_customer_order('{order}')->>'status';"
-            prepare = f"set local role authenticated;set local request.jwt.claim.sub='{staff}';select public.update_kitchen_order_status('{order}','confirmed','preparing')->>'status';"
+            prepare = f"set local role authenticated;set local request.jwt.claim.sub='{staff}';set local request.jwt.claim.aal='aal2';select public.update_kitchen_order_status('{order}','confirmed','preparing')->>'status';"
             rival = pool.submit(sql, f"begin;{prepare if first == 'cancel' else cancel}commit;", False)
             holder.stdin.write((cancel if first == 'cancel' else prepare) + 'commit;\n')
             holder.stdin.close(); holder.wait(timeout=10)

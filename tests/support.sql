@@ -1,4 +1,5 @@
 BEGIN;
+SELECT set_config('request.jwt.claim.aal','aal2',true);
 DO $$
 DECLARE
   v_admin UUID := gen_random_uuid();

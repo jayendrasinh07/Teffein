@@ -70,6 +70,7 @@ export const PasswordRecoveryPage: React.FC = () => {
               <input
                 type="password"
                 required
+                minLength={12}
                 autoComplete="new-password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -82,6 +83,7 @@ export const PasswordRecoveryPage: React.FC = () => {
               <input
                 type="password"
                 required
+                minLength={12}
                 autoComplete="new-password"
                 value={confirmation}
                 onChange={(event) => setConfirmation(event.target.value)}

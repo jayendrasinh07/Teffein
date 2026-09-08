@@ -1,5 +1,6 @@
 -- Disposable fixtures: safe to run on cloud in this transaction; nothing survives rollback.
 BEGIN;
+SELECT set_config('request.jwt.claim.aal','aal2',true);
 DO $$
 DECLARE owner_id UUID:=gen_random_uuid(); staff UUID:=gen_random_uuid(); admin_id UUID:=gen_random_uuid();
  delivery UUID:=gen_random_uuid(); corporate UUID:=gen_random_uuid(); addr UUID; meal UUID; slot UUID; addon UUID; day UUID;
@@ -110,6 +111,7 @@ SELECT 'PASS: kitchen authorization, projection, snapshots, filters, transitions
 
 -- Catalog management, customer identification, and RLS-protected realtime signals.
 BEGIN;
+SELECT set_config('request.jwt.claim.aal','aal2',true);
 DO $$
 DECLARE
   owner_id UUID := gen_random_uuid();
@@ -269,6 +271,7 @@ ROLLBACK;
 SELECT 'PASS: kitchen catalog RPC, audited archive, operational customer projection and realtime signal isolation' AS result;
 
 BEGIN;
+SELECT set_config('request.jwt.claim.aal','aal2',true);
 DO $$
 DECLARE
   owner_id UUID := gen_random_uuid();

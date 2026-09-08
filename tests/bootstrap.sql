@@ -7,5 +7,11 @@ CREATE TABLE auth.users (id UUID PRIMARY KEY, email TEXT, phone TEXT, raw_user_m
 CREATE FUNCTION auth.uid() RETURNS UUID LANGUAGE sql STABLE AS $$
  SELECT nullif(current_setting('request.jwt.claim.sub',true),'')::uuid;
 $$;
+CREATE FUNCTION auth.jwt() RETURNS JSONB LANGUAGE sql STABLE AS $$
+ SELECT jsonb_build_object(
+   'sub', nullif(current_setting('request.jwt.claim.sub',true),''),
+   'aal', coalesce(nullif(current_setting('request.jwt.claim.aal',true),''),'aal1')
+ );
+$$;
 GRANT USAGE ON SCHEMA auth,public TO anon,authenticated;
-GRANT EXECUTE ON FUNCTION auth.uid() TO anon,authenticated;
+GRANT EXECUTE ON FUNCTION auth.uid(), auth.jwt() TO anon,authenticated;

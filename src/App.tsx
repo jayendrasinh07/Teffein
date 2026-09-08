@@ -44,6 +44,7 @@ import { MealPreferencesPage } from './pages/MealPreferencesPage';
 import { OrderHistoryPage } from './pages/OrderHistoryPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { KitchenDashboard } from './pages/KitchenDashboard';
+import { KitchenMfaGate } from './components/kitchen/KitchenMfaGate';
 import { DeliveryDashboard } from './pages/DeliveryDashboard';
 import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
@@ -65,7 +66,9 @@ const MainContent: React.FC = () => {
     return (
       <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
         {hasKitchenAccess ? (
-          <KitchenDashboard />
+          <KitchenMfaGate key={currentUser.id}>
+            <KitchenDashboard />
+          </KitchenMfaGate>
         ) : (
           <main className="flex min-h-screen items-center justify-center px-6">
             <div className="max-w-md rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-sm">

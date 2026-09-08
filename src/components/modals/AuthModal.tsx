@@ -285,6 +285,8 @@ export const AuthModal: React.FC = () => {
               <input
                 type="password"
                 required
+                minLength={isSignIn ? undefined : 12}
+                autoComplete={isSignIn ? 'current-password' : 'new-password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"

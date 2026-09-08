@@ -1,4 +1,5 @@
 BEGIN;
+SELECT set_config('request.jwt.claim.aal','aal2',true);
 DO $$
 DECLARE
   v_admin UUID := gen_random_uuid();
@@ -56,6 +57,9 @@ DECLARE
   v_slot JSONB;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', v_f->>'admin', true);
+  PERFORM set_config('request.jwt.claim.aal', 'aal1', true);
+  BEGIN PERFORM public.get_kitchen_management(); RAISE EXCEPTION 'Admin without MFA read management'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  PERFORM set_config('request.jwt.claim.aal', 'aal2', true);
   v_document := public.get_kitchen_management();
   SELECT entry INTO v_slot FROM jsonb_array_elements(v_document->'slots') entry WHERE entry->>'id' = v_f->>'slot';
   IF v_document->>'payment_mode' <> 'manual'
