@@ -15,7 +15,7 @@ export const TraceabilitySection: React.FC = () => {
             <div className="lg:col-span-6 space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-xs font-bold">
                 <QrCode className="w-3.5 h-3.5 text-amber-300" />
-                <span>TEFFEIN Transparency & Traceability</span>
+                <span>Thalimitra Transparency & Traceability</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
@@ -24,7 +24,7 @@ export const TraceabilitySection: React.FC = () => {
               </h2>
 
               <p className="text-stone-300 text-sm sm:text-base leading-relaxed">
-                Every single TEFFEIN meal tray features a scannable QR verification stamp. Check the exact minute your meal left the tawa, packed temperature, chef in charge, and hygiene clearance.
+                Every single Thalimitra meal tray features a scannable QR verification stamp. Check the exact minute your meal left the tawa, packed temperature, chef in charge, and hygiene clearance.
               </p>
 
               <div className="pt-2 flex flex-col gap-2.5 text-xs sm:text-sm text-stone-300">

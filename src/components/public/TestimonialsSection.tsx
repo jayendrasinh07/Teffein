@@ -24,7 +24,7 @@ export const TestimonialsSection: React.FC = () => {
             <span className="text-[#0D6E44]">across Gandhinagar</span>
           </h2>
           <p className="text-stone-600 text-sm sm:text-base mt-3">
-            See how students, corporate employees, and factory managers transformed their daily eating routine with TEFFEIN.
+            See how students, corporate employees, and factory managers transformed their daily eating routine with Thalimitra.
           </p>
         </div>
 

@@ -1,4 +1,4 @@
-# TEFFEIN ordering and Kitchen MVP
+# Thalimitra ordering and Kitchen MVP
 
 The ordering foundation is merged in GitHub main at `331c22b786a304b28cbd2f985ad37c4bf2136cbc`. Its TypeScript check, production build, client tests and PostgreSQL 17 tests passed in [CI run 33764191064](https://github.com/jayendrasinh07/Teffein/actions/runs/33764191064).
 
@@ -6,7 +6,7 @@ This change implements the minimal Kitchen workspace and deploys its guarded dat
 
 ## Deployed database source
 
-Connected project: Tiffein, `boeceqmjrnxpkmhppblq`.
+Connected project: Thalimitra, `boeceqmjrnxpkmhppblq`.
 
 - `supabase/migrations/20260903125901_phase1_foundation.sql`
 - `supabase/migrations/20260903125913_phase2_ordering_engine.sql`

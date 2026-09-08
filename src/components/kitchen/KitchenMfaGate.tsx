@@ -58,7 +58,7 @@ export const KitchenMfaGate: React.FC<React.PropsWithChildren> = ({ children }) 
         const removal = await client.auth.mfa.unenroll({ factorId: factor.id });
         if (removal.error) throw removal.error;
       }
-      const enrollment = await client.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'TEFFEIN Kitchen' });
+      const enrollment = await client.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Thalimitra Kitchen' });
       if (enrollment.error) throw enrollment.error;
       setFactorId(enrollment.data.id);
       setQrCode(enrollment.data.totp.qr_code);
@@ -110,7 +110,7 @@ export const KitchenMfaGate: React.FC<React.PropsWithChildren> = ({ children }) 
         ) : qrCode ? (
           <>
             <p className="mt-2 text-center text-sm text-stone-600">Scan this QR code in Google Authenticator, then enter the current code.</p>
-            <img src={qrCode} alt="TEFFEIN Kitchen authenticator QR code" className="mx-auto mt-5 h-52 w-52 rounded-xl border border-stone-200 p-2" />
+            <img src={qrCode} alt="Thalimitra Kitchen authenticator QR code" className="mx-auto mt-5 h-52 w-52 rounded-xl border border-stone-200 p-2" />
             <details className="mt-3 rounded-xl bg-stone-50 p-3 text-xs text-stone-600">
               <summary className="cursor-pointer font-bold">Cannot scan? Show setup key</summary>
               <code className="mt-2 block break-all select-all">{secret}</code>

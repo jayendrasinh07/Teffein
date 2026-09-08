@@ -23,7 +23,7 @@ export const CorporateSection: React.FC = () => {
           <div className="lg:col-span-6 space-y-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/5 text-[#0D6E44] text-xs font-black uppercase tracking-wider">
               <Building2 className="w-3.5 h-3.5" />
-              <span>TEFFEIN for Teams & Enterprises</span>
+              <span>Thalimitra for Teams & Enterprises</span>
             </div>
 
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight leading-tight">
@@ -32,7 +32,7 @@ export const CorporateSection: React.FC = () => {
             </h2>
 
             <p className="text-stone-600 text-sm sm:text-base leading-relaxed">
-              Leading teams across GIFT City, Infocity, and manufacturing plants in Sector 24-28 GIDC partner with TEFFEIN for scheduled, hygienic employee catering. Boost focus and eliminate the daily food ordering scramble.
+              Leading teams across GIFT City, Infocity, and manufacturing plants in Sector 24-28 GIDC partner with Thalimitra for scheduled, hygienic employee catering. Boost focus and eliminate the daily food ordering scramble.
             </p>
 
             <div className="space-y-3.5 text-xs sm:text-sm text-stone-700 font-medium">

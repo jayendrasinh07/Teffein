@@ -432,7 +432,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showToast('GPS Location Detected', `${resolved.displayName}. Confirm your address to activate cluster delivery.`, 'success');
     } else {
       setLocationState('not-serviceable');
-      showToast('Outside Active Zone', resolved.serviceability?.message || `TEFFEIN is currently not delivering to ${resolved.displayName}.`, 'warning');
+      showToast('Outside Active Zone', resolved.serviceability?.message || `Thalimitra is currently not delivering to ${resolved.displayName}.`, 'warning');
     }
   }, []);
 
@@ -618,7 +618,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotificationPermission(state);
     if (state === 'granted') {
       showToast('Notifications Enabled', 'You will receive live updates when your meal is prepared, dispatched, and delivered.', 'success');
-      permissionManager.sendOrderNotification('TEFFEIN Delivery Updates Active 🍲', {
+      permissionManager.sendOrderNotification('Thalimitra Delivery Updates Active 🍲', {
         body: 'You will receive punctual status alerts for your lunch and dinner orders.'
       });
       return true;

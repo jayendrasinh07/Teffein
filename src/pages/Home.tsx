@@ -15,10 +15,10 @@ export const Home: React.FC = () => {
       {/* 1. Hero: Roz ka khana. Sahi khana. */}
       <HeroSection />
 
-      {/* 2. Today's Meal: Aaj TEFFEIN mein kya mil raha hai? */}
+      {/* 2. Today's Meal: Aaj Thalimitra mein kya mil raha hai? */}
       <HomeMealPreview />
 
-      {/* 3. Why TEFFEIN: 3 Key Benefits (Freshly Cooked, Home-Style, Flexible) */}
+      {/* 3. Why Thalimitra: 3 Key Benefits (Freshly Cooked, Home-Style, Flexible) */}
       <HomeThreeBenefits />
 
       {/* 4. Made for your everyday: Segments (Students, Workers, Companies) */}

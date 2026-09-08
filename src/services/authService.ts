@@ -54,7 +54,7 @@ export const authService = {
       if (error) throw error;
       return { user: data.user, error: null };
     } catch (err: any) {
-      console.error('[TEFFEIN Auth] Sign up error:', err);
+      console.error('[Thalimitra Auth] Sign up error:', err);
       return { user: null, error: err };
     }
   },
@@ -75,7 +75,7 @@ export const authService = {
       if (error) throw error;
       return { user: data.user, session: data.session, error: null };
     } catch (err: any) {
-      console.error('[TEFFEIN Auth] Sign in error:', err);
+      console.error('[Thalimitra Auth] Sign in error:', err);
       return { user: null, session: null, error: err };
     }
   },
@@ -91,7 +91,7 @@ export const authService = {
       if (error) throw error;
       return { error: null };
     } catch (err: any) {
-      console.error('[TEFFEIN Auth] Password recovery request failed:', err);
+      console.error('[Thalimitra Auth] Password recovery request failed:', err);
       return { error: err };
     }
   },
@@ -105,7 +105,7 @@ export const authService = {
       if (error) throw error;
       return { error: null };
     } catch (err: any) {
-      console.error('[TEFFEIN Auth] Password update failed:', err);
+      console.error('[Thalimitra Auth] Password update failed:', err);
       return { error: err };
     }
   },
@@ -122,7 +122,7 @@ export const authService = {
       if (error) throw error;
       return { error: null };
     } catch (err: any) {
-      console.error('[TEFFEIN Auth] Sign out error:', err);
+      console.error('[Thalimitra Auth] Sign out error:', err);
       return { error: err };
     }
   },
@@ -139,7 +139,7 @@ export const authService = {
       if (error || !user) return null;
       return user;
     } catch (err) {
-      console.warn('[TEFFEIN Auth] Failed to fetch current user:', err);
+      console.warn('[Thalimitra Auth] Failed to fetch current user:', err);
       return null;
     }
   },
@@ -172,7 +172,7 @@ export const authService = {
         avatarUrl: row.avatar_url || undefined
       };
     } catch (err) {
-      console.warn('[TEFFEIN Auth] Failed to fetch profile from Supabase:', err);
+      console.warn('[Thalimitra Auth] Failed to fetch profile from Supabase:', err);
       return null;
     }
   },
@@ -196,7 +196,7 @@ export const authService = {
 
       return (data as any[]).map((r) => r.role as UserRoleType);
     } catch (err) {
-      console.warn('[TEFFEIN Auth] Failed to fetch roles:', err);
+      console.warn('[Thalimitra Auth] Failed to fetch roles:', err);
       return [];
     }
   },
@@ -224,7 +224,7 @@ export const authService = {
       if (error) throw error;
       return { success: true, error: null };
     } catch (err: any) {
-      console.error('[TEFFEIN Auth] Profile update failed:', err);
+      console.error('[Thalimitra Auth] Profile update failed:', err);
       return { success: false, error: err };
     }
   },

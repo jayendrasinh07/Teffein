@@ -109,7 +109,7 @@ export const HomeMealPreview = () => {
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-black text-stone-900 mt-2">{meal.name}</h3>
                   <p className="text-sm text-stone-600 mt-2 leading-relaxed">
-                    {meal.description || 'Freshly prepared by the TEFFEIN kitchen.'}
+                    {meal.description || 'Freshly prepared by the Thalimitra kitchen.'}
                   </p>
                 </div>
 

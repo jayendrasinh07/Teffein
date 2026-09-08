@@ -14,5 +14,6 @@ backups/
 *.dpapi
 *.tefkey
 TEFFEIN Recovery Code*.txt
+Thalimitra Recovery Code*.txt
 supabase/.temp/
 

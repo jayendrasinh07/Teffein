@@ -1,5 +1,5 @@
 /**
- * TEFFEIN - Location & Address Intelligence Service
+ * Thalimitra - Location & Address Intelligence Service
  * Handles coordinate resolution, zone calculations, serviceability checks,
  * human-readable formatting, and address persistence.
  */
@@ -20,7 +20,7 @@ import { reverseGeocodeGoogle } from './googleMapsLoader';
 export const CENTRAL_KITCHEN_COORDS = {
   latitude: 23.2356,
   longitude: 72.6417,
-  name: 'TEFFEIN Central Steam Kitchen, Sector 25, Gandhinagar'
+  name: 'Thalimitra Central Steam Kitchen, Sector 25, Gandhinagar'
 };
 
 // Delivery Zones
@@ -140,7 +140,7 @@ export function evaluateLocationServiceability(
       clusterId: 'cluster-d',
       clusterName: zone.name,
       deliveryFee: zone.deliveryFee,
-      message: `TEFFEIN delivers directly to ${areaName || 'your area'} with free cluster doorstep delivery.`,
+      message: `Thalimitra delivers directly to ${areaName || 'your area'} with free cluster doorstep delivery.`,
       estimatedLunchSlot: '12:00 PM – 01:00 PM',
       estimatedDinnerSlot: '07:30 PM – 08:30 PM',
       isExactSectorMatch: true
@@ -161,7 +161,7 @@ export function evaluateLocationServiceability(
       clusterId: 'cluster-b',
       clusterName: zone.name,
       deliveryFee: zone.deliveryFee,
-      message: `TEFFEIN delivers to ${areaName || 'your area'} with ₹${zone.deliveryFee} express delivery.`,
+      message: `Thalimitra delivers to ${areaName || 'your area'} with ₹${zone.deliveryFee} express delivery.`,
       estimatedLunchSlot: '12:30 PM – 01:15 PM',
       estimatedDinnerSlot: '07:45 PM – 08:30 PM',
       isExactSectorMatch: true
@@ -182,7 +182,7 @@ export function evaluateLocationServiceability(
       clusterId: 'cluster-d',
       clusterName: zone.name,
       deliveryFee: zone.deliveryFee,
-      message: `TEFFEIN delivers to ${areaName || 'your area'} with ₹${zone.deliveryFee} extended delivery.`,
+      message: `Thalimitra delivers to ${areaName || 'your area'} with ₹${zone.deliveryFee} extended delivery.`,
       estimatedLunchSlot: '12:30 PM – 01:15 PM',
       estimatedDinnerSlot: '08:00 PM – 08:45 PM',
       isExactSectorMatch: false
@@ -200,7 +200,7 @@ export function evaluateLocationServiceability(
     clusterId: '',
     clusterName: '',
     deliveryFee: 0,
-    message: `We're not delivering to ${areaName ? `"${areaName}"` : 'this location'} yet. TEFFEIN currently serves Gandhinagar sectors (1–30), Infocity, Kudasan, PDPU Knowledge Corridor, and GIFT City.`,
+    message: `We're not delivering to ${areaName ? `"${areaName}"` : 'this location'} yet. Thalimitra currently serves Gandhinagar sectors (1–30), Infocity, Kudasan, PDPU Knowledge Corridor, and GIFT City.`,
     estimatedLunchSlot: 'N/A',
     estimatedDinnerSlot: 'N/A'
   };
@@ -218,7 +218,7 @@ export async function reverseGeocodeCoordinates(
 ): Promise<DetectedLocation> {
   const timestamp = Date.now();
 
-  console.group('📍 [TEFFEIN GPS PIPELINE] Reverse Geocoding Request');
+  console.group('📍 [Thalimitra GPS PIPELINE] Reverse Geocoding Request');
   console.log('LOCATION REQUEST STARTED');
   console.log('LOCATION PERMISSION: granted');
   console.log('RAW LATITUDE:', latitude);
@@ -255,7 +255,7 @@ export async function reverseGeocodeCoordinates(
       rawGeocode = googleResult.rawResult || null;
     }
   } catch (googleErr) {
-    console.warn('[TEFFEIN Maps] Google Geocoder reverse lookup failed:', googleErr);
+    console.warn('[Thalimitra Maps] Google Geocoder reverse lookup failed:', googleErr);
   }
 
   // If geocoding could not resolve names, do not fake sector or synthetic addresses
@@ -332,7 +332,7 @@ export function checkAreaServiceability(searchQuery: string): ServiceabilityResu
         clusterId: secNum <= 15 ? 'cluster-d' : 'cluster-c',
         clusterName: 'Core Gandhinagar Sectors',
         deliveryFee: zone.deliveryFee,
-        message: `TEFFEIN delivers directly to Sector ${secNum} with free cluster doorstep delivery.`,
+        message: `Thalimitra delivers directly to Sector ${secNum} with free cluster doorstep delivery.`,
         estimatedLunchSlot: '12:15 PM – 01:00 PM',
         estimatedDinnerSlot: '07:45 PM – 08:30 PM',
         isExactSectorMatch: true
@@ -377,7 +377,7 @@ export function checkAreaServiceability(searchQuery: string): ServiceabilityResu
         : 'cluster-d',
       clusterName: match.cluster,
       deliveryFee: zone.deliveryFee,
-      message: `TEFFEIN delivers directly to ${match.area} (${zone.name}) with ${zone.deliveryFee === 0 ? 'free cluster delivery' : `₹${zone.deliveryFee} delivery fee`}.`,
+      message: `Thalimitra delivers directly to ${match.area} (${zone.name}) with ${zone.deliveryFee === 0 ? 'free cluster delivery' : `₹${zone.deliveryFee} delivery fee`}.`,
       estimatedLunchSlot: match.lunchSlot,
       estimatedDinnerSlot: match.dinnerSlot,
       isExactSectorMatch: true
@@ -406,7 +406,7 @@ export function checkAreaServiceability(searchQuery: string): ServiceabilityResu
       clusterId: 'cluster-a',
       clusterName: 'Student & Tech Belt',
       deliveryFee: 0,
-      message: 'TEFFEIN delivers directly to all Gandhinagar college campuses & student PGs with free doorstep delivery.',
+      message: 'Thalimitra delivers directly to all Gandhinagar college campuses & student PGs with free doorstep delivery.',
       estimatedLunchSlot: '12:15 PM – 12:45 PM',
       estimatedDinnerSlot: '07:30 PM – 08:15 PM',
       isExactSectorMatch: true
@@ -423,7 +423,7 @@ export function checkAreaServiceability(searchQuery: string): ServiceabilityResu
     clusterId: '',
     clusterName: '',
     deliveryFee: 0,
-    message: `We're not delivering to "${searchQuery}" yet. TEFFEIN currently serves all Gandhinagar sectors (1–30), Infocity, Kudasan, and GIFT City.`,
+    message: `We're not delivering to "${searchQuery}" yet. Thalimitra currently serves all Gandhinagar sectors (1–30), Infocity, Kudasan, and GIFT City.`,
     estimatedLunchSlot: 'N/A',
     estimatedDinnerSlot: 'N/A'
   };

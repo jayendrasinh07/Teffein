@@ -46,7 +46,7 @@ export const PasswordRecoveryPage: React.FC = () => {
           {complete ? 'Password updated' : 'Create a new password'}
         </h1>
         <p className="mt-2 text-center text-sm text-stone-600">
-          {complete ? 'You can now return to the Kitchen workspace.' : 'Choose a secure password for your TEFFEIN account.'}
+          {complete ? 'You can now return to the Kitchen workspace.' : 'Choose a secure password for your Thalimitra account.'}
         </p>
 
         {complete ? (

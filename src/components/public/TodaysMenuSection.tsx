@@ -78,7 +78,7 @@ export const TodaysMenuSection = () => {
               {dateLabel(selectedDate, true)} {selectedSlot === 'lunch' ? 'Lunch' : 'Dinner'}
             </h2>
             <p className="text-stone-600 text-sm sm:text-base mt-2 max-w-xl">
-              Every meal and price below is published directly by the TEFFEIN kitchen.
+              Every meal and price below is published directly by the Thalimitra kitchen.
             </p>
           </div>
 
@@ -189,7 +189,7 @@ export const TodaysMenuSection = () => {
                   </div>
 
                   <p className="text-sm text-stone-600 leading-relaxed mt-3 flex-1">
-                    {meal.description || 'Freshly prepared by the TEFFEIN kitchen.'}
+                    {meal.description || 'Freshly prepared by the Thalimitra kitchen.'}
                   </p>
 
                   <button

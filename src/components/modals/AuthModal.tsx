@@ -58,7 +58,7 @@ export const AuthModal: React.FC = () => {
           setErrorMessage(error.message || 'Invalid email or password.');
           return;
         }
-        showToast('Welcome Back!', 'You have successfully signed in to TEFFEIN.', 'success');
+        showToast('Welcome Back!', 'You have successfully signed in to Thalimitra.', 'success');
         setIsAuthModalOpen(false);
       } else {
         if (!fullName.trim()) {
@@ -83,7 +83,7 @@ export const AuthModal: React.FC = () => {
           setErrorMessage(error.message || 'Could not complete registration.');
           return;
         }
-        showToast('Account Created!', 'Welcome to TEFFEIN Gandhinagar. Your profile is ready.', 'success');
+        showToast('Account Created!', 'Welcome to Thalimitra Gandhinagar. Your profile is ready.', 'success');
         setIsAuthModalOpen(false);
       }
     } catch (err: any) {
@@ -109,7 +109,7 @@ export const AuthModal: React.FC = () => {
       setErrorMessage(error.message || 'Could not send the reset link. Please try again.');
       return;
     }
-    setInfoMessage('If this email has a TEFFEIN account, a secure reset link has been sent.');
+    setInfoMessage('If this email has a Thalimitra account, a secure reset link has been sent.');
   };
 
   const segments: { id: CustomerSegment; label: string; icon: React.ReactNode; desc: string }[] = [
@@ -135,11 +135,11 @@ export const AuthModal: React.FC = () => {
 
           <div className="flex items-center gap-2 mb-1 text-amber-300 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>TEFFEIN Gandhinagar</span>
+            <span>Thalimitra Gandhinagar</span>
           </div>
 
           <h3 className="text-xl font-black tracking-tight">
-            {isKitchenSignIn ? 'Kitchen sign in' : mode === 'signin' ? 'Sign in to your account' : 'Create your TEFFEIN account'}
+            {isKitchenSignIn ? 'Kitchen sign in' : mode === 'signin' ? 'Sign in to your account' : 'Create your Thalimitra account'}
           </h3>
           <p className="text-xs text-stone-200 mt-1">
             {isKitchenSignIn

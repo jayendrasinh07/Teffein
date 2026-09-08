@@ -100,7 +100,7 @@ export const LocationConfirmationModal: React.FC<LocationConfirmationModalProps>
     });
 
     setWaitlistSubmitted(true);
-    showToast('Waitlist Joined', `We will notify you as soon as TEFFEIN expands to ${detectedLoc.area || detectedLoc.displayName}!`, 'success');
+    showToast('Waitlist Joined', `We will notify you as soon as Thalimitra expands to ${detectedLoc.area || detectedLoc.displayName}!`, 'success');
   };
 
   return (
@@ -275,7 +275,7 @@ export const LocationConfirmationModal: React.FC<LocationConfirmationModalProps>
             /* Outside Zone Waitlist Form */
             <div className="space-y-4">
               <div className="p-4 rounded-2xl bg-stone-100 border border-stone-200 text-xs text-stone-600 leading-relaxed">
-                TEFFEIN is currently serving Gandhinagar sectors (1–30), Infocity, Kudasan, PDPU Knowledge Corridor, and GIFT City.
+                Thalimitra is currently serving Gandhinagar sectors (1–30), Infocity, Kudasan, PDPU Knowledge Corridor, and GIFT City.
                 Join our waitlist to be first in line when we expand to your neighborhood!
               </div>
 

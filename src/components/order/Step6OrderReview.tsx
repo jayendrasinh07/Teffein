@@ -244,7 +244,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
               {isSubmitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Verifying & Placing Order with TEFFEIN...</span>
+                  <span>Verifying & Placing Order with Thalimitra...</span>
                 </>
               ) : (
                 <>

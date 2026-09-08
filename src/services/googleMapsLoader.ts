@@ -1,5 +1,5 @@
 /**
- * TEFFEIN - Google Maps JavaScript API Loader & Resilient Geocoding Service
+ * Thalimitra - Google Maps JavaScript API Loader & Resilient Geocoding Service
  * Integrates Google Maps JavaScript API with Places (New) and Geometry libraries.
  * Implements resilient fallback reverse geocoding and local Gandhinagar directory search
  * to guarantee zero broken states or unhandled API rejections.
@@ -416,7 +416,7 @@ export function loadGoogleMapsApi(): Promise<typeof google.maps> {
 
   if (!hasKey) {
     const errorMsg = 'Google Maps API key is missing in VITE_GOOGLE_MAPS_API_KEY.';
-    console.warn(`[TEFFEIN Maps] ${errorMsg}`);
+    console.warn(`[Thalimitra Maps] ${errorMsg}`);
     return Promise.reject(new Error(errorMsg));
   }
 
@@ -432,7 +432,7 @@ export function loadGoogleMapsApi(): Promise<typeof google.maps> {
         }
       });
       existingScript.addEventListener('error', (e) => {
-        console.warn('[TEFFEIN Maps] Google Maps script loading error:', e);
+        console.warn('[Thalimitra Maps] Google Maps script loading error:', e);
         reject(new Error("Google Maps script failed to load."));
       });
       return;
@@ -458,7 +458,7 @@ export function loadGoogleMapsApi(): Promise<typeof google.maps> {
     script.onerror = (event) => {
       delete (window as any)[callbackName];
       loadPromise = null;
-      console.warn('[TEFFEIN Maps] Failed to load Google Maps JavaScript API script:', event);
+      console.warn('[Thalimitra Maps] Failed to load Google Maps JavaScript API script:', event);
       reject(new Error("Google Maps script failed to load."));
     };
 
@@ -627,7 +627,7 @@ export async function reverseGeocodeGoogle(
 
     return parseGoogleAddressResult(results[0], lat, lng);
   } catch (err) {
-    console.warn('[TEFFEIN Maps] Google Geocoder reverse lookup failed:', err);
+    console.warn('[Thalimitra Maps] Google Geocoder reverse lookup failed:', err);
     return null;
   }
 }
@@ -722,7 +722,7 @@ export async function searchGooglePlaces(
         signal: controller.signal,
         headers: {
           'Accept-Language': 'en',
-          'User-Agent': 'TEFFEIN-Delivery-App/1.0'
+          'User-Agent': 'Thalimitra-Delivery-App/1.0'
         }
       });
       clearTimeout(timer);

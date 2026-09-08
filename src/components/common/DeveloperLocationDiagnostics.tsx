@@ -62,7 +62,7 @@ export const DeveloperLocationDiagnostics: React.FC = () => {
               ? 'bg-stone-900/85 text-emerald-400 border-stone-700 hover:bg-stone-900' 
               : 'bg-amber-950/85 text-amber-300 border-amber-800/60 hover:bg-amber-950'
           }`}
-          title="Toggle TEFFEIN Location Diagnostics"
+          title="Toggle Thalimitra Location Diagnostics"
         >
           <Crosshair className="w-3 h-3 animate-pulse text-emerald-400" />
           <span className="font-sans tracking-wide">

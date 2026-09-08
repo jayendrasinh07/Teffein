@@ -10,13 +10,13 @@ import {
 } from '../types';
 
 export const BRAND_CONFIG = {
-  name: "TEFFEIN",
+  name: "Thalimitra",
   tagline: "Roz ka khana. Sahi khana.",
   subTagline: "Gandhinagar's Premier Daily Home-Food Subscription",
   location: "Gandhinagar, Gujarat, India",
   phone: "+91 98250 14820",
   whatsapp: "+91 98250 14820",
-  email: "support@teffein.in",
+  email: "parmarjayendrasinh41@gmail.com",
   fssaiNumber: "FSSAI Lic. 20726038000412 (Central Kitchen Gandhinagar)",
   heroHeadline: "Roz ka khana. Sahi khana.",
   heroSubtitle: "Fresh, home-style meals for students, workers and professionals in Gandhinagar — without the daily hassle of outside food.",
@@ -662,7 +662,7 @@ export const CUSTOMER_FEEDBACKS: CustomerFeedback[] = [
     mealId: 'GDM-2650',
     date: '3 days ago',
     rating: 5,
-    comment: 'Factory canteen food was inconsistent. TEFFEIN delivers right at the 12:00 PM lunch whistle hot and fresh. Very reliable daily routine.',
+    comment: 'Factory canteen food was inconsistent. Thalimitra delivers right at the 12:00 PM lunch whistle hot and fresh. Very reliable daily routine.',
     positiveTags: ['Hot Food', 'Punctual Dispatch', 'High Energy'],
     isFeaturedTestimonial: true
   },
@@ -694,12 +694,12 @@ export const GANDHINAGAR_AREAS = [
 
 export const FAQS = [
   {
-    q: 'How does TEFFEIN differ from ordering on Swiggy or Zomato?',
-    a: 'Restaurant apps are meant for occasional heavy dining with high oil, artificial gravies, and unpredictable 45-minute waits with surge delivery fees. TEFFEIN is your daily routine: freshly cooked home-style balanced meals (controlled cold-pressed oil, zero soda, MP Sharbati wheat phulkas) delivered punctually every day at your fixed slot on an affordable subscription without daily ordering hassle.'
+    q: 'How does Thalimitra differ from ordering on Swiggy or Zomato?',
+    a: 'Restaurant apps are meant for occasional heavy dining with high oil, artificial gravies, and unpredictable 45-minute waits with surge delivery fees. Thalimitra is your daily routine: freshly cooked home-style balanced meals (controlled cold-pressed oil, zero soda, MP Sharbati wheat phulkas) delivered punctually every day at your fixed slot on an affordable subscription without daily ordering hassle.'
   },
   {
     q: 'Can I pause my subscription if I am going home or travelling?',
-    a: 'Yes! Flexibility is at the core of TEFFEIN. You can pause your subscription with just 1 tap on your dashboard up to 2 hours before the cooking batch begins. Your remaining days never expire and simply roll over to your next active days.'
+    a: 'Yes! Flexibility is at the core of Thalimitra. You can pause your subscription with just 1 tap on your dashboard up to 2 hours before the cooking batch begins. Your remaining days never expire and simply roll over to your next active days.'
   },
   {
     q: 'What if I just want to skip tomorrow’s lunch or dinner?',

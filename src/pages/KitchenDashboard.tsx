@@ -195,7 +195,7 @@ export const KitchenDashboard: React.FC = () => {
   useEffect(() => {
     if (!newOrderAlert) return;
     const previous = document.title;
-    document.title = `(${newOrderAlert.count}) New Kitchen order · TEFFEIN`;
+    document.title = `(${newOrderAlert.count}) New Kitchen order · Thalimitra`;
     return () => { document.title = previous; };
   }, [newOrderAlert]);
 
@@ -233,7 +233,7 @@ export const KitchenDashboard: React.FC = () => {
           <button type="button" onClick={() => setWorkspace('overview')} className="flex items-center gap-3 text-left">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10"><ChefHat className="h-6 w-6 text-amber-300" /></span>
             <span>
-              <span className="block text-lg font-black tracking-[0.12em]">TEFFEIN</span>
+              <span className="block text-lg font-black tracking-[0.12em]">Thalimitra</span>
               <span className="block text-xs font-semibold text-emerald-100/75">Kitchen Operations</span>
             </span>
           </button>
@@ -304,7 +304,7 @@ export const KitchenDashboard: React.FC = () => {
           {workspace === 'orders' && (
             <>
               <div className="mb-4 hidden print:block">
-                <p className="text-xs font-black uppercase tracking-widest">TEFFEIN Kitchen · Packing list</p>
+                <p className="text-xs font-black uppercase tracking-widest">Thalimitra Kitchen · Packing list</p>
                 <h1 className="mt-1 text-2xl font-black">{fullDate(date)} · {shift === 'lunch' ? 'Lunch' : 'Dinner'}</h1>
               </div>
               <section className="flex flex-col gap-4 rounded-3xl border border-stone-200 bg-white p-4 shadow-sm print:hidden sm:p-5 xl:flex-row xl:items-end xl:justify-between">

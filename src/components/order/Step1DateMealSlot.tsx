@@ -11,7 +11,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { AvailabilityCheckResult, DeliverySlot } from '../../types';
-import { getOrderableDates, TEFFEIN_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
+import { getOrderableDates, THALIMITRA_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
 
 interface Step1DateMealSlotProps {
   selectedDate: string; // YYYY-MM-DD
@@ -230,7 +230,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
                 <span>{lunchTimeRange}</span>
               </div>
               <span className="text-[11px] text-stone-500 font-medium">
-                Cutoff: {TEFFEIN_OPERATIONAL_CONFIG.lunch.cutoffLabel}
+                Cutoff: {THALIMITRA_OPERATIONAL_CONFIG.lunch.cutoffLabel}
               </span>
             </div>
           </button>
@@ -276,7 +276,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
                 <span>{dinnerTimeRange}</span>
               </div>
               <span className="text-[11px] text-stone-500 font-medium">
-                Cutoff: {TEFFEIN_OPERATIONAL_CONFIG.dinner.cutoffLabel}
+                Cutoff: {THALIMITRA_OPERATIONAL_CONFIG.dinner.cutoffLabel}
               </span>
             </div>
           </button>

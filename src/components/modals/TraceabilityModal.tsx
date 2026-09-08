@@ -45,7 +45,7 @@ export const TraceabilityModal: React.FC = () => {
               </span>
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">
-                  TEFFEIN Transparency Engine
+                  Thalimitra Transparency Engine
                 </span>
                 <h3 className="text-lg font-bold text-white leading-tight">Know Your Meal Traceability</h3>
               </div>

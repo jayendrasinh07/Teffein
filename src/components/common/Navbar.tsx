@@ -71,14 +71,14 @@ export const Navbar: React.FC = () => {
               id="brand-logo-btn"
               onClick={() => handleNavClick('home')}
               className="flex items-center gap-2 sm:gap-2.5 text-left group focus:outline-none cursor-pointer"
-              aria-label="TEFFEIN Home"
+              aria-label="Thalimitra Home"
             >
               <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#0D6E44] flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform duration-200 shrink-0">
                 <span className="font-black text-lg sm:text-xl tracking-tighter text-amber-300 font-mono">T</span>
               </div>
               <div className="flex flex-col justify-center min-w-0">
                 <span className="font-black text-xl sm:text-2xl tracking-tight text-stone-900 leading-none">
-                  TEFF<span className="text-[#0D6E44]">EIN</span>
+                  Thali<span className="text-[#0D6E44]">mitra</span>
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-semibold text-stone-500 tracking-tight leading-tight mt-0.5 whitespace-nowrap hidden xs:inline-block">
                   Roz ka khana. Sahi khana.

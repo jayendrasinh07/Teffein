@@ -56,14 +56,14 @@ export const WhyUsSection: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/5 text-[#0D6E44] text-xs font-black uppercase tracking-wider mb-3">
-            <span>The TEFFEIN Standard</span>
+            <span>The Thalimitra Standard</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 tracking-tight leading-tight">
             More than a tiffin. <br />
             <span className="text-[#0D6E44]">A better food routine.</span>
           </h2>
           <p className="text-stone-600 text-sm sm:text-base mt-3 max-w-2xl mx-auto">
-            Traditional restaurant apps are made for irregular heavy dining. TEFFEIN is engineered specifically as your daily, sustainable nutrition system.
+            Traditional restaurant apps are made for irregular heavy dining. Thalimitra is engineered specifically as your daily, sustainable nutrition system.
           </p>
         </div>
 

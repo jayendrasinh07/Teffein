@@ -36,7 +36,7 @@ export const KitchenBusinessAnalytics: React.FC = () => {
       ...report.daily.map(row => [row.date, row.orders, row.cancelled, row.portions, row.booked_value])];
     const csv = rows.map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }));
-    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `teffein-report-${report.start_date}-${report.end_date}.csv`; anchor.click();
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `thalimitra-report-${report.start_date}-${report.end_date}.csv`; anchor.click();
     URL.revokeObjectURL(url);
   };
 

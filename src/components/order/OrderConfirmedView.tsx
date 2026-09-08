@@ -242,7 +242,7 @@ export const OrderConfirmedView: React.FC<OrderConfirmedViewProps> = ({
             </span>
           </div>
           <h4 className="text-base font-black">
-            Ordering TEFFEIN regularly?
+            Ordering Thalimitra regularly?
           </h4>
           <p className="text-xs text-stone-300 max-w-sm">
             Save up to ₹35 per meal, get free pause/resume, and zero daily ordering hassle with a 15-day or 30-day meal plan.

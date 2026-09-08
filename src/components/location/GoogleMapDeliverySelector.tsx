@@ -162,7 +162,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
       }
     } catch (err) {
       if (reqId !== requestIdRef.current) return;
-      console.error('[TEFFEIN Maps] Reverse geocoding error:', err);
+      console.error('[Thalimitra Maps] Reverse geocoding error:', err);
       // Clean fallback object without inventing fake locations
       setResolvedAddress({
         formattedAddress: `${lat.toFixed(5)}° N, ${lng.toFixed(5)}° E`,
@@ -197,7 +197,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
 
       if (!mapElementRef.current) return;
 
-      // Clean modern Google Maps styling tailored for TEFFEIN
+      // Clean modern Google Maps styling tailored for Thalimitra
       const mapOptions: google.maps.MapOptions & { internalUsageAttributionIds?: string[] } = {
         center: mapCenter,
         zoom: 16,
@@ -272,7 +272,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
       // Initial reverse geocode for starting center
       executeReverseGeocode(mapCenter.lat, mapCenter.lng);
     } catch (err: any) {
-      console.error('[TEFFEIN Maps] Google Maps initialization failed:', err);
+      console.error('[Thalimitra Maps] Google Maps initialization failed:', err);
       setMapLoadError(err?.message || "Google Maps couldn't load.");
     } finally {
       setIsInitializingMap(false);
@@ -379,7 +379,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
 
           setLocationStatus('detected');
         } catch (geocodeErr) {
-          console.error('[TEFFEIN Maps] Reverse geocoding error:', geocodeErr);
+          console.error('[Thalimitra Maps] Reverse geocoding error:', geocodeErr);
         } finally {
           setIsGeocoding(false);
           setIsGpsLocating(false);
@@ -450,7 +450,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
         const predictions = await searchGooglePlaces(val, mapCenter);
         setPlacesPredictions(predictions);
       } catch (err) {
-        console.error('[TEFFEIN Maps] Places autocomplete error:', err);
+        console.error('[Thalimitra Maps] Places autocomplete error:', err);
       } finally {
         setIsSearchingPlaces(false);
       }
@@ -473,7 +473,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
         googleMapInstanceRef.current.setZoom(17);
       }
     } catch (err) {
-      console.warn('[TEFFEIN Maps] Could not resolve place details:', err);
+      console.warn('[Thalimitra Maps] Could not resolve place details:', err);
     }
   };
 
@@ -594,7 +594,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
     });
 
     setWaitlistSubmitted(true);
-    showToast('Waitlist Joined', `We will notify ${waitlistContact} as soon as TEFFEIN launches in ${resolvedAddress.area}!`, 'info');
+    showToast('Waitlist Joined', `We will notify ${waitlistContact} as soon as Thalimitra launches in ${resolvedAddress.area}!`, 'info');
   };
 
   return (
@@ -979,7 +979,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
                 <CheckCircle2 className="w-6 h-6 text-[#0D6E44] shrink-0 mt-0.5" />
                 <div>
                   <div className="text-base font-black text-emerald-950 flex items-center gap-2">
-                    <span>TEFFEIN delivers here ✓</span>
+                    <span>Thalimitra delivers here ✓</span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-bold">
                       {serviceabilityResult.deliveryFee === 0 ? 'Free Delivery' : `₹${serviceabilityResult.deliveryFee} Express`}
                     </span>
@@ -1189,7 +1189,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
                 <form onSubmit={handleJoinWaitlist} className="bg-white p-5 rounded-2xl border border-stone-200 space-y-4">
                   <div className="flex items-center gap-2 text-stone-900 font-black text-sm">
                     <Bell className="w-4 h-4 text-amber-600" />
-                    <span>Get Notified When TEFFEIN Launches Here</span>
+                    <span>Get Notified When Thalimitra Launches Here</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1237,7 +1237,7 @@ export const GoogleMapDeliverySelector: React.FC<GoogleMapDeliverySelectorProps>
                   <CheckCircle2 className="w-8 h-8 text-emerald-600 mx-auto" />
                   <div className="text-sm font-black text-emerald-950">You're on the priority list!</div>
                   <p className="text-xs text-emerald-800">
-                    We'll contact you immediately once TEFFEIN meal delivery expands to {resolvedAddress?.area}.
+                    We'll contact you immediately once Thalimitra meal delivery expands to {resolvedAddress?.area}.
                   </p>
                   <button
                     onClick={() => setCurrentStep('map_selection')}

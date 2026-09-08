@@ -8,7 +8,7 @@ export const HomeThreeBenefits: React.FC = () => {
         
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-xs font-black uppercase tracking-wider text-[#0D6E44] bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-            Why TEFFEIN
+            Why Thalimitra
           </span>
           <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 tracking-tight">
             Real food, cooked with care

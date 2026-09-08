@@ -32,7 +32,7 @@ export class KitchenManagementError extends Error {
   constructor(code: string) {
     super(code === '42501' ? 'Admin access is required for Management.'
       : code === '23514' ? 'Capacity cannot be lower than portions already booked for a current or future date.'
-      : code === 'P0002' ? 'Account or access record was not found. The user must create a TEFFEIN account first.'
+      : code === 'P0002' ? 'Account or access record was not found. The user must create a Thalimitra account first.'
       : code === '22023' ? 'Check the value and try again.'
       : 'Management could not be refreshed. Try again.');
     this.code = code;

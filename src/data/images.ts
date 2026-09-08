@@ -1,5 +1,5 @@
 /**
- * TEFFEIN Centralized Image Asset Repository
+ * Thalimitra Centralized Image Asset Repository
  * High-quality authentic food-tech, ingredient, kitchen, and lifestyle photography.
  * Configured with responsive parameters (auto=format, fit=crop, q=80)
  */

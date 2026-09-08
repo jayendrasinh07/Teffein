@@ -110,11 +110,11 @@ function Export-TeffeinPortableRecovery {
     [IO.File]::WriteAllBytes($PortableKeyPath, $output)
 
     @"
-TEFFEIN PORTABLE RECOVERY CARD
+THALIMITRA PORTABLE RECOVERY CARD
 
 RECOVERY-CODE: $recoveryCode
 
-This code unlocks the portable key stored with the encrypted TEFFEIN backup.
+This code unlocks the portable key stored with the encrypted Thalimitra backup.
 Keep this card separate from OneDrive. Print it or save it in a trusted password manager.
 Never send this code in chat, email, Notion, or GitHub.
 "@ | Set-Content -LiteralPath $RecoveryCardPath -Encoding utf8NoBOM
@@ -141,7 +141,7 @@ function Get-TeffeinPortablePassphrase {
   $offset = 0
   [byte[]]$magic = $all[$offset..($offset + $script:PortableMagic.Length - 1)]; $offset += $script:PortableMagic.Length
   if (-not [Security.Cryptography.CryptographicOperations]::FixedTimeEquals($magic, $script:PortableMagic)) {
-    throw 'Not a TEFFEIN portable recovery key.'
+    throw 'Not a compatible Thalimitra portable recovery key.'
   }
   $version = [BitConverter]::ToInt32($all, $offset); $offset += 4
   if ($version -ne 1) { throw 'Unsupported portable recovery key version.' }
@@ -250,7 +250,7 @@ function Unprotect-TeffeinFile {
     $magic = [byte[]]::new($script:Magic.Length)
     if ($input.Read($magic, 0, $magic.Length) -ne $magic.Length -or
         -not [Security.Cryptography.CryptographicOperations]::FixedTimeEquals($magic, $script:Magic)) {
-      throw 'Not a TEFFEIN encrypted backup.'
+      throw 'Not a compatible Thalimitra encrypted backup.'
     }
     $intBytes = [byte[]]::new(4)
     [void]$input.Read($intBytes, 0, 4)

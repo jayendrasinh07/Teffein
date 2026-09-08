@@ -328,7 +328,7 @@ export const OrderOncePage: React.FC = () => {
       setConfirmedOrder(newOrder);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
-      console.error('[TEFFEIN Order] Submission failed:', err);
+      console.error('[Thalimitra Order] Submission failed:', err);
       setSubmissionError(err?.message || 'Order verification failed. Please check your delivery slot and retry.');
     } finally {
       submitLock.current=false;

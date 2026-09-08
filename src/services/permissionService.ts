@@ -1,5 +1,5 @@
 /**
- * TEFFEIN - Centralized Permission Manager
+ * Thalimitra - Centralized Permission Manager
  * Strictly enforces Just-In-Time and Privacy-First permission policies.
  * 
  * Policy:

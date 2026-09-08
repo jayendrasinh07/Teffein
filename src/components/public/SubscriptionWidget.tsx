@@ -71,7 +71,7 @@ export const SubscriptionWidget: React.FC = () => {
               </h2>
 
               <p className="text-stone-300 text-sm sm:text-base leading-relaxed max-w-xl">
-                Experience TEFFEIN’s food-tech dashboard right here. Pause your plan for travel, skip a single meal when dining out, or tweak portion preferences with 1 tap.
+                Experience Thalimitra’s food-tech dashboard right here. Pause your plan for travel, skip a single meal when dining out, or tweak portion preferences with 1 tap.
               </p>
 
               <div className="pt-2 flex flex-wrap gap-4 text-xs text-stone-300 font-medium">
@@ -95,7 +95,7 @@ export const SubscriptionWidget: React.FC = () => {
                     <span className="text-[10px] font-black uppercase tracking-wider text-[#0D6E44] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                       LIVE SUBSCRIBER PORTAL
                     </span>
-                    <h3 className="text-xl font-black text-stone-900 mt-1.5">My TEFFEIN Plan</h3>
+                    <h3 className="text-xl font-black text-stone-900 mt-1.5">My Thalimitra Plan</h3>
                   </div>
 
                   <div className="text-right">
@@ -224,7 +224,7 @@ export const SubscriptionWidget: React.FC = () => {
         <div className="fixed inset-0 z-50 bg-stone-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-              <h4 className="text-lg font-black text-stone-900">Pause your TEFFEIN plan</h4>
+              <h4 className="text-lg font-black text-stone-900">Pause your Thalimitra plan</h4>
               <button onClick={() => setShowPauseDialog(false)} className="text-stone-400 hover:text-stone-700">
                 <X className="w-5 h-5" />
               </button>

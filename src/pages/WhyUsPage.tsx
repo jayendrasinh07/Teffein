@@ -12,13 +12,13 @@ export const WhyUsPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
         <div className="text-center max-w-3xl mx-auto">
           <span className="text-xs font-extrabold uppercase tracking-widest text-[#0D6E44] bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200">
-            The TEFFEIN Standard
+            The Thalimitra Standard
           </span>
           <h1 className="text-4xl sm:text-5xl font-black text-stone-900 mt-4 tracking-tight">
-            Why TEFFEIN vs The Alternatives
+            Why Thalimitra vs The Alternatives
           </h1>
           <p className="text-stone-600 text-base mt-3 leading-relaxed">
-            See how TEFFEIN solves the daily dilemmas between expensive delivery apps, unhygienic local tiffins, and the stress of daily cooking.
+            See how Thalimitra solves the daily dilemmas between expensive delivery apps, unhygienic local tiffins, and the stress of daily cooking.
           </p>
         </div>
 
@@ -29,7 +29,7 @@ export const WhyUsPage: React.FC = () => {
             <thead>
               <tr className="border-b border-stone-200 text-stone-500 font-bold uppercase text-[10px]">
                 <th className="pb-3">Dimension</th>
-                <th className="pb-3 text-[#0D6E44] font-black">TEFFEIN Daily Plan</th>
+                <th className="pb-3 text-[#0D6E44] font-black">Thalimitra Daily Plan</th>
                 <th className="pb-3">Restaurant Delivery Apps</th>
                 <th className="pb-3">Unorganized Local Dabbas</th>
               </tr>

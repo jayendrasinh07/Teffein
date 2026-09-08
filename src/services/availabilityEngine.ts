@@ -7,7 +7,7 @@ import {
 import { GANDHINAGAR_AREAS } from '../data/config';
 import { IMAGES } from '../data/images';
 
-export interface TeffeinConfig {
+export interface ThalimitraConfig {
   lunch: {
     startTime: string; // e.g. "12:00 PM"
     endTime: string;   // e.g. "01:30 PM"
@@ -33,7 +33,7 @@ export interface TeffeinConfig {
   };
 }
 
-export const TEFFEIN_OPERATIONAL_CONFIG: TeffeinConfig = {
+export const THALIMITRA_OPERATIONAL_CONFIG: ThalimitraConfig = {
   lunch: {
     startTime: '12:00 PM',
     endTime: '01:30 PM',
@@ -146,7 +146,7 @@ export function checkServiceability(pincodeOrArea: string): {
       clusterId,
       clusterName: match.cluster,
       pincode: match.pincode,
-      message: `TEFFEIN delivers directly to ${match.area} (${match.cluster}) with free cluster doorstep delivery.`
+      message: `Thalimitra delivers directly to ${match.area} (${match.cluster}) with free cluster doorstep delivery.`
     };
   }
 
@@ -176,7 +176,7 @@ export function checkMealAvailability(params:{date:string;mealSlot:'lunch'|'dinn
  const cutoff=mealSlot==='lunch'?'10:30:00':'17:30:00';
  const dateLabel=date===today?'Today':date===tomorrow?'Tomorrow':date;
  const inBounds=/^\d{4}-\d{2}-\d{2}$/.test(date)&&date>=today&&date<=addCalendarDays(today,6);
- const closed=TEFFEIN_OPERATIONAL_CONFIG.closedDates.includes(date);
+ const closed=THALIMITRA_OPERATIONAL_CONFIG.closedDates.includes(date);
  const pastCutoff=date===today&&clock>=cutoff;
  const available=inBounds&&!closed&&!pastCutoff;
  return {date,mealSlot,dateLabel,isAvailable:available,availableSlots:[],reason:!inBounds?'DATE_OUT_OF_BOUNDS':closed?'KITCHEN_CLOSED':pastCutoff?'CUTOFF_PASSED':undefined,

@@ -30,7 +30,7 @@ export const LegalModal: React.FC = () => {
                 {legalModalTab === 'delivery' && 'Delivery Information & Timings'}
                 {legalModalTab === 'faq' && 'Frequently Asked Questions'}
               </h3>
-              <p className="text-[11px] text-stone-400">TEFFEIN Customer Trust & Operations • Gandhinagar</p>
+              <p className="text-[11px] text-stone-400">Thalimitra Customer Trust & Operations • Gandhinagar</p>
             </div>
           </div>
 
@@ -101,7 +101,7 @@ export const LegalModal: React.FC = () => {
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
                 <p className="font-bold text-xs">Effective Date: January 1, 2026 • Last updated: August 2026</p>
                 <p className="text-xs text-emerald-800 mt-1">
-                  At TEFFEIN, we respect your privacy and are committed to protecting the personal information you share with us for daily home meal deliveries.
+                  At Thalimitra, we respect your privacy and are committed to protecting the personal information you share with us for daily home meal deliveries.
                 </p>
               </div>
 
@@ -127,7 +127,7 @@ export const LegalModal: React.FC = () => {
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">3. Payment Security</h4>
                 <p className="text-stone-600">
-                  All digital transactions are processed through RBI-authorized, PCI-DSS compliant payment gateways (UPI, Cards, NetBanking). TEFFEIN does not store full credit/debit card numbers or UPI PINs.
+                  Digital payments are not active yet. Thalimitra does not collect or store card details or UPI PINs. This policy will be updated when the verified Razorpay payment flow goes live.
                 </p>
               </div>
 
@@ -144,16 +144,16 @@ export const LegalModal: React.FC = () => {
           {legalModalTab === 'terms' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="p-4 rounded-2xl bg-stone-100 border border-stone-200 text-stone-900">
-                <p className="font-bold text-xs">TEFFEIN Platform & Service Terms</p>
+                <p className="font-bold text-xs">Thalimitra Platform & Service Terms</p>
                 <p className="text-xs text-stone-600 mt-1">
-                  By placing a one-time order or activating a meal subscription with TEFFEIN in Gandhinagar, you agree to the following terms.
+                  By placing a one-time order or activating a meal subscription with Thalimitra in Gandhinagar, you agree to the following terms.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">1. Kitchen Cutoff & Batch Timings</h4>
                 <p className="text-stone-600">
-                  Our meals are freshly prepared daily in scheduled batches. Same-day lunch orders and skips must be placed before <strong>9:30 AM</strong>. Same-day dinner orders and skips must be placed before <strong>5:00 PM</strong>. Orders received after cutoff will be scheduled for the next delivery slot.
+                  Our meals are freshly prepared daily in scheduled batches. Same-day lunch orders must be placed before <strong>10:30 AM</strong>, and same-day dinner orders before <strong>5:30 PM</strong>. Orders received after cutoff must use a later orderable date.
                 </p>
               </div>
 
@@ -167,7 +167,7 @@ export const LegalModal: React.FC = () => {
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">3. Food Quality & Consumption Window</h4>
                 <p className="text-stone-600">
-                  TEFFEIN meals are cooked without chemical preservatives or artificial shelf-life extenders. Meals should ideally be consumed within <strong>2.5 hours</strong> of delivery for optimal nutritional freshness and aroma.
+                  Thalimitra meals are cooked without chemical preservatives or artificial shelf-life extenders. Meals should ideally be consumed within <strong>2.5 hours</strong> of delivery for optimal nutritional freshness and aroma.
                 </p>
               </div>
 

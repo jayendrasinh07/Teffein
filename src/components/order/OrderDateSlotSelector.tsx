@@ -10,7 +10,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { AvailabilityCheckResult } from '../../types';
-import { getOrderableDates, TEFFEIN_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
+import { getOrderableDates, THALIMITRA_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
 
 interface OrderDateSlotSelectorProps {
   selectedDate: string; // YYYY-MM-DD

@@ -53,7 +53,7 @@ export const Footer: React.FC = () => {
               </div>
               <div>
                 <span className="font-black text-2xl tracking-tight text-white font-sans block leading-none">
-                  TEFF<span className="text-emerald-400">EIN</span>
+                  Thali<span className="text-emerald-400">mitra</span>
                 </span>
                 <span className="text-xs text-stone-400 font-medium block mt-1">
                   Roz ka khana. Sahi khana.
@@ -189,7 +189,7 @@ export const Footer: React.FC = () => {
                     onClick={() => handleNav('why_us')}
                     className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
                   >
-                    About TEFFEIN
+                    About Thalimitra
                   </button>
                 </li>
               </ul>
@@ -355,7 +355,7 @@ export const Footer: React.FC = () => {
           
           {/* Copyright & Location */}
           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-3 gap-y-1 text-center md:text-left">
-            <span>© 2026 TEFFEIN Technologies Pvt. Ltd.</span>
+            <span>© 2026 Thalimitra</span>
             <span className="hidden sm:inline">•</span>
             <span>Gandhinagar, Gujarat</span>
             

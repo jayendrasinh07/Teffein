@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
   [string]$ProjectRef = 'boeceqmjrnxpkmhppblq',
-  [string]$Destination = (Join-Path $env:OneDrive 'TEFFEIN Secure Backups'),
+  [string]$Destination = (Join-Path $env:OneDrive 'Thalimitra Secure Backups'),
   [switch]$UseWindowsProtectedKey
 )
 
@@ -63,9 +63,9 @@ if ($UseWindowsProtectedKey) {
 }
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$tempRoot = Join-Path $env:TEMP "teffein-backup-$stamp"
-$zipPath = Join-Path $env:TEMP "teffein-backup-$stamp.zip"
-$encryptedPath = Join-Path $Destination "teffein-production-$stamp.tefbackup"
+$tempRoot = Join-Path $env:TEMP "thalimitra-backup-$stamp"
+$zipPath = Join-Path $env:TEMP "thalimitra-backup-$stamp.zip"
+$encryptedPath = Join-Path $Destination "thalimitra-production-$stamp.tefbackup"
 New-Item -ItemType Directory -Path $tempRoot -Force | Out-Null
 
 try {

@@ -18,7 +18,7 @@ export const CorporatePage: React.FC = () => {
               Enterprise Benefits
             </span>
             <h3 className="text-2xl sm:text-3xl font-black text-stone-900 mt-2">
-              Why GIFT City & Infocity Companies Choose TEFFEIN
+              Why GIFT City & Infocity Companies Choose Thalimitra
             </h3>
           </div>
 

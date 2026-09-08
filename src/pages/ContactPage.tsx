@@ -49,7 +49,7 @@ export const ContactPage: React.FC = () => {
             Gandhinagar Kitchen & Support Hub
           </span>
           <h1 className="text-4xl sm:text-5xl font-black text-stone-900 mt-4 tracking-tight">
-            Get in Touch with TEFFEIN
+            Get in Touch with Thalimitra
           </h1>
           <p className="text-stone-600 text-base mt-3 leading-relaxed">
             Have questions about custom plans, corporate orders, or delivery timing in your sector? We’re always here to help.
@@ -133,7 +133,7 @@ export const ContactPage: React.FC = () => {
                   <h3 className="font-bold text-lg text-stone-900 mb-2">Send Us an Enquiry</h3>
 
                   <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs text-emerald-900">
-                    {currentUser ? <>Submitting from <strong>{currentUser.email}</strong>. Your account details are attached securely.</> : <><strong>Sign in required.</strong> We use your TEFFEIN account so the request can be tracked and answered securely.</>}
+                    {currentUser ? <>Submitting from <strong>{currentUser.email}</strong>. Your account details are attached securely.</> : <><strong>Sign in required.</strong> We use your Thalimitra account so the request can be tracked and answered securely.</>}
                   </div>
 
                   <div>

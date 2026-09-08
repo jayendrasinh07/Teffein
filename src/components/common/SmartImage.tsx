@@ -18,7 +18,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
   className = '',
   containerClassName = '',
   priority = false,
-  fallbackTitle = 'TEFFEIN Fresh Meal',
+  fallbackTitle = 'Thalimitra Fresh Meal',
   ...props
 }) => {
   const [isLoading, setIsLoading] = useState(true);
@@ -53,7 +53,7 @@ export const SmartImage: React.FC<SmartImageProps> = ({
         <div className="absolute inset-0 bg-gradient-to-r from-stone-200 via-stone-100 to-stone-200 animate-pulse flex items-center justify-center">
           <div className="flex flex-col items-center gap-1.5 opacity-40">
             <UtensilsCrossed className="w-5 h-5 text-stone-500 animate-bounce" />
-            <span className="text-[10px] font-bold tracking-wider uppercase text-stone-600">TEFFEIN</span>
+            <span className="text-[10px] font-bold tracking-wider uppercase text-stone-600">Thalimitra</span>
           </div>
         </div>
       )}

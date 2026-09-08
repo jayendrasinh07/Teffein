@@ -1,15 +1,15 @@
-# TEFFEIN production recovery
+# Thalimitra production recovery
 
 ## Current protection
 
-- Supabase project: `boeceqmjrnxpkmhppblq` (`Tiffein`, Free plan).
+- Supabase project: `boeceqmjrnxpkmhppblq` (`Thalimitra`, Free plan).
 - Managed daily backups and point-in-time recovery are unavailable on the current plan.
 - Database schema is recoverable from `supabase/migrations/`.
 - `.github/workflows/verify.yml` rebuilds Postgres 17 from every migration and runs ordering, Kitchen, and concurrency checks.
 - Customer and Kitchen health routes are `https://teffein.pages.dev/` and `https://teffein.pages.dev/kitchen`.
 - Kitchen/Admin recovery must preserve TOTP factors; privileged RPCs require an `aal2` session.
 - `backups/` and common dump extensions are ignored so customer data cannot be committed accidentally.
-- The daily `TEFFEIN Production Health` monitor checks project health, advisors, migrations, both live routes, and aggregate order failures without exposing customer data.
+- The daily `Thalimitra Production Health` monitor checks project health, advisors, migrations, both live routes, and aggregate order failures without exposing customer data.
 
 ## Data backup procedure
 
@@ -26,12 +26,13 @@ For unattended recovery on this trusted Windows profile, use `-UseWindowsProtect
 ## Latest verified backup
 
 - Created: 2026-09-08 12:45 IST
-- Archive: `teffein-production-20260908-124550.tefbackup`
-- Off-site destination: OneDrive `TEFFEIN Secure Backups`
+- Archive: `thalimitra-production-20260908-124550.tefbackup`
+- Off-site destination: OneDrive `Thalimitra Secure Backups`
 - SHA-256: `d29dcfa0517dc8fd2c0b7625d459ccc449e32e354e96a909f7ea0c54098de221`
 - Scope: `public`, `private`, `auth`, and `storage` database records. Storage objects themselves require a separate object-file backup if buckets are used.
 - Encryption: AES-256-CBC, PBKDF2-SHA256 (600,000 iterations), and HMAC-SHA256; key wrapped to the current Windows user with DPAPI.
 - Portable recovery: encrypted portable key created and verified on 2026-09-08. Its plaintext recovery card is deliberately outside OneDrive and must be moved to an offline or password-manager destination.
+- Recovery-card location: `C:\Users\jayen\Thalimitra Recovery Code - PRINT AND STORE.txt` (temporary local location; never copy its code into GitHub, Notion, chat, or email).
 
 ## Restore drill
 

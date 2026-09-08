@@ -37,7 +37,7 @@ export const StudentSection: React.FC = () => {
               </h2>
 
               <p className="text-stone-200 text-sm sm:text-base mt-4 leading-relaxed">
-                Tired of oily canteen snacks or spending ₹250 on restaurant delivery apps every evening? TEFFEIN delivers authentic mom-style comfort meals right to your PG gate or hostel reception.
+                Tired of oily canteen snacks or spending ₹250 on restaurant delivery apps every evening? Thalimitra delivers authentic mom-style comfort meals right to your PG gate or hostel reception.
               </p>
 
               {/* Feature Highlights Grid */}

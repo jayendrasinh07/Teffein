@@ -26,7 +26,7 @@ export const HowItWorksPage: React.FC = () => {
             Transparent Operations
           </span>
           <h1 className="text-4xl sm:text-5xl font-black text-stone-900 mt-4 tracking-tight">
-            How TEFFEIN Delivers Daily Perfection
+            How Thalimitra Delivers Daily Perfection
           </h1>
           <p className="text-stone-600 text-base mt-3 leading-relaxed">
             From morning mandi procurement in Gandhinagar to hot steam cooking and cluster delivery at your doorstep.

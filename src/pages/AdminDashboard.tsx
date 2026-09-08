@@ -42,7 +42,7 @@ export const AdminDashboard: React.FC = () => {
               <span className="text-xs text-stone-300">Live Production Mode</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white mt-1">
-              TEFFEIN Platform Operations
+              Thalimitra Platform Operations
             </h1>
             <p className="text-xs text-stone-300">
               Real-time monitoring of kitchen production, delivery clusters, single orders, subscription churn & MRR.
