@@ -1,8 +1,9 @@
 import React from 'react';
 
 type State = { failed: boolean; eventId: string };
+type Props = { children: React.ReactNode };
 
-export class AppErrorBoundary extends React.Component<React.PropsWithChildren, State> {
+export class AppErrorBoundary extends React.Component<Props, State> {
   state: State = { failed: false, eventId: '' };
 
   static getDerivedStateFromError(): State {
