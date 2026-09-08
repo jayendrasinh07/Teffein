@@ -9,5 +9,8 @@ coverage/
 backups/
 *.backup.sql
 *.backup.dump
+*.tefbackup
+*.tefbackup.sha256
+*.dpapi
 supabase/.temp/
 

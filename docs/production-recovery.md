@@ -13,27 +13,34 @@
 
 ## Data backup procedure
 
-Run only from a trusted computer with Docker, the Supabase CLI, the production database password, and an encrypted off-site destination. Never commit or upload dumps to GitHub.
+Run only from a trusted computer with PostgreSQL client tools, an authenticated Supabase CLI, and an encrypted off-site destination. Never commit or upload plaintext dumps to GitHub.
 
 ```powershell
-$backupDir = Join-Path $env:TEMP ("teffein-backup-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
-New-Item -ItemType Directory -Path $backupDir | Out-Null
-supabase db dump --db-url $env:TEFFEIN_DB_URL -f "$backupDir/roles.sql" --role-only
-supabase db dump --db-url $env:TEFFEIN_DB_URL -f "$backupDir/schema.sql"
-supabase db dump --db-url $env:TEFFEIN_DB_URL -f "$backupDir/data.sql" --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
+.\scripts\backup-production.ps1
 ```
 
-Immediately encrypt the three files, copy the encrypted archive off-site, verify its checksum, and securely delete the temporary plaintext directory.
+The script obtains a short-lived database login from the authenticated Supabase CLI, dumps `public`, `private`, `auth`, and `storage`, writes a PII-free manifest, encrypts the archive with AES-256-CBC plus HMAC-SHA256, stores it in OneDrive, verifies SHA-256, and removes plaintext temporary files. Keep the passphrase outside GitHub and Notion.
+
+For unattended recovery on this trusted Windows profile, use `-UseWindowsProtectedKey`. The random key is wrapped with Windows DPAPI and saved beside the encrypted archives; it is usable only by the same Windows user profile. Maintain a separate portable recovery key before relying on it for device-loss recovery.
+
+## Latest verified backup
+
+- Created: 2026-09-08 12:45 IST
+- Archive: `teffein-production-20260908-124550.tefbackup`
+- Off-site destination: OneDrive `TEFFEIN Secure Backups`
+- SHA-256: `d29dcfa0517dc8fd2c0b7625d459ccc449e32e354e96a909f7ea0c54098de221`
+- Scope: `public`, `private`, `auth`, and `storage` database records. Storage objects themselves require a separate object-file backup if buckets are used.
+- Encryption: AES-256-CBC, PBKDF2-SHA256 (600,000 iterations), and HMAC-SHA256; key wrapped to the current Windows user with DPAPI.
 
 ## Restore drill
 
-1. Create a disposable Supabase project; never test a restore against production.
-2. Match required extensions and Postgres major version.
-3. Restore roles, schema, then data in a single transaction with `ON_ERROR_STOP=1` and triggers disabled during data load.
-4. Verify migration history, table counts, RLS, function privileges, a customer order smoke test, and a Kitchen status transition.
-5. Delete the disposable project and record the date and result.
+1. Run `.\scripts\restore-backup-drill.ps1 -BackupPath <encrypted-file>`; it creates an isolated local PostgreSQL cluster and never connects writes to production.
+2. The drill authenticates the archive, restores production `public` schema/data, and checks row counts, RLS coverage, and the ordering RPC.
+3. For a full disaster simulation, restore the same archive to a disposable Supabase project, then verify Auth/MFA, customer ordering, and a Kitchen status transition before deleting it.
+
+Latest local drill: **passed on 2026-09-08** with 14 public tables, 9 private tables, 3 orders, and 4 menu days matching the manifest. `place_order_secure` and RLS-protected tables were present. Auth and Storage records are included in the encrypted archive; restoring them remains part of the future disposable-Supabase drill.
 
 Run a data backup weekly and a restore drill monthly until managed backups are enabled. A Pro upgrade would add seven days of scheduled backups; leaked-password protection and PITR remain separate plan/add-on decisions.
 
-Last schema recovery verification: 2026-09-08, all 14 cloud migration versions matched the repository and GitHub run 34186227606 rebuilt the database and passed every integration test.
+Last schema recovery verification: 2026-09-08, all 15 cloud migration versions matched the repository and GitHub run 34190366558 rebuilt the database and passed every integration test.
 
