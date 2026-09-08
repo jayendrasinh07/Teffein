@@ -50,7 +50,7 @@ export const IMAGES = {
   quality: {
     centralKitchen: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80", // Stainless steel spotless kitchen
     kitchenClean: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=1000&q=80", // Alias
-    foodSafety: "https://images.unsplash.com/photo-1584905066893-7d5c142ba4e1?auto=format&fit=crop&w=800&q=80", // Temperature checks & FSSAI certified sanitization
+    foodSafety: "https://images.unsplash.com/photo-1584905066893-7d5c142ba4e1?auto=format&fit=crop&w=800&q=80", // Food-safety controls preview
     spicesGrains: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=800&q=80", // Pure cold-pressed oils, MP wheat & rock salt
   },
 

@@ -45,9 +45,9 @@ export const TraceabilityModal: React.FC = () => {
               </span>
               <div>
                 <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-400">
-                  Thalimitra Transparency Engine
+                  Pilot Feature Preview
                 </span>
-                <h3 className="text-lg font-bold text-white leading-tight">Know Your Meal Traceability</h3>
+                <h3 className="text-lg font-bold text-white leading-tight">Sample Meal Traceability</h3>
               </div>
             </div>
 
@@ -60,7 +60,7 @@ export const TraceabilityModal: React.FC = () => {
           </div>
 
           <p className="text-xs text-stone-400 mt-2">
-            Every daily tiffin is stamped with a unique QR code verifying real cooking timestamps, oil inspection, and hygiene compliance.
+            This preview contains sample data. Live QR records and verified kitchen checks will be enabled before commercial launch.
           </p>
 
           {/* Search ID Form */}
@@ -152,7 +152,7 @@ export const TraceabilityModal: React.FC = () => {
               <div className="p-3 rounded-xl bg-stone-50 border border-stone-200 flex items-start gap-2.5">
                 <ShieldCheck className="w-4 h-4 text-emerald-700 mt-0.5 shrink-0" />
                 <div>
-                  <div className="font-semibold text-stone-900">Quality Inspector</div>
+                  <div className="font-semibold text-stone-900">Checklist Reviewer</div>
                   <div className="text-stone-600">{meal.hygieneInspector}</div>
                 </div>
               </div>
@@ -194,7 +194,7 @@ export const TraceabilityModal: React.FC = () => {
             onClick={() => setIsTraceabilityModalOpen(false)}
             className="px-5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-colors"
           >
-            Close Inspector
+            Close Details
           </button>
         </div>
       </div>

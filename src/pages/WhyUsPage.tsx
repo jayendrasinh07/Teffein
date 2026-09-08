@@ -54,8 +54,8 @@ export const WhyUsPage: React.FC = () => {
                 <td className="py-3 text-rose-700">Often late or missed</td>
               </tr>
               <tr>
-                <td className="py-3 font-bold text-stone-900">Hygiene Certification</td>
-                <td className="py-3 font-bold text-emerald-800">FSSAI Certified Steam Facility + QR Trace</td>
+                <td className="py-3 font-bold text-stone-900">Hygiene Records</td>
+                <td className="py-3 font-bold text-emerald-800">Documented kitchen checks + QR trace preview</td>
                 <td className="py-3 text-stone-500">Varies by restaurant</td>
                 <td className="py-3 text-rose-700">No audited standards</td>
               </tr>

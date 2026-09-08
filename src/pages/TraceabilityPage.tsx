@@ -24,7 +24,7 @@ export const TraceabilityPage: React.FC = () => {
         <div className="max-w-3xl mx-auto bg-[#FAF8F5] rounded-3xl p-6 sm:p-10 border border-stone-200 shadow-md">
           <div className="text-center mb-6">
             <span className="text-xs font-extrabold uppercase tracking-widest text-[#107048] bg-emerald-100/70 px-3 py-1 rounded-full border border-emerald-200">
-              Meal Certificate Lookup
+              Sample Traceability Lookup
             </span>
             <h3 className="text-2xl font-bold text-stone-900 mt-2">
               Enter Meal Barcode / QR ID
@@ -49,7 +49,7 @@ export const TraceabilityPage: React.FC = () => {
               type="submit"
               className="px-6 py-3.5 bg-[#107048] hover:bg-[#0A4E32] text-white font-bold rounded-2xl text-xs sm:text-sm shrink-0 shadow-md"
             >
-              Verify Certificate
+              View Sample Record
             </button>
           </form>
 
@@ -64,7 +64,7 @@ export const TraceabilityPage: React.FC = () => {
             <div className="p-3 bg-white rounded-xl border border-stone-200">
               <UserCheck className="w-5 h-5 text-emerald-600 mx-auto mb-1" />
               <span className="font-bold block text-stone-900">Head Chef</span>
-              <span className="text-[10px] text-stone-500">Maharaj Rameshwar</span>
+              <span className="text-[10px] text-stone-500">Sample kitchen lead</span>
             </div>
 
             <div className="p-3 bg-white rounded-xl border border-stone-200">
@@ -75,8 +75,8 @@ export const TraceabilityPage: React.FC = () => {
 
             <div className="p-3 bg-white rounded-xl border border-stone-200">
               <Flame className="w-5 h-5 text-amber-500 mx-auto mb-1" />
-              <span className="font-bold block text-stone-900">Oil Certified</span>
-              <span className="text-[10px] text-stone-500">Cold Pressed Virgin</span>
+              <span className="font-bold block text-stone-900">Ingredient Record</span>
+              <span className="text-[10px] text-stone-500">Sample data</span>
             </div>
           </div>
         </div>

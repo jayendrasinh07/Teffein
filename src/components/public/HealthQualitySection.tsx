@@ -29,9 +29,9 @@ export const HealthQualitySection: React.FC = () => {
       tag: 'Sustained Energy'
     },
     {
-      title: 'Hygienic Steam Kitchen',
-      desc: 'Cooked in our FSSAI-compliant central facility with RO filtered water, stainless steel vats, and strict hairnet & glove protocols.',
-      tag: 'FSSAI Certified'
+      title: 'Food Safety by Design',
+      desc: 'Kitchen cleaning, safe-water, temperature and food-handling checks are being documented before commercial launch.',
+      tag: 'Pre-launch controls'
     },
     {
       title: '100% Spill-Proof Packaging',
@@ -129,20 +129,20 @@ export const HealthQualitySection: React.FC = () => {
           ))}
         </div>
 
-        {/* FSSAI & Transparency Badge */}
+        {/* Food licence transparency */}
         <div className="mt-10 p-6 sm:p-8 rounded-3xl bg-white border border-stone-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-[#0D6E44] border border-emerald-200 flex items-center justify-center shrink-0 shadow-2xs">
               <Award className="w-7 h-7" />
             </div>
             <div>
-              <div className="text-xs font-mono uppercase text-stone-500 font-bold">FSSAI Certified Kitchen</div>
+              <div className="text-xs font-mono uppercase text-stone-500 font-bold">Food Licence Status</div>
               <div className="text-base sm:text-lg font-black text-stone-900 tracking-tight">{BRAND_CONFIG.fssaiNumber}</div>
             </div>
           </div>
 
           <div className="text-xs text-stone-500 max-w-md text-center md:text-right font-medium">
-            <span>Our Gandhinagar central kitchen is open for scheduled visits by university wardens, parents, and corporate HR managers.</span>
+            <span>Commercial ordering will open only after required food-licence details and operating checks are verified.</span>
           </div>
         </div>
       </div>

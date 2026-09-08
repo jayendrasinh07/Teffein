@@ -12,35 +12,35 @@ export const QualityStandardsPage: React.FC = () => {
         {/* 4 Pillars of Clean Food */}
         <div className="bg-[#FAF8F5] rounded-3xl p-8 sm:p-12 border border-stone-200">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 text-center mb-8">
-            Our 4 Non-Negotiable Kitchen Rules
+            Planned Food-Safety Controls
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-stone-700">
             <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-2">
-              <div className="font-extrabold text-emerald-800 text-base">Rule 1: Pure RO Water Only</div>
+              <div className="font-extrabold text-emerald-800 text-base">Control 1: Verified Safe Water</div>
               <p className="text-stone-600 leading-relaxed">
-                From dough kneading to dal simmering and vegetable rinsing, every milliliter of water passes through a 5-stage commercial reverse osmosis filtration unit.
+                Water sources, filtration and routine checks will be documented before commercial cooking begins.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-2">
-              <div className="font-extrabold text-emerald-800 text-base">Rule 2: Never Re-used Cooking Oils</div>
+              <div className="font-extrabold text-emerald-800 text-base">Control 2: Cooking-Oil Records</div>
               <p className="text-stone-600 leading-relaxed">
-                We strictly ban recycled oil vats. Cold-pressed virgin oils are dosed per batch in calculated proportions, leaving zero greasy residue in your thali.
+                Oil type, supplier and batch-use rules will be documented and shown accurately for the live kitchen.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-2">
-              <div className="font-extrabold text-emerald-800 text-base">Rule 3: Zero Preservatives or Enhancers</div>
+              <div className="font-extrabold text-emerald-800 text-base">Control 3: Ingredient Disclosure</div>
               <p className="text-stone-600 leading-relaxed">
-                No artificial food dyes (tartrazine/sunset yellow), no synthetic tenderizers, and zero baking soda. Food is naturally delicious through traditional slow bhuna techniques.
+                Ingredient and allergen details will be reviewed and published for each live meal before customers order.
               </p>
             </div>
 
             <div className="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm space-y-2">
-              <div className="font-extrabold text-emerald-800 text-base">Rule 4: Certified Daily Staff Temperature Logs</div>
+              <div className="font-extrabold text-emerald-800 text-base">Control 4: Daily Hygiene Logs</div>
               <p className="text-stone-600 leading-relaxed">
-                All prep and packaging staff undergo biometric hygiene checks, temperature screening, and wear fresh food-grade gloves and double-layer hairnets.
+                Staff hygiene, cleaning and temperature-control checklists will be recorded for daily kitchen operations.
               </p>
             </div>
           </div>

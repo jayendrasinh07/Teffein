@@ -148,7 +148,7 @@ export const OrderSummaryDesktop: React.FC<OrderSummaryDesktopProps> = ({
       <div className="space-y-2 pt-2 border-t border-stone-150">
         <div className="flex items-center gap-2 text-[11px] text-stone-600">
           <ShieldCheck className="w-4 h-4 text-[#0D6E44] shrink-0" />
-          <span>FSSAI Certified • Fresh Groundnut Oil Guarantee</span>
+          <span>Hygiene-first preparation • Ingredient details shown before launch</span>
         </div>
         <div className="flex items-center gap-2 text-[11px] text-stone-600">
           <Lock className="w-3.5 h-3.5 text-stone-400 shrink-0" />

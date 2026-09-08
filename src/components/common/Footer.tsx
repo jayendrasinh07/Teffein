@@ -359,11 +359,11 @@ export const Footer: React.FC = () => {
             <span className="hidden sm:inline">•</span>
             <span>Gandhinagar, Gujarat</span>
             
-            {/* Subtle FSSAI Tag */}
+            {/* Food licence status */}
             <span className="hidden sm:inline">•</span>
             <span className="inline-flex items-center gap-1 text-stone-400 font-medium">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-              <span>FSSAI Lic. 20726038000412</span>
+              <span>Food licence verification pending</span>
             </span>
           </div>
 

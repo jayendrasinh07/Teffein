@@ -15,30 +15,30 @@ export const TraceabilitySection: React.FC = () => {
             <div className="lg:col-span-6 space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-xs font-bold">
                 <QrCode className="w-3.5 h-3.5 text-amber-300" />
-                <span>Thalimitra Transparency & Traceability</span>
+                <span>Traceability Feature Preview</span>
               </div>
 
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-                Scan. Verify. <br />
-                <span className="text-emerald-400">Eat with Complete Peace of Mind.</span>
+                See how meal records <br />
+                <span className="text-emerald-400">will work at launch.</span>
               </h2>
 
               <p className="text-stone-300 text-sm sm:text-base leading-relaxed">
-                Every single Thalimitra meal tray features a scannable QR verification stamp. Check the exact minute your meal left the tawa, packed temperature, chef in charge, and hygiene clearance.
+                This pre-launch preview uses sample data to demonstrate planned QR meal records. Live kitchen records will replace it before commercial launch.
               </p>
 
               <div className="pt-2 flex flex-col gap-2.5 text-xs sm:text-sm text-stone-300">
                 <div className="flex items-center gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Real-time timestamps: Prepared → Packed → Dispatched → Delivered</span>
+                  <span>Planned timestamps: Prepared → Packed → Dispatched → Delivered</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Packing temperature (68°C+) & virgin oil verification</span>
+                  <span>Planned packing-temperature and ingredient records</span>
                 </div>
                 <div className="flex items-center gap-2.5">
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                  <span>Certified FSSAI hygiene inspector sign-off</span>
+                  <span>Documented kitchen hygiene checklist</span>
                 </div>
               </div>
 
@@ -96,7 +96,7 @@ export const TraceabilitySection: React.FC = () => {
                 </div>
 
                 <div className="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500">
-                  <span>Inspector: <strong>{MOCK_TRACEABILITY_MEAL.hygieneInspector}</strong></span>
+                  <span>Reviewer: <strong>{MOCK_TRACEABILITY_MEAL.hygieneInspector}</strong></span>
                   <button
                     onClick={() => lookupMealTraceability('GDM-2841')}
                     className="text-[#0D6E44] font-black hover:underline cursor-pointer"
