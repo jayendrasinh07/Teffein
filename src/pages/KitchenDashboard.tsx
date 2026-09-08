@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   BellRing,
+  BarChart3,
   CalendarDays,
   Check,
   ChefHat,
@@ -30,12 +31,13 @@ import { KitchenOverview } from '../components/kitchen/KitchenOverview';
 import { KitchenCatalogManager } from '../components/kitchen/KitchenCatalogManager';
 import { KitchenMenuPlanner } from '../components/kitchen/KitchenMenuPlanner';
 import { KitchenManagement } from '../components/kitchen/KitchenManagement';
+import { KitchenBusinessAnalytics } from '../components/kitchen/KitchenBusinessAnalytics';
 import { istDate } from '../services/availabilityEngine';
 import { kitchenService, type KitchenOrder, type KitchenRealtimeStatus, type KitchenShift, type KitchenStatus } from '../services/kitchenService';
 import { createKitchenQueue, emptyKitchenQueue, type KitchenQueueState } from '../services/kitchenQueue';
 import { kitchenOrderAge, newConfirmedOrders } from '../services/kitchenAlertEngine';
 
-type KitchenWorkspace = 'overview' | 'catalog' | 'menu' | 'orders' | 'management';
+type KitchenWorkspace = 'overview' | 'catalog' | 'menu' | 'orders' | 'management' | 'reports';
 type KitchenSort = 'delivery' | 'oldest' | 'newest';
 
 const pageCopy: Record<KitchenWorkspace, { eyebrow: string; title: string; description: string }> = {
@@ -44,6 +46,7 @@ const pageCopy: Record<KitchenWorkspace, { eyebrow: string; title: string; descr
   menu: { eyebrow: 'Daily planning', title: 'Daily menu', description: 'Choose catalog meals and publish the full lunch and dinner menu.' },
   orders: { eyebrow: 'Live operations', title: 'Live orders', description: 'See who ordered what and move meals through preparing and ready.' },
   management: { eyebrow: 'Admin controls', title: 'Management', description: 'Control capacity, Kitchen staff access, and customer support requests.' },
+  reports: { eyebrow: 'Business intelligence', title: 'Reports', description: 'Understand order demand, portions, booked value, cancellations and popular meals.' },
 };
 
 const kitchenNavigation: Array<{ id: KitchenWorkspace; label: string; icon: typeof ChefHat }> = [
@@ -53,9 +56,10 @@ const kitchenNavigation: Array<{ id: KitchenWorkspace; label: string; icon: type
   { id: 'orders', label: 'Live Orders', icon: ClipboardList },
 ];
 
-const workspaceForPath = (): KitchenWorkspace => window.location.pathname.replace(/\/+$/, '') === '/kitchen/management'
-  ? 'management'
-  : 'overview';
+const workspaceForPath = (): KitchenWorkspace => {
+  const path = window.location.pathname.replace(/\/+$/, '');
+  return path === '/kitchen/management' ? 'management' : path === '/kitchen/reports' ? 'reports' : 'overview';
+};
 
 const stages: { status: KitchenStatus; title: string; hint: string; color: string }[] = [
   { status: 'confirmed', title: 'To prepare', hint: 'Start with the earliest delivery window.', color: 'bg-amber-100 text-amber-900' },
@@ -135,9 +139,9 @@ export const KitchenDashboard: React.FC = () => {
 
   useEffect(() => {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
-    const destination = workspace === 'management'
-      ? '/kitchen/management'
-      : path === '/kitchen/management' ? '/kitchen' : null;
+    const destination = workspace === 'management' ? '/kitchen/management'
+      : workspace === 'reports' ? '/kitchen/reports'
+      : path === '/kitchen/management' || path === '/kitchen/reports' ? '/kitchen' : null;
     if (destination && destination !== path) window.history.pushState(null, '', destination);
   }, [workspace]);
 
@@ -254,6 +258,10 @@ export const KitchenDashboard: React.FC = () => {
               className={`flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition lg:w-full ${workspace === 'management' ? 'bg-amber-100 text-amber-950 shadow-sm' : 'text-amber-100 hover:bg-white/10'}`}>
               <Settings className="h-5 w-5" />Management
             </button>
+            <button type="button" onClick={() => setWorkspace('reports')} aria-current={workspace === 'reports' ? 'page' : undefined}
+              className={`mt-1 flex shrink-0 items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition lg:w-full ${workspace === 'reports' ? 'bg-amber-100 text-amber-950 shadow-sm' : 'text-amber-100 hover:bg-white/10'}`}>
+              <BarChart3 className="h-5 w-5" />Reports
+            </button>
           </div>}
         </nav>
 
@@ -290,6 +298,9 @@ export const KitchenDashboard: React.FC = () => {
           {workspace === 'management' && (hasAdminAccess
             ? <KitchenManagement />
             : <div role="alert" className="rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm"><ShieldCheck className="mx-auto h-9 w-9 text-red-700" /><h2 className="mt-3 text-xl font-black text-stone-900">Admin access required</h2><p className="mt-2 text-sm text-stone-500">This page is available only to an account with the admin role.</p><button type="button" onClick={() => setWorkspace('overview')} className="mt-5 min-h-11 rounded-xl bg-stone-900 px-5 text-sm font-bold text-white">Back to Kitchen overview</button></div>)}
+          {workspace === 'reports' && (hasAdminAccess
+            ? <KitchenBusinessAnalytics />
+            : <div role="alert" className="rounded-3xl border border-red-200 bg-white p-8 text-center shadow-sm"><ShieldCheck className="mx-auto h-9 w-9 text-red-700" /><h2 className="mt-3 text-xl font-black text-stone-900">Admin access required</h2><p className="mt-2 text-sm text-stone-500">Business reports are available only to an account with the admin role.</p><button type="button" onClick={() => setWorkspace('overview')} className="mt-5 min-h-11 rounded-xl bg-stone-900 px-5 text-sm font-bold text-white">Back to Kitchen overview</button></div>)}
           {workspace === 'orders' && (
             <>
               <div className="mb-4 hidden print:block">

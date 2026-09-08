@@ -718,6 +718,10 @@ export type Database = {
         }[]
       }
       get_kitchen_catalog: { Args: never; Returns: Json }
+      get_kitchen_business_analytics: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: Json
+      }
       get_kitchen_management: { Args: never; Returns: Json }
       get_kitchen_menu: { Args: { p_menu_date: string }; Returns: Json }
       get_kitchen_orders: {

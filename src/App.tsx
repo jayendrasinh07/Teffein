@@ -43,11 +43,12 @@ import { CustomerDashboard } from './pages/CustomerDashboard';
 import { MealPreferencesPage } from './pages/MealPreferencesPage';
 import { OrderHistoryPage } from './pages/OrderHistoryPage';
 import { AdminDashboard } from './pages/AdminDashboard';
-import { KitchenDashboard } from './pages/KitchenDashboard';
 import { KitchenMfaGate } from './components/kitchen/KitchenMfaGate';
 import { DeliveryDashboard } from './pages/DeliveryDashboard';
 import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
+
+const KitchenDashboard = React.lazy(() => import('./pages/KitchenDashboard').then(module => ({ default: module.KitchenDashboard })));
 
 const MainContent: React.FC = () => {
   const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen, setIsAuthModalOpen } = useApp();
@@ -67,7 +68,9 @@ const MainContent: React.FC = () => {
       <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
         {hasKitchenAccess ? (
           <KitchenMfaGate key={currentUser.id}>
-            <KitchenDashboard />
+            <React.Suspense fallback={<main className="flex min-h-screen items-center justify-center text-sm font-bold text-stone-600">Loading Kitchen workspace…</main>}>
+              <KitchenDashboard />
+            </React.Suspense>
           </KitchenMfaGate>
         ) : (
           <main className="flex min-h-screen items-center justify-center px-6">
