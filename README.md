@@ -1,6 +1,6 @@
 # Thalimitra ordering and Kitchen MVP
 
-The ordering foundation is merged in GitHub main at `331c22b786a304b28cbd2f985ad37c4bf2136cbc`. Its TypeScript check, production build, client tests and PostgreSQL 17 tests passed in [CI run 33764191064](https://github.com/jayendrasinh07/Teffein/actions/runs/33764191064).
+The ordering foundation is merged in GitHub main at `331c22b786a304b28cbd2f985ad37c4bf2136cbc`. Its TypeScript check, production build, client tests and PostgreSQL 17 tests passed in [CI run 33764191064](https://github.com/jayendrasinh07/Thalimitra/actions/runs/33764191064).
 
 This change implements the minimal Kitchen workspace and deploys its guarded database RPCs. The new frontend still needs its own CI typecheck/build and browser smoke before release; the passing foundation run does not validate these new UI files.
 

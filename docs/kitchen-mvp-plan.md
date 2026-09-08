@@ -2,7 +2,7 @@
 
 ## Verified source and deployment
 
-Based on merged main `331c22b786a304b28cbd2f985ad37c4bf2136cbc`. Foundation CI [33764191064](https://github.com/jayendrasinh07/Teffein/actions/runs/33764191064) passed; job `100677736090` ran CLI help and `supabase migration new kitchen_mvp`, creating version `20260903135955`.
+Based on merged main `331c22b786a304b28cbd2f985ad37c4bf2136cbc`. Foundation CI [33764191064](https://github.com/jayendrasinh07/Thalimitra/actions/runs/33764191064) passed; job `100677736090` ran CLI help and `supabase migration new kitchen_mvp`, creating version `20260903135955`.
 
 The implemented migration was locally verified and deployed to Thalimitra `boeceqmjrnxpkmhppblq` as `20260903141846_kitchen_mvp`. The filename now matches actual cloud history. Phase 1/2 source remains immutable. Source MD5 (LF with final newline): `a23c8791750f5f7124e912fc6bbc507c`.
 
