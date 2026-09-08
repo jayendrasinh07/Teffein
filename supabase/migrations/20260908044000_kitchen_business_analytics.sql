@@ -35,22 +35,22 @@ BEGIN
     ),
     'daily', (
       SELECT coalesce(jsonb_agg(jsonb_build_object(
-        'date', report.day,
+        'date', report.report_date,
         'orders', report.orders,
         'cancelled', report.cancelled,
         'portions', report.portions,
         'booked_value', report.booked_value
-      ) ORDER BY report.day), '[]'::jsonb)
+      ) ORDER BY report.report_date), '[]'::jsonb)
       FROM (
-        SELECT d.day::DATE day,
+        SELECT d.report_date::DATE AS report_date,
           count(o.id) orders,
           count(o.id) FILTER (WHERE o.status = 'cancelled') cancelled,
           coalesce(sum(items.portions) FILTER (WHERE o.status <> 'cancelled'), 0) portions,
           coalesce(sum(o.grand_total) FILTER (WHERE o.status <> 'cancelled'), 0) booked_value
-        FROM generate_series(p_start_date, p_end_date, interval '1 day') d(day)
-        LEFT JOIN public.orders o ON o.order_date = d.day::DATE
+        FROM generate_series(p_start_date, p_end_date, interval '1 day') AS d(report_date)
+        LEFT JOIN public.orders o ON o.order_date = d.report_date::DATE
         LEFT JOIN LATERAL (SELECT sum(i.quantity)::BIGINT portions FROM public.order_items i WHERE i.order_id = o.id) items ON true
-        GROUP BY d.day
+        GROUP BY d.report_date
       ) report
     ),
     'statuses', (
