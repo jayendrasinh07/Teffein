@@ -12,5 +12,7 @@ backups/
 *.tefbackup
 *.tefbackup.sha256
 *.dpapi
+*.tefkey
+TEFFEIN Recovery Code*.txt
 supabase/.temp/
 

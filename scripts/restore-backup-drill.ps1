@@ -2,7 +2,9 @@
 param(
   [Parameter(Mandatory)][string]$BackupPath,
   [int]$Port = 55432,
-  [switch]$UseWindowsProtectedKey
+  [switch]$UseWindowsProtectedKey,
+  [string]$PortableKeyPath,
+  [string]$RecoveryCardPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,6 +25,16 @@ New-Item -ItemType Directory -Path $tempRoot,$extract -Force | Out-Null
 try {
   if ($UseWindowsProtectedKey) {
     $passphrase = Get-TeffeinWindowsProtectedPassphrase -KeyPath (Join-Path (Split-Path $BackupPath) '.teffein-backup-key.dpapi')
+  } elseif ($PortableKeyPath) {
+    if ($RecoveryCardPath) {
+      $card = Get-Content -LiteralPath $RecoveryCardPath -Raw
+      $match = [regex]::Match($card, '(?m)^RECOVERY-CODE:\s*(\S+)\s*$')
+      if (-not $match.Success) { throw 'Recovery card does not contain a recovery code.' }
+      $code = ConvertTo-SecureString $match.Groups[1].Value -AsPlainText -Force
+    } else {
+      $code = Read-Host 'Portable recovery code' -AsSecureString
+    }
+    $passphrase = Get-TeffeinPortablePassphrase -PortableKeyPath $PortableKeyPath -RecoveryCode $code
   } else {
     $passphrase = Read-Host 'Backup encryption passphrase' -AsSecureString
   }
