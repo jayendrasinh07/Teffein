@@ -58,7 +58,9 @@ const kitchenNavigation: Array<{ id: KitchenWorkspace; label: string; icon: type
 
 const workspaceForPath = (): KitchenWorkspace => {
   const path = window.location.pathname.replace(/\/+$/, '');
-  return path === '/kitchen/management' ? 'management' : path === '/kitchen/reports' ? 'reports' : 'overview';
+  return path === '/management' || path === '/kitchen/management' ? 'management'
+    : path === '/reports' || path === '/kitchen/reports' ? 'reports'
+      : 'overview';
 };
 
 const stages: { status: KitchenStatus; title: string; hint: string; color: string }[] = [
@@ -139,9 +141,11 @@ export const KitchenDashboard: React.FC = () => {
 
   useEffect(() => {
     const path = window.location.pathname.replace(/\/+$/, '') || '/';
-    const destination = workspace === 'management' ? '/kitchen/management'
-      : workspace === 'reports' ? '/kitchen/reports'
-      : path === '/kitchen/management' || path === '/kitchen/reports' ? '/kitchen' : null;
+    const opsBuild = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
+    const root = opsBuild ? '' : '/kitchen';
+    const destination = workspace === 'management' ? `${root}/management`
+      : workspace === 'reports' ? `${root}/reports`
+      : path === `${root}/management` || path === `${root}/reports` ? (root || '/') : null;
     if (destination && destination !== path) window.history.pushState(null, '', destination);
   }, [workspace]);
 
@@ -397,5 +401,4 @@ export const KitchenDashboard: React.FC = () => {
     </div>
   );
 };
-
 

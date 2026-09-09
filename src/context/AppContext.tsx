@@ -214,7 +214,10 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
-const tabForPath = (): ActiveTab => (currentPath() === '/kitchen' || currentPath().startsWith('/kitchen/'))
+const isOpsBuild = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
+const tabForPath = (): ActiveTab => isOpsBuild
+  ? currentPath() === '/reset-password' ? 'password_recovery' : 'kitchen_dashboard'
+  : (currentPath() === '/kitchen' || currentPath().startsWith('/kitchen/'))
   ? 'kitchen_dashboard'
   : currentPath() === '/reset-password'
     ? 'password_recovery'
@@ -345,7 +348,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const signOutUser = async () => {
     const result=await authService.signOut();
     if(result.error){showToast('Sign out failed',result.error.message,'error');return;}
-    ++authGeneration.current;authIdentity.current=null;clearCustomerData();setActiveTab('home');
+    ++authGeneration.current;authIdentity.current=null;clearCustomerData();setActiveTab(isOpsBuild ? 'kitchen_dashboard' : 'home');
     setCurrentUser(null);
     setUserProfile(null);
     setUserRolesList([]);
@@ -371,6 +374,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     const path = currentPath();
+    if (isOpsBuild) {
+      const destination = activeTab === 'password_recovery'
+        ? (path === '/reset-password' ? null : '/reset-password')
+        : path === '/' || path === '/management' || path === '/reports' ? null : '/';
+      if (destination && destination !== path) window.history.pushState(null, '', destination);
+      return;
+    }
     const isKitchenPath = path === '/kitchen' || path.startsWith('/kitchen/');
     const destination = activeTab === 'kitchen_dashboard'
       ? (isKitchenPath ? null : '/kitchen')

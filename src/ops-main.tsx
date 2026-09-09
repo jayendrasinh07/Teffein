@@ -1,0 +1,9 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import OpsApp from './OpsApp';
+import { AppErrorBoundary } from './components/common/AppErrorBoundary';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode><AppErrorBoundary><OpsApp /></AppErrorBoundary></StrictMode>,
+);
