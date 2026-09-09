@@ -92,6 +92,12 @@ export const authService = {
       return { error: null };
     } catch (err: any) {
       console.error('[Thalimitra Auth] Password recovery request failed:', err);
+      const message = String(err?.message || '').toLowerCase();
+      if (message.includes('email rate limit')) {
+        return {
+          error: new Error('Too many reset emails were requested. Please wait about one hour, then request one fresh link.')
+        };
+      }
       return { error: err };
     }
   },
