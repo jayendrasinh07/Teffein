@@ -1,6 +1,8 @@
 import React from 'react';
 import { clientMonitoringService } from '../../services/clientMonitoringService';
 
+const isOpsBuild = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
+
 type State = { failed: boolean; eventId: string };
 type Props = { children: React.ReactNode };
 
@@ -19,14 +21,13 @@ export class AppErrorBoundary extends React.Component<Props, State> {
     });
     void clientMonitoringService.reportRenderCrash(
       this.state.eventId,
-      window.location.pathname.startsWith('/kitchen') ? 'kitchen' : 'customer',
+      isOpsBuild ? 'kitchen' : 'customer',
     );
   }
 
   render() {
     if (!this.state.failed) return this.props.children;
 
-    const kitchen = window.location.pathname.startsWith('/kitchen');
     return (
       <main className="grid min-h-screen place-items-center bg-stone-50 px-5 text-stone-900">
         <section className="w-full max-w-md rounded-3xl border border-stone-200 bg-white p-7 text-center shadow-sm">
@@ -36,8 +37,8 @@ export class AppErrorBoundary extends React.Component<Props, State> {
           <button className="mt-6 w-full rounded-xl bg-emerald-800 px-4 py-3 text-sm font-black text-white" onClick={() => window.location.reload()}>
             Reload
           </button>
-          <a className="mt-3 block text-sm font-bold text-emerald-800 underline" href={kitchen ? '/kitchen' : '/'}>
-            Return to {kitchen ? 'Kitchen' : 'Customer'} home
+          <a className="mt-3 block text-sm font-bold text-emerald-800 underline" href="/">
+            Return to {isOpsBuild ? 'Operations' : 'Customer'} home
           </a>
         </section>
       </main>

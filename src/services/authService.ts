@@ -133,14 +133,14 @@ export const authService = {
       }
 
       if (!session) {
-        return { ready: false, error: new Error('This reset link is invalid, expired, or already used. Request a new link from Kitchen sign in.') };
+        return { ready: false, error: new Error('This reset link is invalid, expired, or already used. Request a new link from sign in.') };
       }
 
       window.history.replaceState(null, '', '/reset-password');
       return { ready: true, error: null };
     } catch (err: any) {
       console.error('[Thalimitra Auth] Password recovery session failed:', err);
-      return { ready: false, error: new Error('This reset link is invalid, expired, or already used. Request a new link from Kitchen sign in.') };
+      return { ready: false, error: new Error('This reset link is invalid, expired, or already used. Request a new link from sign in.') };
     }
   },
 
@@ -189,7 +189,7 @@ export const authService = {
       const client = getSupabaseClient();
       const { data: { session }, error: sessionError } = await client.auth.getSession();
       if (sessionError || !session) {
-        return { error: new Error('This reset link is invalid, expired, or already used. Request a new link from Kitchen sign in.') };
+        return { error: new Error('This reset link is invalid, expired, or already used. Request a new link from sign in.') };
       }
       const { error } = await client.auth.updateUser({ password });
       if (error) throw error;

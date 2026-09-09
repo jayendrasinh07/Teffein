@@ -217,8 +217,6 @@ const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
 const isOpsBuild = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
 const tabForPath = (): ActiveTab => isOpsBuild
   ? currentPath() === '/reset-password' ? 'password_recovery' : 'kitchen_dashboard'
-  : (currentPath() === '/kitchen' || currentPath().startsWith('/kitchen/'))
-  ? 'kitchen_dashboard'
   : currentPath() === '/reset-password'
     ? 'password_recovery'
     : 'home';
@@ -381,12 +379,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (destination && destination !== path) window.history.pushState(null, '', destination);
       return;
     }
-    const isKitchenPath = path === '/kitchen' || path.startsWith('/kitchen/');
-    const destination = activeTab === 'kitchen_dashboard'
-      ? (isKitchenPath ? null : '/kitchen')
-      : activeTab === 'password_recovery'
+    const destination = activeTab === 'password_recovery'
         ? '/reset-password'
-        : (isKitchenPath || path === '/reset-password') ? '/' : null;
+        : path !== '/' ? '/' : null;
     if (destination && destination !== path) window.history.pushState(null, '', destination);
   }, [activeTab]);
 

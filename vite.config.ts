@@ -9,6 +9,7 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig(() => {
   return {
     plugins: [react(), tailwindcss()],
+    define: { 'import.meta.env.VITE_APP_TARGET': JSON.stringify('customer') },
     resolve: {
       alias: {
         '@': projectRoot,

@@ -5,7 +5,8 @@ import { authService } from '../services/authService';
 import { getPasswordPolicyError, PASSWORD_REQUIREMENTS } from '../utils/passwordPolicy';
 
 export const PasswordRecoveryPage: React.FC = () => {
-  const { setActiveTab, showToast } = useApp();
+  const { setActiveTab, setIsAuthModalOpen, showToast } = useApp();
+  const isOpsBuild = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
   const [password, setPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,6 +15,11 @@ export const PasswordRecoveryPage: React.FC = () => {
   const [recoveryState, setRecoveryState] = useState<'checking' | 'mfa' | 'ready' | 'invalid'>('checking');
   const [factorId, setFactorId] = useState('');
   const [securityCode, setSecurityCode] = useState('');
+
+  const returnToSignIn = () => {
+    setActiveTab(isOpsBuild ? 'kitchen_dashboard' : 'home');
+    if (!isOpsBuild) setIsAuthModalOpen(true);
+  };
 
   useEffect(() => {
     let active = true;
@@ -91,16 +97,18 @@ export const PasswordRecoveryPage: React.FC = () => {
           {complete ? 'Password updated' : 'Create a new password'}
         </h1>
         <p className="mt-2 text-center text-sm text-stone-600">
-          {complete ? 'You can now return to the Kitchen workspace.' : 'Choose a secure password for your Thalimitra account.'}
+          {complete
+            ? isOpsBuild ? 'You can now return to the Operations workspace.' : 'You can now sign in to your Thalimitra account.'
+            : 'Choose a secure password for your Thalimitra account.'}
         </p>
 
         {complete ? (
           <button
             type="button"
-            onClick={() => setActiveTab('kitchen_dashboard')}
+            onClick={returnToSignIn}
             className="mt-6 w-full rounded-2xl bg-[#0D6E44] px-5 py-3 text-sm font-black text-white hover:bg-[#08482C]"
           >
-            Open Kitchen
+            {isOpsBuild ? 'Open Operations' : 'Sign in'}
           </button>
         ) : recoveryState === 'checking' ? (
           <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-stone-100 p-4 text-sm font-bold text-stone-600">
@@ -111,7 +119,7 @@ export const PasswordRecoveryPage: React.FC = () => {
           <form onSubmit={handleMfa} className="mt-6 space-y-4">
             <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-950">
               <ShieldCheck className="h-5 w-5 shrink-0 text-[#0D6E44]" />
-              Verify Kitchen security before changing the password.
+              Verify account security before changing the password.
             </div>
             {errorMessage && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-800">{errorMessage}</p>}
             <label className="block text-xs font-bold text-stone-700">
@@ -138,7 +146,7 @@ export const PasswordRecoveryPage: React.FC = () => {
             </div>
             <button
               type="button"
-              onClick={() => setActiveTab('kitchen_dashboard')}
+              onClick={returnToSignIn}
               className="w-full rounded-2xl bg-[#0D6E44] px-5 py-3 text-sm font-black text-white hover:bg-[#08482C]"
             >
               Request a new reset link
@@ -187,10 +195,10 @@ export const PasswordRecoveryPage: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab('kitchen_dashboard')}
+              onClick={returnToSignIn}
               className="w-full text-xs font-bold text-stone-500 hover:text-stone-800"
             >
-              Back to Kitchen sign in
+              {isOpsBuild ? 'Back to Operations sign in' : 'Back to sign in'}
             </button>
           </form>
         )}

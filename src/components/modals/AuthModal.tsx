@@ -29,9 +29,8 @@ export const AuthModal: React.FC = () => {
     signInUser, 
     signUpUser, 
     showToast,
-    activeTab
   } = useApp();
-  const isKitchenSignIn = activeTab === 'kitchen_dashboard';
+  const isKitchenSignIn = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
 
   const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const isSignIn = isKitchenSignIn || mode === 'signin';
@@ -333,4 +332,3 @@ export const AuthModal: React.FC = () => {
     </div>
   );
 };
-

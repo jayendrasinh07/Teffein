@@ -42,16 +42,10 @@ import { MobileBottomBar } from './components/common/MobileBottomBar';
 import { CustomerDashboard } from './pages/CustomerDashboard';
 import { MealPreferencesPage } from './pages/MealPreferencesPage';
 import { OrderHistoryPage } from './pages/OrderHistoryPage';
-import { AdminDashboard } from './pages/AdminDashboard';
-import { KitchenMfaGate } from './components/kitchen/KitchenMfaGate';
-import { DeliveryDashboard } from './pages/DeliveryDashboard';
-import { CorporateAdminDashboard } from './pages/CorporateAdminDashboard';
 import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
 
-const KitchenDashboard = React.lazy(() => import('./pages/KitchenDashboard').then(module => ({ default: module.KitchenDashboard })));
-
 const MainContent: React.FC = () => {
-  const { activeTab, currentUser, userRolesList, isLocationModalOpen, setIsLocationModalOpen, setIsAuthModalOpen } = useApp();
+  const { activeTab, isLocationModalOpen, setIsLocationModalOpen } = useApp();
 
   if (activeTab === 'password_recovery') {
     return (
@@ -62,41 +56,7 @@ const MainContent: React.FC = () => {
     );
   }
 
-  if (activeTab === 'kitchen_dashboard') {
-    const hasKitchenAccess = !!currentUser && userRolesList.some(role => role === 'kitchen' || role === 'admin');
-    return (
-      <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
-        {hasKitchenAccess ? (
-          <KitchenMfaGate key={currentUser.id}>
-            <React.Suspense fallback={<main className="flex min-h-screen items-center justify-center text-sm font-bold text-stone-600">Loading Kitchen workspace…</main>}>
-              <KitchenDashboard />
-            </React.Suspense>
-          </KitchenMfaGate>
-        ) : (
-          <main className="flex min-h-screen items-center justify-center px-6">
-            <div className="max-w-md rounded-3xl border border-stone-200 bg-white p-8 text-center shadow-sm">
-              <h1 className="text-2xl font-black text-stone-900">Kitchen access required</h1>
-              <p className="mt-3 text-sm text-stone-600">Sign in with an authorized kitchen account to open this workspace.</p>
-              <button
-                type="button"
-                onClick={() => setIsAuthModalOpen(true)}
-                className="mt-6 rounded-xl bg-[#0D6E44] px-5 py-3 text-sm font-bold text-white hover:bg-[#095a37]"
-              >
-                Sign in to Kitchen
-              </button>
-            </div>
-          </main>
-        )}
-        <AuthModal />
-        <ToastContainer />
-      </div>
-    );
-  }
-
   const renderActivePage = () => {
-    const requiredRoles: Partial<Record<typeof activeTab,string[]>> = {admin_dashboard:['admin'],delivery_dashboard:['delivery','admin'],corporate_admin_dashboard:['corporate','admin']};
-    const allowed=requiredRoles[activeTab];
-    if(allowed&&(!currentUser||!userRolesList.some(role=>allowed.includes(role))))return <div className="p-10 text-center">Sign in with an authorized account to open this workspace.</div>;
     switch (activeTab) {
       case 'home':
         return <Home />;
@@ -130,12 +90,6 @@ const MainContent: React.FC = () => {
         return <MealPreferencesPage />;
       case 'order_history':
         return <OrderHistoryPage />;
-      case 'admin_dashboard':
-        return <AdminDashboard />;
-      case 'delivery_dashboard':
-        return <DeliveryDashboard />;
-      case 'corporate_admin_dashboard':
-        return <CorporateAdminDashboard />;
       default:
         return <Home />;
     }
