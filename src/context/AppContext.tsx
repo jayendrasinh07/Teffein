@@ -96,6 +96,8 @@ export type ActiveTab =
   | 'feedback_analytics'
   | 'revenue_overview';
 
+export type LegalTab = 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq';
+
 interface ToastState {
   id: string;
   type: 'success' | 'info' | 'warning' | 'error';
@@ -183,9 +185,9 @@ interface AppContextType {
   // Legal & Help Modal
   isLegalModalOpen: boolean;
   setIsLegalModalOpen: (open: boolean) => void;
-  legalModalTab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq';
-  setLegalModalTab: (tab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq') => void;
-  openLegalModal: (tab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq') => void;
+  legalModalTab: LegalTab;
+  setLegalModalTab: (tab: LegalTab) => void;
+  openLegalModal: (tab: LegalTab) => void;
 
   // Supabase Authentication & User Profile
   currentUser: User | null;
@@ -215,13 +217,29 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const currentPath = () => window.location.pathname.replace(/\/+$/, '') || '/';
 const isOpsBuild = (import.meta as any).env?.VITE_APP_TARGET === 'ops';
+const LEGAL_PATH_BY_TAB: Record<LegalTab, string> = {
+  privacy: '/privacy-policy',
+  terms: '/terms-and-conditions',
+  refund: '/cancellation-and-refunds',
+  delivery: '/shipping-and-delivery',
+  faq: '/faqs'
+};
+const legalTabForPath = (): LegalTab | null => {
+  const path = currentPath();
+  return (Object.entries(LEGAL_PATH_BY_TAB).find(([, value]) => value === path)?.[0] as LegalTab | undefined) ?? null;
+};
 const tabForPath = (): ActiveTab => isOpsBuild
   ? currentPath() === '/reset-password' ? 'password_recovery' : 'kitchen_dashboard'
   : currentPath() === '/reset-password'
     ? 'password_recovery'
-    : 'home';
+    : currentPath() === '/contact'
+      ? 'contact'
+      : currentPath() === '/pricing'
+        ? 'todays_menu'
+        : 'home';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const initialLegalTab = legalTabForPath();
   const [activeTab, setActiveTab] = useState<ActiveTab>(tabForPath);
   const [userRole, setUserRole] = useState<UserRole>('guest');
   const [subscription, setSubscription] = useState<UserSubscription>(INITIAL_USER_SUBSCRIPTION);
@@ -261,8 +279,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isCorporateModalOpen, setIsCorporateModalOpen] = useState<boolean>(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState<boolean>(false);
   const [isAreaCheckerOpen, setIsAreaCheckerOpen] = useState<boolean>(false);
-  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(false);
-  const [legalModalTab, setLegalModalTab] = useState<'privacy' | 'terms' | 'refund' | 'delivery' | 'faq'>('privacy');
+  const [isLegalModalOpen, setIsLegalModalOpen] = useState<boolean>(() => !isOpsBuild && initialLegalTab !== null);
+  const [legalModalTab, setLegalModalTab] = useState<LegalTab>(initialLegalTab ?? 'privacy');
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
 
   // Supabase Auth & Profile State
@@ -354,9 +372,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showToast('Signed Out', 'You have been safely signed out.', 'info');
   };
 
-  const openLegalModal = useCallback((tab: 'privacy' | 'terms' | 'refund' | 'delivery' | 'faq' = 'privacy') => {
+  const openLegalModal = useCallback((tab: LegalTab = 'privacy') => {
     setLegalModalTab(tab);
     setIsLegalModalOpen(true);
+    if (!isOpsBuild && currentPath() !== LEGAL_PATH_BY_TAB[tab]) {
+      window.history.pushState(null, '', LEGAL_PATH_BY_TAB[tab]);
+    }
   }, []);
 
   // Toasts
@@ -365,7 +386,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => { for(const key of ['teffein_user_role','teffein_onetime_orders','teffein_saved_customer_orders','teffein_saved_addresses','teffein_mock_auth_session','teffein_sub'])localStorage.removeItem(key); }, []);
 
   useEffect(() => {
-    const handlePopState = () => setActiveTab(tabForPath());
+    const handlePopState = () => {
+      const legalTab = legalTabForPath();
+      setActiveTab(tabForPath());
+      setLegalModalTab(legalTab ?? 'privacy');
+      setIsLegalModalOpen(!isOpsBuild && legalTab !== null);
+    };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -381,9 +407,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const destination = activeTab === 'password_recovery'
         ? '/reset-password'
+        : activeTab === 'contact'
+          ? (path === '/contact' ? null : '/contact')
+        : activeTab === 'todays_menu' && path === '/pricing'
+          ? null
+        : legalTabForPath() && isLegalModalOpen
+          ? null
         : path !== '/' ? '/' : null;
     if (destination && destination !== path) window.history.pushState(null, '', destination);
-  }, [activeTab]);
+  }, [activeTab, isLegalModalOpen]);
 
   // Window scroll to top on tab change
   useEffect(() => {
