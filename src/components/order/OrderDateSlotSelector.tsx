@@ -190,7 +190,7 @@ export const OrderDateSlotSelector: React.FC<OrderDateSlotSelectorProps> = ({
           >
             <Moon className={`w-4 h-4 ${selectedMealSlot === 'dinner' ? 'text-indigo-500' : 'text-stone-400'}`} />
             <span>🌙 Dinner</span>
-            <span className="text-[10px] font-semibold opacity-75 hidden sm:inline">(7:00–8:30 PM)</span>
+            <span className="text-[10px] font-semibold opacity-75 hidden sm:inline">(7:30–9:00 PM)</span>
           </button>
         </div>
       </div>

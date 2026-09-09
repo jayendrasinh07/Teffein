@@ -31,7 +31,7 @@ export const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({
             <span>Choose Delivery Window</span>
           </h3>
           <p className="text-xs text-stone-500 mt-0.5">
-            Free cluster van delivery in Gandhinagar • Guaranteed hot & fresh
+            Gandhinagar delivery windows • Live slot availability
           </p>
         </div>
       </div>

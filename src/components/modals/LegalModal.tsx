@@ -99,7 +99,7 @@ export const LegalModal: React.FC = () => {
           {legalModalTab === 'privacy' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
-                <p className="font-bold text-xs">Effective Date: January 1, 2026 • Last updated: August 2026</p>
+                <p className="font-bold text-xs">Effective Date: September 9, 2026 • Last updated: September 9, 2026</p>
                 <p className="text-xs text-emerald-800 mt-1">
                   At Thalimitra, we respect your privacy and are committed to protecting the personal information you share with us for daily home meal deliveries.
                 </p>
@@ -111,7 +111,7 @@ export const LegalModal: React.FC = () => {
                   To fulfill doorstep food orders in Gandhinagar, we collect:
                 </p>
                 <ul className="list-disc pl-5 mt-1 space-y-1 text-stone-600">
-                  <li><strong>Contact details:</strong> Name, delivery phone number, and optional email for invoice receipts.</li>
+                  <li><strong>Contact details:</strong> Account email, name, and delivery phone number.</li>
                   <li><strong>Location data:</strong> Doorstep address (house/flat number, society/building name, landmark, sector/area, and GPS coordinates if verified).</li>
                   <li><strong>Meal preferences:</strong> Dietary selections (Standard Gujarati, Jain Satvik, Low-Oil Fitness), spice levels, and delivery instructions.</li>
                 </ul>
@@ -146,7 +146,7 @@ export const LegalModal: React.FC = () => {
               <div className="p-4 rounded-2xl bg-stone-100 border border-stone-200 text-stone-900">
                 <p className="font-bold text-xs">Thalimitra Platform & Service Terms</p>
                 <p className="text-xs text-stone-600 mt-1">
-                  By placing a one-time order or activating a meal subscription with Thalimitra in Gandhinagar, you agree to the following terms.
+                  By placing a one-time order with Thalimitra in Gandhinagar, you agree to the following terms.
                 </p>
               </div>
 
@@ -160,7 +160,7 @@ export const LegalModal: React.FC = () => {
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">2. Service Coverage & Cluster Handover</h4>
                 <p className="text-stone-600">
-                  Deliveries are restricted to confirmed clusters across Gandhinagar (Kudasan, Infocity, GIFT City, Bhaijipura, Sectors 1–30, and GIDC). Delivery partners hand over food-grade thermo-sealed meal trays directly to you, your society guard, or designated reception desks per your instructions.
+                  Delivery is available only for addresses marked serviceable during checkout. Orders may be handed to you or to the recipient named in your delivery instructions.
                 </p>
               </div>
 
@@ -172,9 +172,9 @@ export const LegalModal: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="font-bold text-stone-900 text-sm mb-1">4. Subscription Pause & Rollover</h4>
+                <h4 className="font-bold text-stone-900 text-sm mb-1">4. Online Payments & Subscriptions</h4>
                 <p className="text-stone-600">
-                  Subscribers may pause plans anytime via the customer dashboard or helpline. Remaining unserved meal credits roll over with an extended validity period matching your plan tier.
+                  Online payments and paid subscriptions are not active yet. Their final pricing, billing, cancellation, and refund terms will be published before launch.
                 </p>
               </div>
             </div>
@@ -198,23 +198,23 @@ export const LegalModal: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="font-bold text-stone-900 text-sm mb-1">2. Subscription Skips & Pauses</h4>
+                <h4 className="font-bold text-stone-900 text-sm mb-1">2. Online Payments & Subscriptions</h4>
                 <p className="text-stone-600">
-                  If you do not require food on specific days, you do not lose your money! Simply skip the slot on your dashboard before cutoff (9:30 AM for lunch, 5:00 PM for dinner). The skipped meal credit is credited to your balance and extends your subscription end date.
+                  Online payments and paid subscriptions are not active yet. Applicable cancellation and refund rules will be displayed before either feature is enabled.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">3. Quality or Delivery Guarantee</h4>
                 <p className="text-stone-600">
-                  If a meal tray arrives damaged, delayed beyond acceptable transit limits due to operational fault, or incorrect items are dispatched, contact our helpline at <span className="font-bold text-stone-900">{BRAND_CONFIG.phone}</span> immediately. We will issue a replacement meal or full slot credit immediately.
+                  If an order arrives damaged, substantially delayed due to an operational issue, or contains incorrect items, contact support at <span className="font-bold text-stone-900">{BRAND_CONFIG.phone}</span>. The Kitchen team will review the order and confirm the available resolution.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">4. Refund Processing Time</h4>
                 <p className="text-stone-600">
-                  UPI and card refunds are initiated immediately and reflect in your account within 24 to 72 hours depending on your issuing bank.
+                  UPI and card payments are not active yet, so no online refund is currently processed. Processing timelines will be published before online payments launch.
                 </p>
               </div>
             </div>
@@ -226,19 +226,19 @@ export const LegalModal: React.FC = () => {
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
                 <p className="font-bold text-xs">Punctual Cluster Logistics • Gandhinagar</p>
                 <p className="text-xs text-emerald-800 mt-1">
-                  Our route-optimized vans dispatch directly from our central kitchen to ensure food reaches your doorstep piping hot.
+                  Available delivery windows and serviceability are confirmed during checkout. Arrival time may vary with route and local traffic conditions.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200">
                   <span className="font-bold text-xs text-stone-900 block">Lunch Delivery Slot</span>
-                  <span className="text-sm font-extrabold text-[#0D6E44]">12:00 PM – 1:00 PM</span>
+                  <span className="text-sm font-extrabold text-[#0D6E44]">12:00 PM – 1:30 PM</span>
                   <p className="text-[11px] text-stone-500 mt-1">Timed for college breaks and corporate lunch hours.</p>
                 </div>
                 <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200">
                   <span className="font-bold text-xs text-stone-900 block">Dinner Delivery Slot</span>
-                  <span className="text-sm font-extrabold text-[#0D6E44]">7:30 PM – 8:30 PM</span>
+                  <span className="text-sm font-extrabold text-[#0D6E44]">7:30 PM – 9:00 PM</span>
                   <p className="text-[11px] text-stone-500 mt-1">Delivered hot for a relaxing evening routine.</p>
                 </div>
               </div>
@@ -315,4 +315,3 @@ export const LegalModal: React.FC = () => {
     </div>
   );
 };
-

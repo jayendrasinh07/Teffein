@@ -152,7 +152,7 @@ export const OrderSummaryDesktop: React.FC<OrderSummaryDesktopProps> = ({
         </div>
         <div className="flex items-center gap-2 text-[11px] text-stone-600">
           <Lock className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-          <span>Secure instant UPI / QR / COD verification</span>
+          <span>Online payments are not active yet</span>
         </div>
       </div>
     </aside>
