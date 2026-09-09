@@ -96,11 +96,57 @@ export const authService = {
     }
   },
 
+  async preparePasswordRecovery(): Promise<{ ready: boolean; error: Error | null }> {
+    if (!isSupabaseConfigured()) {
+      return { ready: false, error: new Error('Password recovery is currently unavailable.') };
+    }
+
+    try {
+      const client = getSupabaseClient();
+      const url = new URL(window.location.href);
+      const hash = new URLSearchParams(url.hash.replace(/^#/, ''));
+      const authError = url.searchParams.get('error_description') || hash.get('error_description');
+      if (authError) throw new Error(decodeURIComponent(authError.replace(/\+/g, ' ')));
+
+      let { data: { session }, error } = await client.auth.getSession();
+      if (error) throw error;
+
+      const code = url.searchParams.get('code');
+      if (!session && code) {
+        const exchanged = await client.auth.exchangeCodeForSession(code);
+        if (exchanged.error) throw exchanged.error;
+        session = exchanged.data.session;
+      }
+
+      const accessToken = hash.get('access_token');
+      const refreshToken = hash.get('refresh_token');
+      if (!session && accessToken && refreshToken) {
+        const restored = await client.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+        if (restored.error) throw restored.error;
+        session = restored.data.session;
+      }
+
+      if (!session) {
+        return { ready: false, error: new Error('This reset link is invalid, expired, or already used. Request a new link from Kitchen sign in.') };
+      }
+
+      window.history.replaceState(null, '', '/reset-password');
+      return { ready: true, error: null };
+    } catch (err: any) {
+      console.error('[Thalimitra Auth] Password recovery session failed:', err);
+      return { ready: false, error: new Error('This reset link is invalid, expired, or already used. Request a new link from Kitchen sign in.') };
+    }
+  },
+
   async updatePassword(password: string): Promise<{ error: Error | null }> {
     if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
 
     try {
       const client = getSupabaseClient();
+      const { data: { session }, error: sessionError } = await client.auth.getSession();
+      if (sessionError || !session) {
+        return { error: new Error('This reset link is invalid, expired, or already used. Request a new link from Kitchen sign in.') };
+      }
       const { error } = await client.auth.updateUser({ password });
       if (error) throw error;
       return { error: null };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AlertCircle, CheckCircle2, Loader2, LockKeyhole } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/authService';
@@ -11,6 +11,17 @@ export const PasswordRecoveryPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
+  const [recoveryState, setRecoveryState] = useState<'checking' | 'ready' | 'invalid'>('checking');
+
+  useEffect(() => {
+    let active = true;
+    void authService.preparePasswordRecovery().then(({ ready, error }) => {
+      if (!active) return;
+      setRecoveryState(ready ? 'ready' : 'invalid');
+      setErrorMessage(error?.message || null);
+    });
+    return () => { active = false; };
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -57,6 +68,25 @@ export const PasswordRecoveryPage: React.FC = () => {
           >
             Open Kitchen
           </button>
+        ) : recoveryState === 'checking' ? (
+          <div className="mt-6 flex items-center justify-center gap-2 rounded-2xl bg-stone-100 p-4 text-sm font-bold text-stone-600">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Checking your secure reset link…
+          </div>
+        ) : recoveryState === 'invalid' ? (
+          <div className="mt-6 space-y-4">
+            <div className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900" role="alert">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-rose-600" />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('kitchen_dashboard')}
+              className="w-full rounded-2xl bg-[#0D6E44] px-5 py-3 text-sm font-black text-white hover:bg-[#08482C]"
+            >
+              Request a new reset link
+            </button>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             {errorMessage && (
@@ -111,4 +141,3 @@ export const PasswordRecoveryPage: React.FC = () => {
     </main>
   );
 };
-
