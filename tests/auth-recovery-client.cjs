@@ -42,10 +42,27 @@ function serviceFor(auth, href) {
   }, 'https://thalimitra.com/reset-password#access_token=access&refresh_token=refresh&type=recovery');
   assert.equal((await hash.authService.preparePasswordRecovery()).ready, true);
 
+  let verifiedCode = '';
+  const mfa = serviceFor({
+    mfa: {
+      getAuthenticatorAssuranceLevel: async () => ({ data: { currentLevel: verifiedCode ? 'aal2' : 'aal1', nextLevel: 'aal2' }, error: null }),
+      listFactors: async () => ({ data: { all: [{ id: 'totp-1', factor_type: 'totp', status: 'verified' }] }, error: null }),
+      challengeAndVerify: async ({ factorId, code }) => {
+        if (factorId === 'totp-1' && code === '123456') verifiedCode = code;
+        return { error: verifiedCode ? null : new Error('invalid code') };
+      },
+    },
+  }, 'https://thalimitra.com/reset-password');
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(await mfa.authService.getPasswordRecoveryMfa())),
+    { required: true, factorId: 'totp-1', error: null },
+  );
+  assert.equal((await mfa.authService.verifyPasswordRecoveryMfa('totp-1', '123456')).error, null);
+
   const missing = serviceFor({ getSession: async () => ({ data: { session: null }, error: null }) }, 'https://thalimitra.com/reset-password');
   const result = await missing.authService.preparePasswordRecovery();
   assert.equal(result.ready, false);
   assert.match(result.error.message, /invalid, expired, or already used/);
 
-  console.log('PASS: recovery session validation, code exchange, token restore, and missing-session rejection');
+  console.log('PASS: recovery session validation, code exchange, token restore, MFA elevation, and missing-session rejection');
 })().catch(error => { console.error(error); process.exitCode = 1; });

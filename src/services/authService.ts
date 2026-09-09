@@ -144,6 +144,44 @@ export const authService = {
     }
   },
 
+  async getPasswordRecoveryMfa(): Promise<{ required: boolean; factorId: string | null; error: Error | null }> {
+    try {
+      const client = getSupabaseClient();
+      const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assurance.error) throw assurance.error;
+      if (assurance.data.currentLevel === 'aal2' || assurance.data.nextLevel !== 'aal2') {
+        return { required: false, factorId: null, error: null };
+      }
+
+      const factors = await client.auth.mfa.listFactors();
+      if (factors.error) throw factors.error;
+      const verified = factors.data.all.find(
+        factor => factor.factor_type === 'totp' && factor.status === 'verified'
+      );
+      if (!verified) throw new Error('Verified authenticator factor not found.');
+      return { required: true, factorId: verified.id, error: null };
+    } catch (err: any) {
+      console.error('[Thalimitra Auth] Recovery MFA inspection failed:', err);
+      return { required: false, factorId: null, error: new Error('Kitchen security verification could not start. Request a new reset link and try again.') };
+    }
+  },
+
+  async verifyPasswordRecoveryMfa(factorId: string, code: string): Promise<{ error: Error | null }> {
+    try {
+      const client = getSupabaseClient();
+      const verification = await client.auth.mfa.challengeAndVerify({ factorId, code });
+      if (verification.error) throw verification.error;
+      const assurance = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (assurance.error || assurance.data.currentLevel !== 'aal2') {
+        throw assurance.error ?? new Error('MFA verification incomplete.');
+      }
+      return { error: null };
+    } catch (err: any) {
+      console.error('[Thalimitra Auth] Recovery MFA verification failed:', err);
+      return { error: new Error('That security code was not accepted. Use the latest 6-digit code and try again.') };
+    }
+  },
+
   async updatePassword(password: string): Promise<{ error: Error | null }> {
     if (!isSupabaseConfigured()) return { error: new Error('Password recovery is currently unavailable.') };
 

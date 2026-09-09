@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, LockKeyhole } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { authService } from '../services/authService';
 import { getPasswordPolicyError, PASSWORD_REQUIREMENTS } from '../utils/passwordPolicy';
@@ -11,17 +11,51 @@ export const PasswordRecoveryPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [complete, setComplete] = useState(false);
-  const [recoveryState, setRecoveryState] = useState<'checking' | 'ready' | 'invalid'>('checking');
+  const [recoveryState, setRecoveryState] = useState<'checking' | 'mfa' | 'ready' | 'invalid'>('checking');
+  const [factorId, setFactorId] = useState('');
+  const [securityCode, setSecurityCode] = useState('');
 
   useEffect(() => {
     let active = true;
-    void authService.preparePasswordRecovery().then(({ ready, error }) => {
+    void authService.preparePasswordRecovery().then(async ({ ready, error }) => {
       if (!active) return;
-      setRecoveryState(ready ? 'ready' : 'invalid');
-      setErrorMessage(error?.message || null);
+      if (!ready) {
+        setRecoveryState('invalid');
+        setErrorMessage(error?.message || null);
+        return;
+      }
+      const mfa = await authService.getPasswordRecoveryMfa();
+      if (!active) return;
+      if (mfa.error) {
+        setRecoveryState('invalid');
+        setErrorMessage(mfa.error.message);
+      } else if (mfa.required && mfa.factorId) {
+        setFactorId(mfa.factorId);
+        setRecoveryState('mfa');
+      } else {
+        setRecoveryState('ready');
+      }
     });
     return () => { active = false; };
   }, []);
+
+  const handleMfa = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!factorId || !/^\d{6}$/.test(securityCode)) {
+      setErrorMessage('Enter the current 6-digit code from your authenticator app.');
+      return;
+    }
+    setLoading(true);
+    setErrorMessage(null);
+    const { error } = await authService.verifyPasswordRecoveryMfa(factorId, securityCode);
+    setLoading(false);
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
+    setSecurityCode('');
+    setRecoveryState('ready');
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -73,6 +107,29 @@ export const PasswordRecoveryPage: React.FC = () => {
             <Loader2 className="h-4 w-4 animate-spin" />
             Checking your secure reset link…
           </div>
+        ) : recoveryState === 'mfa' ? (
+          <form onSubmit={handleMfa} className="mt-6 space-y-4">
+            <div className="flex items-center gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-950">
+              <ShieldCheck className="h-5 w-5 shrink-0 text-[#0D6E44]" />
+              Verify Kitchen security before changing the password.
+            </div>
+            {errorMessage && <p role="alert" className="rounded-xl bg-rose-50 p-3 text-xs font-semibold text-rose-800">{errorMessage}</p>}
+            <label className="block text-xs font-bold text-stone-700">
+              6-digit authenticator code
+              <input
+                value={securityCode}
+                onChange={(event) => setSecurityCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="\d{6}"
+                required
+                className="mt-2 w-full rounded-xl border border-stone-300 px-4 py-3 text-center text-xl font-black tracking-[0.35em] outline-none focus:ring-2 focus:ring-emerald-700"
+              />
+            </label>
+            <button type="submit" disabled={loading || securityCode.length !== 6} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#0D6E44] px-5 py-3 text-sm font-black text-white disabled:opacity-60">
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />} Verify security code
+            </button>
+          </form>
         ) : recoveryState === 'invalid' ? (
           <div className="mt-6 space-y-4">
             <div className="flex items-start gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-900" role="alert">
