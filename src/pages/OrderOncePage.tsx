@@ -41,6 +41,18 @@ import { addressService } from '../services/addressService';
 import { dietLabel } from '../services/menuService';
 import { IMAGES } from '../data/images';
 
+type LandingOrderIntent = { date: string; slot: 'lunch' | 'dinner'; mealId: string };
+
+const readLandingOrderIntent = (orderableDates: ReturnType<typeof getOrderableDates>): LandingOrderIntent | null => {
+  if (window.location.pathname.replace(/\/+$/, '') !== '/order') return null;
+  const params = new URLSearchParams(window.location.search);
+  const date = params.get('date') ?? '';
+  const slot = params.get('slot');
+  const mealId = params.get('meal') ?? '';
+  if (!orderableDates.some(item => item.dateStr === date) || (slot !== 'lunch' && slot !== 'dinner') || !mealId) return null;
+  return { date, slot, mealId };
+};
+
 export const OrderOncePage: React.FC = () => {
   const { 
     createOneTimeOrder, 
@@ -55,15 +67,16 @@ export const OrderOncePage: React.FC = () => {
     setIsAuthModalOpen
   } = useApp();
 
-  const orderableDates = getOrderableDates();
+  const orderableDates = useMemo(() => getOrderableDates(), []);
+  const landingIntent = useRef<LandingOrderIntent | null>(readLandingOrderIntent(orderableDates));
 
   // 1. Step Navigation State (1 to 6)
-  const [currentStep, setCurrentStep] = useState<number>(1);
-  const [maxCompletedStep, setMaxCompletedStep] = useState<number>(1);
+  const [currentStep, setCurrentStep] = useState<number>(landingIntent.current ? 2 : 1);
+  const [maxCompletedStep, setMaxCompletedStep] = useState<number>(landingIntent.current ? 2 : 1);
 
   // 2. Centralized Order Draft State
-  const [selectedDate, setSelectedDate] = useState<string>(orderableDates[0]?.dateStr || '');
-  const [selectedMealSlot, setSelectedMealSlot] = useState<'lunch' | 'dinner'>('lunch');
+  const [selectedDate, setSelectedDate] = useState<string>(landingIntent.current?.date || orderableDates[0]?.dateStr || '');
+  const [selectedMealSlot, setSelectedMealSlot] = useState<'lunch' | 'dinner'>(landingIntent.current?.slot || 'lunch');
 
   // Supabase Data State
   const [dbMeals, setDbMeals] = useState<DatabaseMeal[]>([]);
@@ -120,7 +133,17 @@ export const OrderOncePage: React.FC = () => {
     setIsLoadingMenu(true);setMenuError('');setDbMeals([]);setSelectedMeal(emptyMeal);setSelectedAddons({});setSelectedSlotId('');
     setDbLunchSlots([]);setDbDinnerSlots([]);setMaxCompletedStep(1);
     Promise.all([menuService.getMenuForDate(selectedDate),menuService.getDeliverySlots('lunch',selectedDate),menuService.getDeliverySlots('dinner',selectedDate)])
-      .then(([menu,lunch,dinner])=>{if(alive){setDbMeals((menu?.meals??[]).filter(m=>(m.mealType===selectedMealSlot||m.mealType==='both')));setDbLunchSlots(lunch);setDbDinnerSlots(dinner);}})
+      .then(([menu,lunch,dinner])=>{if(alive){
+        const availableMeals=(menu?.meals??[]).filter(m=>(m.mealType===selectedMealSlot||m.mealType==='both'));
+        setDbMeals(availableMeals);setDbLunchSlots(lunch);setDbDinnerSlots(dinner);
+        const intent=landingIntent.current;
+        if(intent){
+          const requestedMeal=availableMeals.find(meal=>meal.id===intent.mealId);
+          if(requestedMeal){setSelectedMeal(requestedMeal);setCurrentStep(3);setMaxCompletedStep(3);}
+          else{setCurrentStep(2);setSubmissionError('That meal is no longer available. Choose another published meal.');}
+          landingIntent.current=null;
+        }
+      }})
       .catch(error=>{if(alive)setMenuError(error.message||'Unable to load the menu. Please try again.');})
       .finally(()=>{if(alive)setIsLoadingMenu(false);});
     return()=>{alive=false;};
@@ -391,7 +414,7 @@ export const OrderOncePage: React.FC = () => {
 
           <div className="flex items-center gap-2 text-xs text-stone-500 font-medium">
             <ShieldCheck className="w-4 h-4 text-[#0D6E44]" />
-            <span>Pure Filtered Groundnut Oil • MP Sharbati Wheat</span>
+            <span>Kitchen-published menu • Price verified at checkout</span>
           </div>
         </div>
 

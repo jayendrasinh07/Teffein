@@ -1,7 +1,7 @@
 import React from 'react';
 import { HomeReturningUserBanner } from '../components/public/HomeReturningUserBanner';
 import { HeroSection } from '../components/public/HeroSection';
-import { HomeMealPreview } from '../components/public/HomeMealPreview';
+import { HomeMealSelector } from '../components/public/HomeMealSelector';
 import { HomeThreeBenefits } from '../components/public/HomeThreeBenefits';
 import { HomeFinalCTA } from '../components/public/HomeFinalCTA';
 
@@ -15,7 +15,7 @@ export const Home: React.FC = () => {
       <HeroSection />
 
       {/* 2. Today's Meal: Aaj Thalimitra mein kya mil raha hai? */}
-      <HomeMealPreview />
+      <HomeMealSelector />
 
       {/* 3. Why Thalimitra: 3 Key Benefits (Freshly Cooked, Home-Style, Flexible) */}
       <HomeThreeBenefits />

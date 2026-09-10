@@ -11,7 +11,6 @@ import { SmartImage } from '../common/SmartImage';
 
 export const HeroSection: React.FC = () => {
   const { 
-    setActiveTab, 
     setIsLocationModalOpen,
     centralLocation,
     activeDeliveryAddress 
@@ -66,8 +65,7 @@ export const HeroSection: React.FC = () => {
               <button
                 id="hero-primary-order-btn"
                 onClick={() => {
-                  setActiveTab('todays_menu');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  document.getElementById('choose-meal')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
                 className="px-7 py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-base font-black shadow-lg shadow-emerald-950/15 hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 group cursor-pointer"
               >

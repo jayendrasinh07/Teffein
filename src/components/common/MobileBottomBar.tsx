@@ -24,8 +24,11 @@ export const MobileBottomBar: React.FC = () => {
         <button
           id="mobile-sticky-order-btn"
           onClick={() => {
-            setActiveTab('todays_menu');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            if (activeTab === 'home') document.getElementById('choose-meal')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            else {
+              setActiveTab('todays_menu');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
           }}
           className="flex-1 py-3 px-4 rounded-xl bg-[#0D6E44] active:bg-[#08482C] text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >

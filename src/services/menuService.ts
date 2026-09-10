@@ -21,10 +21,27 @@ export const menuService = {
   if(error)throw error; return (data??[]).map(mapDeliverySlot);
  },
  async getMenuForDate(date:string):Promise<DatabaseDayMenu|null> {
-  const client=getSupabaseClient(); const {data:day,error}=await client.from('menu_days').select('id,menu_date,is_published').eq('menu_date',date).eq('is_published',true).maybeSingle();
-  if(error)throw error; if(!day)return null;
-  const {data:items,error:itemError}=await client.from('menu_items').select('meal_id,availability,display_order,meals(*)').eq('menu_day_id',day.id).eq('availability',true).order('display_order');
+  const menus=await this.getMenusForDates([date]);
+  return menus[date]??null;
+ },
+ async getMenusForDates(dates:string[]):Promise<Record<string,DatabaseDayMenu|null>> {
+  const uniqueDates=[...new Set(dates.filter(date=>/^\d{4}-\d{2}-\d{2}$/.test(date)))];
+  const empty=Object.fromEntries(uniqueDates.map(date=>[date,null])) as Record<string,DatabaseDayMenu|null>;
+  if(uniqueDates.length===0)return empty;
+  const client=getSupabaseClient();
+  const {data:days,error}=await client.from('menu_days').select('id,menu_date,is_published').in('menu_date',uniqueDates).eq('is_published',true);
+  if(error)throw error;
+  if(!days?.length)return empty;
+  const {data:items,error:itemError}=await client.from('menu_items').select('menu_day_id,meal_id,availability,display_order,meals(*)').in('menu_day_id',days.map((day:any)=>day.id)).eq('availability',true).order('display_order');
   if(itemError)throw itemError;
-  return {id:day.id,menuDate:day.menu_date,isPublished:day.is_published,meals:(items??[]).filter((i:any)=>i.meals?.is_active).map((i:any)=>meal(i.meals))};
+  for(const day of days){
+   empty[day.menu_date]={
+    id:day.id,
+    menuDate:day.menu_date,
+    isPublished:day.is_published,
+    meals:(items??[]).filter((item:any)=>item.menu_day_id===day.id&&item.meals?.is_active).map((item:any)=>meal(item.meals))
+   };
+  }
+  return empty;
  }
 };

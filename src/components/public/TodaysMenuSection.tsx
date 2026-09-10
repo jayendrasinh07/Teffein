@@ -40,9 +40,9 @@ export const TodaysMenuSection = () => {
     setIsLoading(true);
     setError(null);
 
-    Promise.all(dates.map(async date => [date, await menuService.getMenuForDate(date)] as const))
-      .then(entries => {
-        if (active) setMenus(Object.fromEntries(entries));
+    menuService.getMenusForDates(dates)
+      .then(result => {
+        if (active) setMenus(result);
       })
       .catch(() => {
         if (active) setError('Published menu could not be loaded. Please try again.');

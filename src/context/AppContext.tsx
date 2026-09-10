@@ -232,6 +232,8 @@ const tabForPath = (): ActiveTab => isOpsBuild
   ? currentPath() === '/reset-password' ? 'password_recovery' : 'kitchen_dashboard'
   : currentPath() === '/reset-password'
     ? 'password_recovery'
+    : currentPath() === '/order'
+      ? 'order_once'
     : currentPath() === '/contact'
       ? 'contact'
       : currentPath() === '/pricing'
@@ -407,6 +409,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     const destination = activeTab === 'password_recovery'
         ? '/reset-password'
+        : activeTab === 'order_once'
+          ? (path === '/order' ? null : '/order')
         : activeTab === 'contact'
           ? (path === '/contact' ? null : '/contact')
         : activeTab === 'todays_menu' && path === '/pricing'

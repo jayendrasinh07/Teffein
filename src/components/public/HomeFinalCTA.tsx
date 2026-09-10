@@ -5,7 +5,7 @@ import { IMAGES } from '../../data/images';
 import { SmartImage } from '../common/SmartImage';
 
 export const HomeFinalCTA: React.FC = () => {
-  const { setActiveTab, setIsLocationModalOpen } = useApp();
+  const { setIsLocationModalOpen } = useApp();
 
   return (
     <section className="py-14 sm:py-20 bg-white border-t border-stone-200">
@@ -40,8 +40,7 @@ export const HomeFinalCTA: React.FC = () => {
               <button
                 id="final-cta-order-meal"
                 onClick={() => {
-                  setActiveTab('todays_menu');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  document.getElementById('choose-meal')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }}
                 className="px-7 py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-base font-black shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 group cursor-pointer"
               >

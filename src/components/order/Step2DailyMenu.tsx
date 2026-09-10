@@ -57,7 +57,7 @@ export const Step2DailyMenu: React.FC<Step2DailyMenuProps> = ({
         </div>
 
         <p className="text-xs sm:text-sm text-stone-600 font-normal leading-relaxed">
-          Every meal is prepared fresh in our Gandhinagar cloud kitchen using 100% cold-pressed/filtered groundnut oil, MP Sharbati wheat, and zero palm oil or chemical preservatives.
+          Only meals published by the Kitchen for this date and service appear here. The displayed price is used for checkout.
         </p>
       </div>
 
@@ -106,7 +106,7 @@ export const Step2DailyMenu: React.FC<Step2DailyMenuProps> = ({
                   <div className="absolute top-3 left-3 flex items-center gap-1.5">
                     <span className="bg-[#0D6E44] text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full flex items-center gap-1 shadow-sm">
                       <Leaf className="w-3 h-3 text-amber-300" />
-                      <span>100% Pure Veg</span>
+                      <span>Vegetarian</span>
                     </span>
                   </div>
 
