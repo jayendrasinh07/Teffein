@@ -24,16 +24,16 @@ export const HeroSection: React.FC = () => {
     'Gandhinagar';
 
   return (
-    <section className="relative overflow-hidden pt-8 pb-12 sm:pt-12 sm:pb-16 lg:py-16 bg-[#FAF8F5]">
+    <section className="relative overflow-hidden bg-[#FAF8F5] pb-5 pt-6 sm:pb-10 sm:pt-9 lg:py-10">
       {/* Ambient background glow */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-emerald-100/30 rounded-full blur-3xl -z-10 pointer-events-none" />
       <div className="absolute bottom-4 left-10 w-80 h-80 bg-amber-100/25 rounded-full blur-3xl -z-10 pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div className="grid grid-cols-1 items-center gap-7 lg:grid-cols-12 lg:gap-12">
           
           {/* LEFT COLUMN: Copy & Clear CTAs */}
-          <div className="lg:col-span-7 space-y-5 text-left">
+          <div className="space-y-4 text-left lg:col-span-7 lg:space-y-5">
             {/* Subtle Location Context */}
             <div className="flex flex-wrap items-center gap-2">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-stone-700">
@@ -56,12 +56,13 @@ export const HeroSection: React.FC = () => {
             </h1>
 
             {/* Short supporting text */}
-            <p className="text-base sm:text-lg text-stone-600 font-normal leading-relaxed max-w-lg">
-              Home-style lunch and dinner without the daily “what should I eat?” stress. See the kitchen-published menu, exact price and delivery window before you decide.
+            <p className="max-w-lg text-base font-normal leading-relaxed text-stone-600 sm:text-lg">
+              <span className="sm:hidden">Menu, exact price aur delivery time pehle dekhiye.</span>
+              <span className="hidden sm:inline">Choose a day and Lunch or Dinner. See the Kitchen-published meal, exact price and delivery time before you order.</span>
             </p>
 
             {/* Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <div className="hidden items-stretch gap-3 pt-2 sm:flex sm:flex-row sm:items-center">
               <button
                 id="hero-primary-order-btn"
                 onClick={() => {
@@ -85,7 +86,7 @@ export const HeroSection: React.FC = () => {
             </div>
 
             {/* Trust Line */}
-            <div className="pt-1 grid grid-cols-1 gap-2 text-xs text-stone-500 font-medium sm:flex sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1 sm:text-sm">
+            <div className="hidden flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-sm font-medium text-stone-500 sm:flex">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
                 <span>Kitchen-published menu</span>
@@ -104,11 +105,11 @@ export const HeroSection: React.FC = () => {
           </div>
 
           {/* RIGHT COLUMN: Large Clean Food Showcase Card (40-45% width) */}
-          <div className="lg:col-span-5 relative mt-2 lg:mt-0">
+          <div className="relative hidden lg:col-span-5 lg:mt-0 lg:block">
             <div className="relative mx-auto max-w-md bg-white rounded-3xl p-3 sm:p-4 shadow-xl border border-stone-200/90 overflow-hidden group">
               
               {/* Photo Area */}
-              <div className="relative h-64 sm:h-72 w-full rounded-2xl overflow-hidden shadow-inner bg-stone-100">
+              <div className="relative h-60 w-full overflow-hidden rounded-2xl bg-stone-100 shadow-inner">
                 <SmartImage
                   src={IMAGES.hero.mainThali}
                   alt="Fresh wholesome Indian thali with dal, sabji, rotis, rice, salad and chaas"
