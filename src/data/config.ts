@@ -14,8 +14,6 @@ export const BRAND_CONFIG = {
   tagline: "Roz ka khana. Sahi khana.",
   subTagline: "Gandhinagar's Premier Daily Home-Food Subscription",
   location: "Gandhinagar, Gujarat, India",
-  phone: "+91 98250 14820",
-  whatsapp: "+91 98250 14820",
   email: "parmarjayendrasinh41@gmail.com",
   fssaiNumber: "Licence details will be published after verification",
   heroHeadline: "Roz ka khana. Sahi khana.",

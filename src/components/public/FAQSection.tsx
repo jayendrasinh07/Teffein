@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { FAQS, BRAND_CONFIG } from '../../data/config';
-import { ChevronDown, HelpCircle, Phone, MessageSquare } from 'lucide-react';
+import { FAQS } from '../../data/config';
+import { ChevronDown, HelpCircle } from 'lucide-react';
 
 export const FAQSection: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
@@ -61,27 +61,6 @@ export const FAQSection: React.FC = () => {
           })}
         </div>
 
-        {/* WhatsApp Support Box */}
-        <div className="mt-12 p-6 rounded-3xl bg-white border border-stone-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-              <MessageSquare className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm text-stone-900">Have a custom question or group requirement?</h4>
-              <p className="text-xs text-stone-500">Chat with our Gandhinagar meal coordinator directly on WhatsApp.</p>
-            </div>
-          </div>
-
-          <a
-            href={`https://wa.me/${(BRAND_CONFIG.whatsapp || '').replace(/[^0-9]/g, '')}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shrink-0 flex items-center gap-1.5"
-          >
-            <span>WhatsApp Support ({BRAND_CONFIG.phone})</span>
-          </a>
-        </div>
       </div>
     </section>
   );

@@ -12,9 +12,6 @@ import {
   ArrowRight,
   Crosshair,
   ShieldCheck,
-  Phone,
-  User,
-  Compass
 } from 'lucide-react';
 import { AddressLabel, DeliveryInstructionPreset, DetectedLocation } from '../../types';
 import { saveAreaWaitlistEntry } from '../../services/locationService';
@@ -41,8 +38,8 @@ export const LocationConfirmationModal: React.FC<LocationConfirmationModalProps>
   } = useApp();
 
   const [label, setLabel] = useState<AddressLabel>('Home');
-  const [fullName, setFullName] = useState(activeDeliveryAddress?.fullName || 'Jayendrasinh Parmar');
-  const [phone, setPhone] = useState(activeDeliveryAddress?.phone || '9825014820');
+  const [fullName, setFullName] = useState(activeDeliveryAddress?.fullName || '');
+  const [phone, setPhone] = useState(activeDeliveryAddress?.phone || '');
   const [flatOrStreet, setFlatOrStreet] = useState('');
   const [landmark, setLandmark] = useState('');
   const [instructionPreset, setInstructionPreset] = useState<DeliveryInstructionPreset>('call_on_reach');

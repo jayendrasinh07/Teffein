@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { 
   MapPin, 
-  Phone, 
   Mail, 
   ShieldCheck, 
   ArrowRight,
@@ -97,14 +96,6 @@ export const Footer: React.FC = () => {
             <div className="pt-2 border-t border-stone-800/60 space-y-1 text-xs">
               <span className="text-stone-400 block font-medium">Need help?</span>
               <div className="flex flex-wrap items-center gap-3 text-stone-300">
-                <a
-                  href={`tel:${BRAND_CONFIG.phone.replace(/[^0-9+]/g, '')}`}
-                  className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1 font-semibold text-stone-200"
-                >
-                  <Phone className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>{BRAND_CONFIG.phone}</span>
-                </a>
-                <span className="text-stone-600 hidden sm:inline">•</span>
                 <a
                   href={`mailto:${BRAND_CONFIG.email}`}
                   className="hover:text-emerald-400 transition-colors inline-flex items-center gap-1 text-stone-300"

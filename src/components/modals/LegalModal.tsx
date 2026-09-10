@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { X, ShieldCheck, FileText, RotateCcw, Truck, HelpCircle, Phone, Mail, CheckCircle2, ArrowRight } from 'lucide-react';
+import { X, ShieldCheck, FileText, RotateCcw, Truck, HelpCircle, Mail, CheckCircle2, ArrowRight } from 'lucide-react';
 import { BRAND_CONFIG, FAQS } from '../../data/config';
 
 export const LegalModal: React.FC = () => {
@@ -104,7 +104,7 @@ export const LegalModal: React.FC = () => {
           {legalModalTab === 'privacy' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
-                <p className="font-bold text-xs">Effective Date: September 9, 2026 • Last updated: September 9, 2026</p>
+                <p className="font-bold text-xs">Effective Date: September 10, 2026 • Last updated: September 10, 2026</p>
                 <p className="text-xs text-emerald-800 mt-1">
                   At Thalimitra, we respect your privacy and are committed to protecting the personal information you share with us for daily home meal deliveries.
                 </p>
@@ -119,27 +119,35 @@ export const LegalModal: React.FC = () => {
                   <li><strong>Contact details:</strong> Account email, name, and delivery phone number.</li>
                   <li><strong>Location data:</strong> Doorstep address (house/flat number, society/building name, landmark, sector/area, and GPS coordinates if verified).</li>
                   <li><strong>Meal preferences:</strong> Dietary selections (Standard Gujarati, Jain Satvik, Low-Oil Fitness), spice levels, and delivery instructions.</li>
+                  <li><strong>Order and payment records:</strong> Ordered items, prices, order status, and payment, refund, or gateway reference identifiers. We do not receive your UPI PIN, card PIN, CVV, or complete card number.</li>
                 </ul>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">2. How We Use Your Data</h4>
                 <p className="text-stone-600">
-                  We use your information exclusively to cook, pack, and punctually dispatch meals to your location via our assigned Gandhinagar delivery clusters. We never sell, rent, or trade your personal data to third-party marketing brokers.
+                  We use this information to authenticate your account, confirm serviceability, prepare and deliver orders, process or reconcile payments, answer support requests, prevent abuse, and meet legal or accounting obligations. We share only the information needed with service providers that support hosting, authentication, maps, payment processing, and delivery operations. We do not sell or rent personal information for advertising.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">3. Payment Security</h4>
                 <p className="text-stone-600">
-                  Digital payments are not active yet. Thalimitra does not collect or store card details or UPI PINs. This policy will be updated when the verified Razorpay payment flow goes live.
+                  Until an online payment option appears at checkout, Thalimitra does not accept online payments. When enabled, Razorpay will process payment credentials on its secured interface. Thalimitra will store only the references and verified status needed to match a payment, refund, or dispute with an order.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">4. Data Retention & Deletion</h4>
                 <p className="text-stone-600">
-                  You can request the modification or deletion of your saved addresses and account history anytime by contacting our support team at <a href={`mailto:${BRAND_CONFIG.email}`} className="text-[#0D6E44] font-bold underline">{BRAND_CONFIG.email}</a>.
+                  You can request correction or deletion of saved profile and address information by contacting <a href={`mailto:${BRAND_CONFIG.email}`} className="text-[#0D6E44] font-bold underline">{BRAND_CONFIG.email}</a>. Order, payment, refund, tax, fraud-prevention, and dispute records may be retained for the period required by applicable law or to establish and defend legal claims.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-stone-900 text-sm mb-1">5. Privacy Questions & Grievances</h4>
+                <p className="text-stone-600">
+                  Contact us at <a href={`mailto:${BRAND_CONFIG.email}`} className="text-[#0D6E44] font-bold underline">{BRAND_CONFIG.email}</a>. Include only the account email and order number needed to locate your request; never send an OTP, UPI PIN, card PIN, or CVV.
                 </p>
               </div>
             </div>
@@ -177,9 +185,16 @@ export const LegalModal: React.FC = () => {
               </div>
 
               <div>
-                <h4 className="font-bold text-stone-900 text-sm mb-1">4. Online Payments & Subscriptions</h4>
+                <h4 className="font-bold text-stone-900 text-sm mb-1">4. Prices & Payment Confirmation</h4>
                 <p className="text-stone-600">
-                  Online payments and paid subscriptions are not active yet. Their final pricing, billing, cancellation, and refund terms will be published before launch.
+                  The published menu and checkout show the meal price, customization charges, delivery fee, discount, and final payable total before you place an order. An online payment is treated as successful only after Thalimitra verifies the payment status with Razorpay. A bank debit, screenshot, or customer-side success screen alone does not change an order to paid; contact support if money is debited but the order remains pending.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-stone-900 text-sm mb-1">5. Subscriptions</h4>
+                <p className="text-stone-600">
+                  Paid subscriptions are not available. Any future subscription will have separate pricing, pause, cancellation, and refund terms displayed before purchase.
                 </p>
               </div>
             </div>
@@ -189,37 +204,37 @@ export const LegalModal: React.FC = () => {
           {legalModalTab === 'refund' && (
             <div className="space-y-4 animate-in fade-in duration-150">
               <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950">
-                <p className="font-bold text-xs">Customer-First Cancellation & Refund Promise</p>
+                <p className="font-bold text-xs">One-Time Order Cancellation & Refund Rules</p>
                 <p className="text-xs text-amber-800 mt-1">
-                  We believe in zero-friction meal flexibility. If your plans change or a meal doesn't meet our promised standard, we make it right.
+                  These rules apply to one-time meal orders. Paid subscriptions are not available.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">1. One-Time Meal Orders</h4>
                 <p className="text-stone-600">
-                  A one-time meal with pending payment can be cancelled online while it is confirmed and before the Kitchen cutoff: 10:30 AM IST for lunch and 5:30 PM IST for dinner. No refund is created while online payments are disabled. Refund rules will be shown here before online payments launch.
+                  You may cancel a confirmed order before the Kitchen cutoff: 10:30 AM IST for lunch and 5:30 PM IST for dinner. If the order was paid, the full order amount will be eligible for refund to the original payment method. Customer cancellation is unavailable after the cutoff or after preparation begins because ingredients and kitchen capacity have already been committed.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-stone-900 text-sm mb-1">2. Online Payments & Subscriptions</h4>
+                <h4 className="font-bold text-stone-900 text-sm mb-1">2. Merchant Cancellation, Failed or Duplicate Debit</h4>
                 <p className="text-stone-600">
-                  Online payments and paid subscriptions are not active yet. Applicable cancellation and refund rules will be displayed before either feature is enabled.
+                  If Thalimitra cancels a paid order, the full order amount will be refunded. If a payment fails, remains unverified, or appears to be debited more than once, contact support with the order and payment reference. We will reconcile it against Razorpay's verified records before confirming or refunding any amount.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">3. Quality or Delivery Guarantee</h4>
                 <p className="text-stone-600">
-                  If an order arrives damaged, substantially delayed due to an operational issue, or contains incorrect items, contact support at <span className="font-bold text-stone-900">{BRAND_CONFIG.phone}</span>. The Kitchen team will review the order and confirm the available resolution.
+                  If an order is not delivered, arrives damaged, or contains materially incorrect items, contact support at <a href={`mailto:${BRAND_CONFIG.email}`} className="text-[#0D6E44] font-bold underline">{BRAND_CONFIG.email}</a> within 2 hours of the delivery window. After verifying the order and issue, Thalimitra may provide a replacement, account credit, partial refund, or full refund as appropriate.
                 </p>
               </div>
 
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">4. Refund Processing Time</h4>
                 <p className="text-stone-600">
-                  UPI and card payments are not active yet, so no online refund is currently processed. Processing timelines will be published before online payments launch.
+                  Approved refunds will be initiated to the original payment method within 2 business days. Razorpay states that a normal refund generally takes 5–7 working days after initiation, although the customer's bank or payment network may take longer. The refund reference will be shared when available. An unpaid or pending order that was never successfully charged does not create a refund.
                 </p>
               </div>
             </div>
@@ -296,11 +311,6 @@ export const LegalModal: React.FC = () => {
         {/* Modal Footer */}
         <div className="px-5 sm:px-6 py-3.5 bg-stone-50 border-t border-stone-200 flex flex-wrap items-center justify-between gap-3 text-xs text-stone-600 shrink-0">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1">
-              <Phone className="w-3.5 h-3.5 text-[#0D6E44]" />
-              <span>{BRAND_CONFIG.phone}</span>
-            </span>
-            <span>•</span>
             <span className="flex items-center gap-1">
               <Mail className="w-3.5 h-3.5 text-[#0D6E44]" />
               <span>{BRAND_CONFIG.email}</span>

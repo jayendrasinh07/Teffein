@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { BRAND_CONFIG } from '../data/config';
-import { MapPin, Phone, Mail, MessageSquare, Send, Clock, CheckCircle2 } from 'lucide-react';
+import { MapPin, Mail, Send, CheckCircle2 } from 'lucide-react';
 import { supportService, type SupportCategory, type SupportRequest } from '../services/supportService';
 
 export const ContactPage: React.FC = () => {
@@ -66,16 +66,8 @@ export const ContactPage: React.FC = () => {
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
                   <div>
-                    <span className="font-bold block text-stone-900">Central Steam Kitchen:</span>
+                    <span className="font-bold block text-stone-900">Current Service Area:</span>
                     <span>{BRAND_CONFIG.location}</span>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold block text-stone-900">Helpline / WhatsApp:</span>
-                    <span>{BRAND_CONFIG.phone} (Daily 7:00 AM – 9:30 PM)</span>
                   </div>
                 </div>
 
@@ -87,31 +79,7 @@ export const ContactPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <Clock className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold block text-stone-900">Kitchen Operations:</span>
-                    <span>Morning Shift: 6:00 AM – 2:00 PM | Evening Shift: 4:30 PM – 9:30 PM</span>
-                  </div>
-                </div>
               </div>
-            </div>
-
-            {/* Quick WhatsApp Action */}
-            <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-200">
-              <h4 className="font-bold text-sm text-emerald-950 mb-1">Instant WhatsApp Assistance</h4>
-              <p className="text-xs text-emerald-800 mb-4">
-                Chat directly with our meal coordinator for immediate subscription assistance or address updates.
-              </p>
-              <a
-                href={`https://wa.me/${(BRAND_CONFIG.whatsapp || '').replace(/[^0-9]/g, '')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-2"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span>Open WhatsApp Chat</span>
-              </a>
             </div>
           </div>
 
@@ -188,4 +156,3 @@ export const ContactPage: React.FC = () => {
     </div>
   );
 };
-
