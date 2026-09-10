@@ -7,6 +7,7 @@ export const MobileBottomBar: React.FC = () => {
 
   // Hide on order page, checkout modal, or customer dashboard to avoid UI collisions
   if (
+    activeTab === 'home' ||
     activeTab === 'order_once' || 
     activeTab === 'customer_dashboard' || 
     activeTab === 'admin_dashboard' ||
