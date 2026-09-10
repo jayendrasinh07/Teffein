@@ -58,7 +58,7 @@ export const HeroSection: React.FC = () => {
 
             {/* Short supporting text */}
             <p className="text-base sm:text-lg text-stone-600 font-normal leading-relaxed max-w-lg">
-              Fresh home-style meals for your everyday routine. Cooked daily in pure groundnut oil, delivered hot to your doorstep across Gandhinagar.
+              Home-style lunch and dinner without the daily “what should I eat?” stress. See the kitchen-published menu, exact price and delivery window before you decide.
             </p>
 
             {/* Action Buttons */}
@@ -66,42 +66,41 @@ export const HeroSection: React.FC = () => {
               <button
                 id="hero-primary-order-btn"
                 onClick={() => {
-                  setActiveTab('order_once');
+                  setActiveTab('todays_menu');
                   window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="px-7 py-3.5 rounded-2xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-base font-black shadow-lg shadow-emerald-950/15 hover:shadow-xl transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2 group cursor-pointer"
               >
-                <span>Order a Meal</span>
+                <span>See Menu & Price</span>
                 <ArrowRight className="w-5 h-5 text-amber-300 group-hover:translate-x-1 transition-transform" />
               </button>
 
               <button
                 id="hero-secondary-menu-btn"
                 onClick={() => {
-                  setActiveTab('todays_menu');
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  setIsLocationModalOpen(true);
                 }}
                 className="px-6 py-3.5 rounded-2xl bg-white hover:bg-stone-50 text-stone-900 text-base font-bold border border-stone-300 shadow-2xs hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>View Today's Menu</span>
+                <span>Check Delivery Area</span>
               </button>
             </div>
 
             {/* Trust Line */}
-            <div className="pt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-stone-500 font-medium">
+            <div className="pt-1 grid grid-cols-1 gap-2 text-xs text-stone-500 font-medium sm:flex sm:flex-wrap sm:items-center sm:gap-x-3 sm:gap-y-1 sm:text-sm">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
-                <span>No subscription required</span>
+                <span>Kitchen-published menu</span>
               </span>
               <span className="text-stone-300 hidden sm:inline">•</span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
-                <span>Freshly cooked</span>
+                <span>Price before checkout</span>
               </span>
               <span className="text-stone-300 hidden sm:inline">•</span>
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-[#0D6E44] shrink-0" />
-                <span>No junk-focused menu</span>
+                <span>Cancel before cutoff</span>
               </span>
             </div>
           </div>
@@ -123,7 +122,7 @@ export const HeroSection: React.FC = () => {
                 {/* Subtle Image Tag */}
                 <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-950/80 backdrop-blur-md text-white text-[11px] font-bold border border-white/10 shadow-sm">
                   <Sparkles className="w-3 h-3 text-amber-400" />
-                  <span>Freshly Cooked Today</span>
+                  <span>Serving Inspiration</span>
                 </div>
               </div>
 
@@ -132,16 +131,16 @@ export const HeroSection: React.FC = () => {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="text-base font-black text-stone-900 leading-snug">
-                      Dal Tadka • Seasonal Sabji
+                      A balanced Thalimitra-style meal
                     </div>
                     <div className="text-xs text-stone-600 font-medium mt-0.5">
-                      4 Phulkas • Steamed Jeera Rice • Kachumber • Masala Chaas
+                      The exact dish and price appear only after the Kitchen publishes them.
                     </div>
                   </div>
 
                   <div className="text-right shrink-0 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200">
-                    <span className="text-[10px] uppercase block text-emerald-800 font-bold leading-tight">Live</span>
-                    <span className="text-base font-black text-[#0D6E44] leading-tight">Menu</span>
+                    <span className="text-[10px] uppercase block text-emerald-800 font-bold leading-tight">Changes</span>
+                    <span className="text-base font-black text-[#0D6E44] leading-tight">Daily</span>
                   </div>
                 </div>
 
@@ -149,9 +148,9 @@ export const HeroSection: React.FC = () => {
                 <div className="pt-2 border-t border-stone-100 flex items-center justify-between text-[11px] text-stone-500 font-medium">
                   <span className="flex items-center gap-1.5 text-emerald-800 font-bold">
                     <span className="w-2 h-2 rounded-full bg-emerald-600" />
-                    100% Pure Vegetarian
+                    Vegetarian options
                   </span>
-                  <span>Gandhinagar Kitchen</span>
+                  <span>Sample serving</span>
                 </div>
               </div>
 

@@ -3,7 +3,6 @@ import { HomeReturningUserBanner } from '../components/public/HomeReturningUserB
 import { HeroSection } from '../components/public/HeroSection';
 import { HomeMealPreview } from '../components/public/HomeMealPreview';
 import { HomeThreeBenefits } from '../components/public/HomeThreeBenefits';
-import { HomeMadeForEveryday } from '../components/public/HomeMadeForEveryday';
 import { HomeFinalCTA } from '../components/public/HomeFinalCTA';
 
 export const Home: React.FC = () => {
@@ -21,10 +20,7 @@ export const Home: React.FC = () => {
       {/* 3. Why Thalimitra: 3 Key Benefits (Freshly Cooked, Home-Style, Flexible) */}
       <HomeThreeBenefits />
 
-      {/* 4. Made for your everyday: Segments (Students, Workers, Companies) */}
-      <HomeMadeForEveryday />
-
-      {/* 5. Final CTA: Your next meal is sorted. */}
+      {/* 4. Final CTA: return to the live menu */}
       <HomeFinalCTA />
     </div>
   );

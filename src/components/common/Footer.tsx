@@ -69,10 +69,10 @@ export const Footer: React.FC = () => {
             <div className="pt-1">
               <button
                 id="footer-cta-order-meal"
-                onClick={() => handleNav('order_once')}
+                onClick={() => handleNav('todays_menu')}
                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#0D6E44] hover:bg-[#0A5434] active:bg-[#084229] text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-950/30 hover:shadow-emerald-900/40 transition-all cursor-pointer min-h-[44px]"
               >
-                <span>Order a Meal</span>
+                <span>See Menu & Price</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -149,14 +149,6 @@ export const Footer: React.FC = () => {
                     className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
                   >
                     Today's Menu
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => handleNav('meal_plans')}
-                    className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer"
-                  >
-                    Plans
                   </button>
                 </li>
                 <li>
@@ -249,10 +241,10 @@ export const Footer: React.FC = () => {
                 </li>
                 <li>
                   <button
-                    onClick={() => handleNav('order_once')}
+                    onClick={() => handleNav('todays_menu')}
                     className="hover:text-emerald-400 transition-colors text-left py-1 cursor-pointer font-medium text-emerald-400"
                   >
-                    Order a Meal
+                    See Menu & Price
                   </button>
                 </li>
               </ul>

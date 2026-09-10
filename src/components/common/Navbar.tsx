@@ -113,18 +113,6 @@ export const Navbar: React.FC = () => {
             </button>
 
             <button
-              id="nav-plans"
-              onClick={() => handleNavClick('meal_plans')}
-              className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
-                activeTab === 'meal_plans'
-                  ? 'text-[#0D6E44] bg-emerald-50 font-bold'
-                  : 'text-stone-700 hover:text-stone-950 hover:bg-stone-100/70'
-              }`}
-            >
-              Plans
-            </button>
-
-            <button
               id="nav-how"
               onClick={() => handleNavClick('how_it_works')}
               className={`px-3 py-1.5 rounded-xl text-sm font-semibold transition-colors cursor-pointer ${
@@ -195,10 +183,10 @@ export const Navbar: React.FC = () => {
             {/* Primary Action: Order Now */}
             <button
               id="nav-order-now-btn"
-              onClick={() => handleNavClick('order_once')}
+              onClick={() => handleNavClick('todays_menu')}
               className="px-4.5 py-2.5 rounded-xl bg-[#0D6E44] hover:bg-[#08482C] text-white text-xs font-black shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 shrink-0"
             >
-              <span>Order a Meal</span>
+              <span>See Menu</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -208,7 +196,7 @@ export const Navbar: React.FC = () => {
             <button
               id="mobile-location-header-btn"
               onClick={() => setIsLocationModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-full bg-stone-100/90 active:bg-emerald-50 text-stone-700 text-[11px] font-bold flex items-center gap-1 border border-stone-200 cursor-pointer max-w-[130px] truncate shrink min-w-0"
+              className="px-2.5 py-1.5 rounded-full bg-stone-100/90 active:bg-emerald-50 text-stone-700 text-[11px] font-bold flex items-center gap-1 border border-stone-200 cursor-pointer max-w-[96px] sm:max-w-[130px] truncate shrink min-w-0"
               aria-label="Delivery Location"
             >
               <MapPin className="w-3 h-3 text-[#0D6E44] shrink-0" />
@@ -234,11 +222,11 @@ export const Navbar: React.FC = () => {
           {/* Primary Mobile Action */}
           <button
             id="mobile-menu-order-now-btn"
-            onClick={() => handleNavClick('order_once')}
+            onClick={() => handleNavClick('todays_menu')}
             className="w-full py-3.5 rounded-2xl bg-[#0D6E44] active:bg-[#08482C] text-white text-sm font-black shadow-md flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>🍱</span>
-            <span>Order a Fresh Meal</span>
+            <span>See Menu & Price</span>
             <ArrowRight className="w-4 h-4 text-amber-300" />
           </button>
 
@@ -259,15 +247,6 @@ export const Navbar: React.FC = () => {
               }`}
             >
               Today's Menu
-            </button>
-
-            <button
-              onClick={() => handleNavClick('meal_plans')}
-              className={`p-3 rounded-xl text-left text-xs font-bold cursor-pointer transition-colors ${
-                activeTab === 'meal_plans' ? 'bg-emerald-50 text-[#0D6E44] border border-emerald-200' : 'bg-stone-50 text-stone-700 hover:bg-stone-100'
-              }`}
-            >
-              Meal Plans
             </button>
 
             <button

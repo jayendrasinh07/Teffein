@@ -1,9 +1,9 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight, MapPin } from 'lucide-react';
 
 export const MobileBottomBar: React.FC = () => {
-  const { activeTab, setActiveTab, isOrderOnceModalOpen, isSubscribeModalOpen } = useApp();
+  const { activeTab, setActiveTab, setIsLocationModalOpen, isOrderOnceModalOpen, isSubscribeModalOpen } = useApp();
 
   // Hide on order page, checkout modal, or customer dashboard to avoid UI collisions
   if (
@@ -24,27 +24,23 @@ export const MobileBottomBar: React.FC = () => {
         <button
           id="mobile-sticky-order-btn"
           onClick={() => {
-            setActiveTab('order_once');
+            setActiveTab('todays_menu');
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }}
           className="flex-1 py-3 px-4 rounded-xl bg-[#0D6E44] active:bg-[#08482C] text-white text-xs font-black shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>🍱</span>
-          <span>Order a Meal</span>
-          <span className="bg-emerald-800/80 px-1.5 py-0.5 rounded text-[10px] text-amber-300 ml-0.5">Live price</span>
+          <span>See Menu & Price</span>
+          <ArrowRight className="w-3.5 h-3.5 text-amber-300" />
         </button>
 
         {/* Secondary Subscription CTA */}
         <button
           id="mobile-sticky-plans-btn"
-          onClick={() => {
-            setActiveTab('meal_plans');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-          }}
+          onClick={() => setIsLocationModalOpen(true)}
           className="py-3 px-3.5 rounded-xl bg-stone-100 active:bg-stone-200 text-stone-800 text-xs font-bold border border-stone-200 flex items-center justify-center gap-1 cursor-pointer shrink-0"
         >
-          <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-          <span>Plans</span>
+          <MapPin className="w-3.5 h-3.5 text-emerald-700" />
+          <span>Area</span>
         </button>
 
       </div>

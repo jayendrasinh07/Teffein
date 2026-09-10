@@ -10,47 +10,65 @@ import { Footer } from './components/common/Footer';
 import { RoleSwitcher } from './components/common/RoleSwitcher';
 import { ToastContainer } from './components/common/ToastContainer';
 
-// Modals
-import { SubscribeModal } from './components/modals/SubscribeModal';
-import { OrderOnceModal } from './components/modals/OrderOnceModal';
-import { TraceabilityModal } from './components/modals/TraceabilityModal';
-import { CorporateEnquiryModal } from './components/modals/CorporateEnquiryModal';
-import { FeedbackModal } from './components/modals/FeedbackModal';
-import { AreaCheckerModal } from './components/modals/AreaCheckerModal';
-import { LocationSelectorModal } from './components/modals/LocationSelectorModal';
-import { LegalModal } from './components/modals/LegalModal';
-import { AuthModal } from './components/modals/AuthModal';
 import { DeveloperLocationDiagnostics } from './components/common/DeveloperLocationDiagnostics';
 
 // Pages
 import { Home } from './pages/Home';
-import { HowItWorksPage } from './pages/HowItWorksPage';
-import { MealPlansPage } from './pages/MealPlansPage';
-import { TodaysMenuPage } from './pages/TodaysMenuPage';
-import { OrderOncePage } from './pages/OrderOncePage';
-import { WhyUsPage } from './pages/WhyUsPage';
-import { GandhinagarCoveragePage } from './pages/GandhinagarCoveragePage';
-import { StudentsPage } from './pages/StudentsPage';
-import { WorkersPage } from './pages/WorkersPage';
-import { CorporatePage } from './pages/CorporatePage';
-import { TraceabilityPage } from './pages/TraceabilityPage';
-import { QualityStandardsPage } from './pages/QualityStandardsPage';
-import { ContactPage } from './pages/ContactPage';
 import { MobileBottomBar } from './components/common/MobileBottomBar';
 
-// Dashboards
-import { CustomerDashboard } from './pages/CustomerDashboard';
-import { MealPreferencesPage } from './pages/MealPreferencesPage';
-import { OrderHistoryPage } from './pages/OrderHistoryPage';
-import { PasswordRecoveryPage } from './pages/PasswordRecoveryPage';
+const HowItWorksPage = React.lazy(() => import('./pages/HowItWorksPage').then((module) => ({ default: module.HowItWorksPage })));
+const MealPlansPage = React.lazy(() => import('./pages/MealPlansPage').then((module) => ({ default: module.MealPlansPage })));
+const TodaysMenuPage = React.lazy(() => import('./pages/TodaysMenuPage').then((module) => ({ default: module.TodaysMenuPage })));
+const OrderOncePage = React.lazy(() => import('./pages/OrderOncePage').then((module) => ({ default: module.OrderOncePage })));
+const WhyUsPage = React.lazy(() => import('./pages/WhyUsPage').then((module) => ({ default: module.WhyUsPage })));
+const GandhinagarCoveragePage = React.lazy(() => import('./pages/GandhinagarCoveragePage').then((module) => ({ default: module.GandhinagarCoveragePage })));
+const StudentsPage = React.lazy(() => import('./pages/StudentsPage').then((module) => ({ default: module.StudentsPage })));
+const WorkersPage = React.lazy(() => import('./pages/WorkersPage').then((module) => ({ default: module.WorkersPage })));
+const CorporatePage = React.lazy(() => import('./pages/CorporatePage').then((module) => ({ default: module.CorporatePage })));
+const TraceabilityPage = React.lazy(() => import('./pages/TraceabilityPage').then((module) => ({ default: module.TraceabilityPage })));
+const QualityStandardsPage = React.lazy(() => import('./pages/QualityStandardsPage').then((module) => ({ default: module.QualityStandardsPage })));
+const ContactPage = React.lazy(() => import('./pages/ContactPage').then((module) => ({ default: module.ContactPage })));
+const CustomerDashboard = React.lazy(() => import('./pages/CustomerDashboard').then((module) => ({ default: module.CustomerDashboard })));
+const MealPreferencesPage = React.lazy(() => import('./pages/MealPreferencesPage').then((module) => ({ default: module.MealPreferencesPage })));
+const OrderHistoryPage = React.lazy(() => import('./pages/OrderHistoryPage').then((module) => ({ default: module.OrderHistoryPage })));
+const PasswordRecoveryPage = React.lazy(() => import('./pages/PasswordRecoveryPage').then((module) => ({ default: module.PasswordRecoveryPage })));
+const SubscribeModal = React.lazy(() => import('./components/modals/SubscribeModal').then((module) => ({ default: module.SubscribeModal })));
+const OrderOnceModal = React.lazy(() => import('./components/modals/OrderOnceModal').then((module) => ({ default: module.OrderOnceModal })));
+const TraceabilityModal = React.lazy(() => import('./components/modals/TraceabilityModal').then((module) => ({ default: module.TraceabilityModal })));
+const CorporateEnquiryModal = React.lazy(() => import('./components/modals/CorporateEnquiryModal').then((module) => ({ default: module.CorporateEnquiryModal })));
+const FeedbackModal = React.lazy(() => import('./components/modals/FeedbackModal').then((module) => ({ default: module.FeedbackModal })));
+const AreaCheckerModal = React.lazy(() => import('./components/modals/AreaCheckerModal').then((module) => ({ default: module.AreaCheckerModal })));
+const LocationSelectorModal = React.lazy(() => import('./components/modals/LocationSelectorModal').then((module) => ({ default: module.LocationSelectorModal })));
+const LegalModal = React.lazy(() => import('./components/modals/LegalModal').then((module) => ({ default: module.LegalModal })));
+const AuthModal = React.lazy(() => import('./components/modals/AuthModal').then((module) => ({ default: module.AuthModal })));
+
+const PageLoader = () => (
+  <div className="min-h-[50vh] grid place-items-center text-sm font-semibold text-stone-500" role="status">
+    Loading…
+  </div>
+);
 
 const MainContent: React.FC = () => {
-  const { activeTab, isLocationModalOpen, setIsLocationModalOpen } = useApp();
+  const {
+    activeTab,
+    isOrderOnceModalOpen,
+    isSubscribeModalOpen,
+    isTraceabilityModalOpen,
+    isCorporateModalOpen,
+    isFeedbackModalOpen,
+    isAreaCheckerOpen,
+    isLegalModalOpen,
+    isAuthModalOpen,
+    isLocationModalOpen,
+    setIsLocationModalOpen,
+  } = useApp();
 
   if (activeTab === 'password_recovery') {
     return (
       <div className="min-h-screen bg-[#f5f6f2] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
-        <PasswordRecoveryPage />
+        <React.Suspense fallback={<PageLoader />}>
+          <PasswordRecoveryPage />
+        </React.Suspense>
         <ToastContainer />
       </div>
     );
@@ -98,25 +116,30 @@ const MainContent: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-[#FAF8F5] text-stone-900 font-sans selection:bg-emerald-200 selection:text-emerald-950">
       <Navbar />
-      <main className="flex-1 w-full pb-16 sm:pb-0">{renderActivePage()}</main>
+      <main className="flex-1 w-full pb-16 sm:pb-0">
+        <React.Suspense fallback={<PageLoader />}>{renderActivePage()}</React.Suspense>
+      </main>
       <Footer />
       <MobileBottomBar />
       <RoleSwitcher />
       <ToastContainer />
 
-      {/* Global Interactive Modals & Diagnostics */}
-      <OrderOnceModal />
-      <SubscribeModal />
-      <TraceabilityModal />
-      <CorporateEnquiryModal />
-      <FeedbackModal />
-      <AreaCheckerModal />
-      <LegalModal />
-      <AuthModal />
-      <LocationSelectorModal
-        isOpen={isLocationModalOpen}
-        onClose={() => setIsLocationModalOpen(false)}
-      />
+      <React.Suspense fallback={null}>
+        {isOrderOnceModalOpen && <OrderOnceModal />}
+        {isSubscribeModalOpen && <SubscribeModal />}
+        {isTraceabilityModalOpen && <TraceabilityModal />}
+        {isCorporateModalOpen && <CorporateEnquiryModal />}
+        {isFeedbackModalOpen && <FeedbackModal />}
+        {isAreaCheckerOpen && <AreaCheckerModal />}
+        {isLegalModalOpen && <LegalModal />}
+        {isAuthModalOpen && <AuthModal />}
+        {isLocationModalOpen && (
+          <LocationSelectorModal
+            isOpen
+            onClose={() => setIsLocationModalOpen(false)}
+          />
+        )}
+      </React.Suspense>
       {(import.meta as any).env?.DEV && <DeveloperLocationDiagnostics />}
     </div>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Flame, Heart, RefreshCw } from 'lucide-react';
+import { Clock3, SlidersHorizontal, UtensilsCrossed } from 'lucide-react';
 
 export const HomeThreeBenefits: React.FC = () => {
   return (
@@ -11,10 +11,10 @@ export const HomeThreeBenefits: React.FC = () => {
             Why Thalimitra
           </span>
           <h2 className="text-2xl sm:text-4xl font-black text-stone-900 mt-2 tracking-tight">
-            Real food, cooked with care
+            Everything clear before you order
           </h2>
           <p className="text-stone-500 text-sm mt-1 font-medium">
-            Everything your everyday routine needs — without restaurant heaviness.
+            No guessing about the meal, price, delivery window or cancellation cutoff.
           </p>
         </div>
 
@@ -23,39 +23,39 @@ export const HomeThreeBenefits: React.FC = () => {
           {/* Benefit 1: Freshly Cooked */}
           <div className="bg-[#FAF8F5] rounded-3xl p-6 sm:p-8 border border-stone-200/90 flex flex-col items-center text-center space-y-3 group hover:border-emerald-300 transition-colors">
             <div className="w-13 h-13 rounded-2xl bg-emerald-100/80 text-[#0D6E44] flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-              <Flame className="w-6 h-6" />
+              <UtensilsCrossed className="w-6 h-6" />
             </div>
             <h3 className="text-lg sm:text-xl font-black text-stone-900">
-              Freshly Cooked
+              See exactly what’s cooking
             </h3>
             <p className="text-stone-600 text-xs sm:text-sm leading-relaxed">
-              Prepared for the day's meals in small batches. Zero frozen food, zero stale gravies, zero re-used oil.
+              The Customer menu shows only meals and prices published by the Kitchen for the selected date.
             </p>
           </div>
 
           {/* Benefit 2: Home-Style */}
           <div className="bg-[#FAF8F5] rounded-3xl p-6 sm:p-8 border border-stone-200/90 flex flex-col items-center text-center space-y-3 group hover:border-emerald-300 transition-colors">
             <div className="w-13 h-13 rounded-2xl bg-amber-100/80 text-amber-800 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-              <Heart className="w-6 h-6" />
+              <SlidersHorizontal className="w-6 h-6" />
             </div>
             <h3 className="text-lg sm:text-xl font-black text-stone-900">
-              Home-Style
+              Make it your way
             </h3>
             <p className="text-stone-600 text-xs sm:text-sm leading-relaxed">
-              Simple everyday Indian food. Light on spices, balanced nutrition, easy on the stomach 365 days a year.
+              Choose available spice, oil and add-on preferences before the final order total is confirmed.
             </p>
           </div>
 
           {/* Benefit 3: Flexible */}
           <div className="bg-[#FAF8F5] rounded-3xl p-6 sm:p-8 border border-stone-200/90 flex flex-col items-center text-center space-y-3 group hover:border-emerald-300 transition-colors">
             <div className="w-13 h-13 rounded-2xl bg-sky-100/80 text-sky-800 flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
-              <RefreshCw className="w-6 h-6" />
+              <Clock3 className="w-6 h-6" />
             </div>
             <h3 className="text-lg sm:text-xl font-black text-stone-900">
-              Flexible
+              Know the cutoff
             </h3>
             <p className="text-stone-600 text-xs sm:text-sm leading-relaxed">
-              Order once when you're hungry or subscribe for 7, 15, or 30 days with 1-click pause and meal rollover.
+              Same-day lunch closes at 10:30 AM and dinner at 5:30 PM. Confirmed orders can be cancelled before cutoff.
             </p>
           </div>
 
