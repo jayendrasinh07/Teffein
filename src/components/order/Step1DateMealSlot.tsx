@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AvailabilityCheckResult, DeliverySlot, ServiceMealType } from '../../types';
 import { getOrderableDates, THALIMITRA_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
+import { formatSlotTime } from '../../services/menuService';
 
 interface Step1DateMealSlotProps {
   selectedDate: string; // YYYY-MM-DD
@@ -56,16 +57,16 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
     : selectedDateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
 
   const breakfastTimeRange = breakfastSlots.length > 0
-    ? `${breakfastSlots[0].startTime} – ${breakfastSlots[breakfastSlots.length - 1].endTime}`
+    ? `${formatSlotTime(breakfastSlots[0].startTime)} – ${formatSlotTime(breakfastSlots[breakfastSlots.length - 1].endTime)}`
     : '07:30 AM – 09:00 AM';
 
   // Get summary time range for each service
   const lunchTimeRange = lunchSlots.length > 0 
-    ? `${lunchSlots[0].startTime} – ${lunchSlots[lunchSlots.length - 1].endTime}`
+    ? `${formatSlotTime(lunchSlots[0].startTime)} – ${formatSlotTime(lunchSlots[lunchSlots.length - 1].endTime)}`
     : '12:00 PM – 01:30 PM';
     
   const dinnerTimeRange = dinnerSlots.length > 0
-    ? `${dinnerSlots[0].startTime} – ${dinnerSlots[dinnerSlots.length - 1].endTime}`
+    ? `${formatSlotTime(dinnerSlots[0].startTime)} – ${formatSlotTime(dinnerSlots[dinnerSlots.length - 1].endTime)}`
     : '07:30 PM – 09:00 PM';
 
   return (
