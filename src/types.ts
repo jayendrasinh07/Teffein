@@ -4,7 +4,8 @@ export type CustomerSegment = 'student' | 'worker' | 'corporate' | 'family' | 'i
 
 export type PlanDuration = 'daily' | 'weekly_7' | 'half_month_15' | 'monthly_30' | 'corporate_custom';
 
-export type MealSlot = 'lunch' | 'dinner' | 'both';
+export type ServiceMealType = 'breakfast' | 'lunch' | 'dinner';
+export type MealSlot = ServiceMealType | 'both';
 
 export type DietType = 'standard_gujarati' | 'jain_satvik' | 'kathiyawadi' | 'low_oil_fit' | 'north_indian';
 
@@ -244,7 +245,7 @@ export interface CustomerAddress {
 
 export interface DeliverySlot {
   id: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   windowLabel: string;
   startTime: string;
   endTime: string;
@@ -277,7 +278,7 @@ export interface OneTimeOrder {
   mealImage: string;
   scheduledDate: string; // YYYY-MM-DD
   scheduledDateLabel: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   deliverySlotId: string;
   deliverySlotLabel: string;
   quantity: number;
@@ -335,14 +336,14 @@ export interface AvailabilityCheckResult {
   isAvailable: boolean;
   reason?: 'CUTOFF_PASSED' | 'SLOT_FULL' | 'AREA_UNSERVICEABLE' | 'KITCHEN_CLOSED' | 'DATE_OUT_OF_BOUNDS';
   message: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   date: string;
   dateLabel: string;
   availableSlots: DeliverySlot[];
   nextAvailable?: {
     date: string;
     dateLabel: string;
-    mealSlot: 'lunch' | 'dinner';
+    mealSlot: ServiceMealType;
     timeWindow: string;
     actionLabel: string;
   };

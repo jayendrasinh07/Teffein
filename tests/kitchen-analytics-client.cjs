@@ -25,7 +25,8 @@ const report = {
   assert.equal(parsed.summary.booked_value, 350);
   assert.equal(parsed.daily[0].orders, 2);
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [{ name: 'get_kitchen_business_analytics', args: { p_start_date: '2026-09-01', p_end_date: '2026-09-02' } }]);
-  for (const invalid of [null, { ...report, summary: { ...report.summary, booked_value: -1 } }, { ...report, summary: { ...report.summary, total_orders: undefined } }, { ...report, meal_types: [{ meal_type: 'breakfast', orders: 1, portions: 1 }] }]) assert.throws(() => api.parseKitchenAnalytics(invalid));
+  assert.equal(api.parseKitchenAnalytics({ ...report, meal_types: [{ meal_type: 'breakfast', orders: 1, portions: 1 }] }).meal_types[0].meal_type, 'breakfast');
+  for (const invalid of [null, { ...report, summary: { ...report.summary, booked_value: -1 } }, { ...report, summary: { ...report.summary, total_orders: undefined } }, { ...report, meal_types: [{ meal_type: 'snack', orders: 1, portions: 1 }] }]) assert.throws(() => api.parseKitchenAnalytics(invalid));
   await assert.rejects(api.kitchenAnalyticsService.get('2026-09-02', '2026-09-01'), /valid report range/);
   await assert.rejects(api.kitchenAnalyticsService.get('2026-01-01', '2026-09-01'), /valid report range/);
   response = { data: null, error: { code: '42501' } };

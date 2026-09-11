@@ -1,6 +1,6 @@
 import { getSupabaseClient } from './supabaseClient';
 
-export type KitchenCatalogMealType = 'lunch' | 'dinner' | 'both';
+export type KitchenCatalogMealType = 'breakfast' | 'lunch' | 'dinner' | 'both';
 export type KitchenCatalogDietType =
   | 'standard_gujarati'
   | 'jain_satvik'
@@ -49,7 +49,7 @@ export class KitchenCatalogError extends Error {
   }
 }
 
-const mealTypes: KitchenCatalogMealType[] = ['lunch', 'dinner', 'both'];
+const mealTypes: KitchenCatalogMealType[] = ['breakfast', 'lunch', 'dinner', 'both'];
 const dietTypes: KitchenCatalogDietType[] = [
   'standard_gujarati', 'jain_satvik', 'kathiyawadi', 'low_oil_fit', 'north_indian',
 ];

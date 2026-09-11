@@ -7,13 +7,13 @@ import {
   Users,
   AlertCircle
 } from 'lucide-react';
-import { DeliverySlot } from '../../types';
+import { DeliverySlot, ServiceMealType } from '../../types';
 
 interface DeliverySlotSelectorProps {
   slots: DeliverySlot[];
   selectedSlotId: string;
   onSelectSlot: (slotId: string) => void;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
 }
 
 export const DeliverySlotSelector: React.FC<DeliverySlotSelectorProps> = ({

@@ -63,6 +63,7 @@ BEGIN
   v_document := public.get_kitchen_management();
   SELECT entry INTO v_slot FROM jsonb_array_elements(v_document->'slots') entry WHERE entry->>'id' = v_f->>'slot';
   IF v_document->>'payment_mode' <> 'manual'
+     OR v_document#>>'{cutoffs,breakfast}' <> '22:00:00'
      OR v_document#>>'{cutoffs,lunch}' <> '10:30:00'
      OR v_document#>>'{cutoffs,dinner}' <> '17:30:00'
      OR v_slot->>'max_portions' <> '8'

@@ -13,6 +13,9 @@ for(const [mealSlot,instant,expected] of [
   ['lunch','04:59:59',true],['lunch','05:00:00',false],['dinner','11:59:59',true],['dinner','12:00:00',false]]){
   assert.equal(availability.checkMealAvailability({date:'2026-09-03',mealSlot,currentTime:new Date(`2026-09-03T${instant}Z`)}).isAvailable,expected);
 }
+assert.equal(availability.checkMealAvailability({date:'2026-09-04',mealSlot:'breakfast',currentTime:new Date('2026-09-03T16:29:59Z')}).isAvailable,true);
+assert.equal(availability.checkMealAvailability({date:'2026-09-04',mealSlot:'breakfast',currentTime:new Date('2026-09-03T16:30:00Z')}).isAvailable,false);
+assert.equal(availability.checkMealAvailability({date:'2026-09-03',mealSlot:'breakfast',currentTime:new Date('2026-09-03T01:00:00Z')}).isAvailable,false);
 assert.equal(availability.checkMealAvailability({date:'2026-09-02',mealSlot:'lunch',currentTime:new Date('2026-09-03T01:00:00Z')}).isAvailable,false);
 const menu=moduleSource('menuService','mapDeliverySlot,dietLabel');
 const slot=menu.mapDeliverySlot({id:'slot',meal_type:'dinner',start_time:'19:30:00',end_time:'20:15:00',max_orders:200,booked_portions:199});

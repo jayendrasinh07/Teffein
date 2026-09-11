@@ -42,7 +42,7 @@ export const HomeActionChoice: React.FC = () => {
               <div className="pt-2 space-y-1.5 text-xs text-stone-600 font-medium">
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-[#0D6E44]" />
-                  <span>Choose Lunch or Dinner slot</span>
+                  <span>Choose Breakfast, Lunch or Dinner</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-3.5 h-3.5 text-[#0D6E44]" />

@@ -35,13 +35,13 @@ import {
   getOrderableDates, 
   SAVED_CUSTOMER_ADDRESSES 
 } from '../services/availabilityEngine';
-import { CustomerAddress, DeliverySlot, OneTimeOrder } from '../types';
+import { CustomerAddress, DeliverySlot, OneTimeOrder, ServiceMealType } from '../types';
 import { EMPTY_DELIVERY_ADDRESS } from '../services/locationService';
 import { addressService } from '../services/addressService';
 import { dietLabel } from '../services/menuService';
 import { IMAGES } from '../data/images';
 
-type LandingOrderIntent = { date: string; slot: 'lunch' | 'dinner'; mealId: string };
+type LandingOrderIntent = { date: string; slot: ServiceMealType; mealId: string };
 
 const readLandingOrderIntent = (orderableDates: ReturnType<typeof getOrderableDates>): LandingOrderIntent | null => {
   if (window.location.pathname.replace(/\/+$/, '') !== '/order') return null;
@@ -49,8 +49,8 @@ const readLandingOrderIntent = (orderableDates: ReturnType<typeof getOrderableDa
   const date = params.get('date') ?? '';
   const slot = params.get('slot');
   const mealId = params.get('meal') ?? '';
-  if (!orderableDates.some(item => item.dateStr === date) || (slot !== 'lunch' && slot !== 'dinner') || !mealId) return null;
-  return { date, slot, mealId };
+  if (!orderableDates.some(item => item.dateStr === date) || !['breakfast', 'lunch', 'dinner'].includes(slot ?? '') || !mealId) return null;
+  return { date, slot: slot as ServiceMealType, mealId };
 };
 
 export const OrderOncePage: React.FC = () => {
@@ -76,11 +76,12 @@ export const OrderOncePage: React.FC = () => {
 
   // 2. Centralized Order Draft State
   const [selectedDate, setSelectedDate] = useState<string>(landingIntent.current?.date || orderableDates[0]?.dateStr || '');
-  const [selectedMealSlot, setSelectedMealSlot] = useState<'lunch' | 'dinner'>(landingIntent.current?.slot || 'lunch');
+  const [selectedMealSlot, setSelectedMealSlot] = useState<ServiceMealType>(landingIntent.current?.slot || 'lunch');
 
   // Supabase Data State
   const [dbMeals, setDbMeals] = useState<DatabaseMeal[]>([]);
   const [dbCustomizations, setDbCustomizations] = useState<DatabaseMealCustomization[]>([]);
+  const [dbBreakfastSlots, setDbBreakfastSlots] = useState<DeliverySlot[]>([]);
   const [dbLunchSlots, setDbLunchSlots] = useState<DeliverySlot[]>([]);
   const [dbDinnerSlots, setDbDinnerSlots] = useState<DeliverySlot[]>([]);
   const [isLoadingMenu, setIsLoadingMenu] = useState<boolean>(true);
@@ -131,11 +132,11 @@ export const OrderOncePage: React.FC = () => {
   useEffect(() => {
     let alive=true;
     setIsLoadingMenu(true);setMenuError('');setDbMeals([]);setSelectedMeal(emptyMeal);setSelectedAddons({});setSelectedSlotId('');
-    setDbLunchSlots([]);setDbDinnerSlots([]);setMaxCompletedStep(1);
-    Promise.all([menuService.getMenuForDate(selectedDate),menuService.getDeliverySlots('lunch',selectedDate),menuService.getDeliverySlots('dinner',selectedDate)])
-      .then(([menu,lunch,dinner])=>{if(alive){
-        const availableMeals=(menu?.meals??[]).filter(m=>(m.mealType===selectedMealSlot||m.mealType==='both'));
-        setDbMeals(availableMeals);setDbLunchSlots(lunch);setDbDinnerSlots(dinner);
+    setDbBreakfastSlots([]);setDbLunchSlots([]);setDbDinnerSlots([]);setMaxCompletedStep(1);
+    Promise.all([menuService.getMenuForDate(selectedDate),menuService.getDeliverySlots('breakfast',selectedDate),menuService.getDeliverySlots('lunch',selectedDate),menuService.getDeliverySlots('dinner',selectedDate)])
+      .then(([menu,breakfast,lunch,dinner])=>{if(alive){
+        const availableMeals=(menu?.meals??[]).filter(m=>m.mealType===selectedMealSlot||(selectedMealSlot!=='breakfast'&&m.mealType==='both'));
+        setDbMeals(availableMeals);setDbBreakfastSlots(breakfast);setDbLunchSlots(lunch);setDbDinnerSlots(dinner);
         const intent=landingIntent.current;
         if(intent){
           const requestedMeal=availableMeals.find(meal=>meal.id===intent.mealId);
@@ -171,10 +172,10 @@ export const OrderOncePage: React.FC = () => {
 
   // Current active slots based on mealSlot
   const currentAvailableSlots: DeliverySlot[] = useMemo(() => {
-    const dbSlots = selectedMealSlot === 'lunch' ? dbLunchSlots : dbDinnerSlots;
+    const dbSlots = selectedMealSlot === 'breakfast' ? dbBreakfastSlots : selectedMealSlot === 'lunch' ? dbLunchSlots : dbDinnerSlots;
     if (dbSlots && dbSlots.length > 0) return dbSlots;
     return availability.availableSlots;
-  }, [selectedMealSlot, dbLunchSlots, dbDinnerSlots, availability.availableSlots]);
+  }, [selectedMealSlot, dbBreakfastSlots, dbLunchSlots, dbDinnerSlots, availability.availableSlots]);
 
   // Set default slot if none selected
   useEffect(() => {
@@ -265,7 +266,7 @@ export const OrderOncePage: React.FC = () => {
   };
 
   // Next Available Slot One-Click Action
-  const handleSelectNextAvailable = (nextDate: string, nextSlot: 'lunch' | 'dinner') => {
+  const handleSelectNextAvailable = (nextDate: string, nextSlot: ServiceMealType) => {
     setSelectedDate(nextDate);
     setSelectedMealSlot(nextSlot);
   };
@@ -441,6 +442,7 @@ export const OrderOncePage: React.FC = () => {
                 onMealSlotChange={setSelectedMealSlot}
                 availability={availability}
                 onSelectNextAvailable={handleSelectNextAvailable}
+                breakfastSlots={dbBreakfastSlots}
                 lunchSlots={dbLunchSlots}
                 dinnerSlots={dbDinnerSlots}
               />
@@ -573,7 +575,7 @@ export const OrderOncePage: React.FC = () => {
                   {quantity}x {selectedMeal.name}
                 </h3>
                 <span className="text-xs text-stone-500 font-medium">
-                  {selectedDate === orderableDates[0]?.dateStr ? 'Today' : selectedDate} • {selectedMealSlot === 'lunch' ? 'Lunch' : 'Dinner'}
+                  {selectedDate === orderableDates[0]?.dateStr ? 'Today' : selectedDate} • {selectedMealSlot[0].toUpperCase() + selectedMealSlot.slice(1)}
                 </span>
               </div>
 

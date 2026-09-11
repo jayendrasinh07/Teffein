@@ -30,7 +30,8 @@ const meal = {
   assert.equal(parsed[0].basePrice, 119.5);
   assert.equal(parsed[0].imageUrl, '');
 
-  for (const invalid of [null, [{ ...meal, is_active: 'yes' }], [{ ...meal, base_price: 0 }], [{ ...meal, meal_type: 'breakfast' }]]) {
+  assert.equal(api.parseKitchenCatalog([{ ...meal, meal_type: 'breakfast' }])[0].mealType, 'breakfast');
+  for (const invalid of [null, [{ ...meal, is_active: 'yes' }], [{ ...meal, base_price: 0 }], [{ ...meal, meal_type: 'snack' }]]) {
     assert.throws(() => api.parseKitchenCatalog(invalid));
   }
 

@@ -13,13 +13,14 @@ import {
 import { DatabaseMeal } from '../../services/menuService';
 import { SmartImage } from '../common/SmartImage';
 import { IMAGES } from '../../data/images';
+import type { ServiceMealType } from '../../types';
 
 interface Step2DailyMenuProps {
   meals: DatabaseMeal[];
   selectedMealId: string;
   onSelectMeal: (meal: DatabaseMeal) => void;
   selectedDate: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   isLoading: boolean;
 }
 

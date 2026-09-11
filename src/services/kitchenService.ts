@@ -1,7 +1,7 @@
 import { getSupabaseClient } from './supabaseClient';
 
 export type KitchenStatus = 'confirmed' | 'preparing' | 'ready';
-export type KitchenShift = 'lunch' | 'dinner';
+export type KitchenShift = 'breakfast' | 'lunch' | 'dinner';
 export type KitchenRealtimeStatus = 'connecting' | 'live' | 'fallback';
 export interface KitchenOrder {
   id: string;
@@ -52,7 +52,7 @@ export function parseKitchenOrder(value: unknown): KitchenOrder {
     || !(o.delivery_instructions === null || typeof o.delivery_instructions === 'string')
     || !['pending', 'processing', 'paid', 'failed', 'refunded'].includes(o.payment_status)
     || !Number.isFinite(total) || total < 0
-    || typeof o.order_date !== 'string' || !['lunch', 'dinner'].includes(o.meal_type)
+    || typeof o.order_date !== 'string' || !['breakfast', 'lunch', 'dinner'].includes(o.meal_type)
     || !['confirmed', 'preparing', 'ready'].includes(o.status)
     || typeof o.slot_label !== 'string' || typeof o.created_at !== 'string'
     || typeof o.updated_at !== 'string' || !(o.notes === null || typeof o.notes === 'string')

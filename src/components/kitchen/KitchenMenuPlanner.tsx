@@ -3,9 +3,10 @@ import { AlertCircle, CalendarDays, Check, LockKeyhole, RefreshCw, Send } from '
 import { addCalendarDays, istDate } from '../../services/availabilityEngine';
 import { dietLabel } from '../../services/menuService';
 import { KitchenMenuMeal, KitchenMenuPlan, kitchenMenuService } from '../../services/kitchenMenuService';
+import type { KitchenShift } from '../../services/kitchenService';
 
-const mealBelongsTo = (meal: KitchenMenuMeal, shift: 'lunch' | 'dinner') =>
-  meal.mealType === shift || meal.mealType === 'both';
+const mealBelongsTo = (meal: KitchenMenuMeal, shift: KitchenShift) =>
+  meal.mealType === shift || (shift !== 'breakfast' && meal.mealType === 'both');
 
 const formatUpdatedAt = (value: string | null) => value
   ? new Date(value).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' })
@@ -90,7 +91,7 @@ export const KitchenMenuPlanner: React.FC = () => {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#0D6E44]"><CalendarDays size={17} /> Daily menu</p>
-            <h2 className="mt-2 text-2xl font-black text-stone-900">Plan lunch and dinner together</h2>
+            <h2 className="mt-2 text-2xl font-black text-stone-900">Plan breakfast, lunch and dinner</h2>
             <p className="mt-1 max-w-2xl text-sm text-stone-600">Choose from the approved meal catalog, save a draft, then publish the complete day to customers.</p>
           </div>
           <label className="text-xs font-bold text-stone-600">Menu date · IST
@@ -132,8 +133,8 @@ export const KitchenMenuPlanner: React.FC = () => {
       {plan?.isLocked && <div className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950"><LockKeyhole size={20} className="shrink-0" /><p>This menu is locked because a customer order already exists for this date. Existing orders and their meal snapshots stay protected.</p></div>}
 
       {loading && !plan ? <div className="rounded-2xl border border-stone-200 bg-white p-10 text-center text-sm text-stone-500">Loading the approved meal catalog…</div> : (
-        <div className="grid gap-5 lg:grid-cols-2">
-          {(['lunch', 'dinner'] as const).map(shift => (
+        <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
+          {(['breakfast', 'lunch', 'dinner'] as KitchenShift[]).map(shift => (
             <section key={shift} aria-label={`${shift} menu`} className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 sm:p-5">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <div>
@@ -162,7 +163,7 @@ export const KitchenMenuPlanner: React.FC = () => {
       )}
 
       <div className="sticky bottom-3 z-10 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200 bg-white/95 p-4 shadow-lg backdrop-blur">
-        <p className="text-xs text-stone-600">Publishing requires at least one lunch and one dinner meal. The menu locks after the first order.</p>
+        <p className="text-xs text-stone-600">Breakfast is optional during rollout. Publishing still requires lunch and dinner; the menu locks after the first order.</p>
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => void save(false)} disabled={!!saving || loading || !!plan?.isLocked || (!dirty && !plan?.isPublished)}
             className="min-h-11 rounded-xl border border-stone-300 px-5 text-sm font-bold text-stone-700 disabled:opacity-40">

@@ -6,7 +6,7 @@ export interface AnalyticsSummary {
 }
 export interface DailyAnalytics { date: string; orders: number; cancelled: number; portions: number; booked_value: number }
 export interface StatusAnalytics { status: string; orders: number }
-export interface MealTypeAnalytics { meal_type: 'lunch' | 'dinner'; orders: number; portions: number }
+export interface MealTypeAnalytics { meal_type: 'breakfast' | 'lunch' | 'dinner'; orders: number; portions: number }
 export interface PaymentAnalytics { payment_status: string; orders: number; value: number }
 export interface TopMealAnalytics { meal_name: string; portions: number }
 export interface KitchenAnalyticsDocument {
@@ -50,7 +50,7 @@ export function parseKitchenAnalytics(value: unknown): KitchenAnalyticsDocument 
     return { ...row, orders: number(row.orders) };
   });
   const meal_types = report.meal_types.map(row => {
-    if (!row || !['lunch', 'dinner'].includes(row.meal_type)) throw new KitchenAnalyticsError('INVALID_RESPONSE');
+    if (!row || !['breakfast', 'lunch', 'dinner'].includes(row.meal_type)) throw new KitchenAnalyticsError('INVALID_RESPONSE');
     return { ...row, orders: number(row.orders), portions: number(row.portions) };
   });
   const payments = report.payments.map(row => {

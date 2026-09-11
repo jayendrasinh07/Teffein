@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  Calendar, 
+  Calendar,
+  Coffee,
   Sun, 
   Moon, 
   Clock, 
@@ -10,16 +11,17 @@ import {
   ArrowRight,
   ShieldAlert
 } from 'lucide-react';
-import { AvailabilityCheckResult, DeliverySlot } from '../../types';
+import { AvailabilityCheckResult, DeliverySlot, ServiceMealType } from '../../types';
 import { getOrderableDates, THALIMITRA_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
 
 interface Step1DateMealSlotProps {
   selectedDate: string; // YYYY-MM-DD
   onDateChange: (dateStr: string) => void;
-  selectedMealSlot: 'lunch' | 'dinner';
-  onMealSlotChange: (slot: 'lunch' | 'dinner') => void;
+  selectedMealSlot: ServiceMealType;
+  onMealSlotChange: (slot: ServiceMealType) => void;
   availability: AvailabilityCheckResult;
-  onSelectNextAvailable?: (date: string, slot: 'lunch' | 'dinner') => void;
+  onSelectNextAvailable?: (date: string, slot: ServiceMealType) => void;
+  breakfastSlots: DeliverySlot[];
   lunchSlots: DeliverySlot[];
   dinnerSlots: DeliverySlot[];
 }
@@ -31,6 +33,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
   onMealSlotChange,
   availability,
   onSelectNextAvailable,
+  breakfastSlots,
   lunchSlots,
   dinnerSlots
 }) => {
@@ -52,7 +55,11 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
     ? `Tomorrow (${tomorrowItem?.subLabel})` 
     : selectedDateObj.toLocaleDateString('en-IN', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  // Get summary time range for lunch and dinner
+  const breakfastTimeRange = breakfastSlots.length > 0
+    ? `${breakfastSlots[0].startTime} – ${breakfastSlots[breakfastSlots.length - 1].endTime}`
+    : '07:30 AM – 09:00 AM';
+
+  // Get summary time range for each service
   const lunchTimeRange = lunchSlots.length > 0 
     ? `${lunchSlots[0].startTime} – ${lunchSlots[lunchSlots.length - 1].endTime}`
     : '12:00 PM – 01:30 PM';
@@ -80,7 +87,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
         </div>
 
         {/* Date Quick Pickers: Today, Tomorrow, Pick Date */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3.5">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3.5">
           {/* Today */}
           <button
             type="button"
@@ -126,7 +133,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
             type="button"
             id="date-btn-custom"
             onClick={() => setShowCustomPicker(!showCustomPicker)}
-            className={`p-3 sm:p-4 rounded-2xl text-center font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer border ${
+            className={`col-span-2 p-3 text-center font-bold transition-all flex flex-col items-center justify-center gap-1 cursor-pointer rounded-2xl border sm:col-span-1 sm:p-4 ${
               isCustom || showCustomPicker
                 ? 'bg-stone-900 text-white border-stone-900 shadow-md scale-[1.02]'
                 : 'bg-[#FAF8F5] hover:bg-stone-100 text-stone-800 border-stone-200'
@@ -177,9 +184,9 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
         )}
       </div>
 
-      {/* 2. Meal Slot Selection Section (Lunch vs Dinner) */}
+      {/* 2. Meal service selection */}
       <div className="bg-white rounded-3xl p-5 sm:p-7 border border-stone-200 shadow-sm space-y-4">
-        <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+        <div className="flex flex-col gap-1 border-b border-stone-100 pb-3 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-base sm:text-lg font-black text-stone-900 tracking-tight">
             Choose Meal Type
           </h3>
@@ -188,7 +195,32 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+          <button
+            type="button"
+            id="meal-slot-breakfast"
+            onClick={() => onMealSlotChange('breakfast')}
+            className={`p-4 sm:p-5 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
+              selectedMealSlot === 'breakfast'
+                ? 'bg-emerald-50/70 border-[#0D6E44] ring-2 ring-[#0D6E44]/30 shadow-md'
+                : 'bg-[#FAF8F5] border-stone-200 hover:border-stone-300'
+            }`}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedMealSlot === 'breakfast' ? 'bg-[#0D6E44] text-amber-300' : 'bg-stone-200 text-stone-700'}`}>
+                  <Coffee className="w-5 h-5" />
+                </div>
+                <div><span className="text-xs font-bold uppercase tracking-wider text-stone-500 block">Morning Meal</span><h4 className="text-lg font-black text-stone-900 leading-tight">Breakfast</h4></div>
+              </div>
+              {selectedMealSlot === 'breakfast' && <span className="bg-[#0D6E44] text-white text-[10px] font-black px-2 py-0.5 rounded-full">Selected</span>}
+            </div>
+            <div className="mt-4 pt-3 border-t border-stone-200/60 space-y-1 text-xs">
+              <div className="flex items-center gap-1.5 text-stone-600 font-semibold"><Clock className="w-3.5 h-3.5 text-[#0D6E44]" /><span>{breakfastTimeRange}</span></div>
+              <span className="block text-[11px] text-stone-500 font-medium">Cutoff: {THALIMITRA_OPERATIONAL_CONFIG.breakfast.cutoffLabel}</span>
+            </div>
+          </button>
+
           {/* Lunch Option */}
           <button
             type="button"
@@ -224,7 +256,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-stone-200/60 flex items-center justify-between text-xs">
+            <div className="mt-4 flex flex-col gap-1 border-t border-stone-200/60 pt-3 text-xs sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-1.5 text-stone-600 font-semibold">
                 <Clock className="w-3.5 h-3.5 text-[#0D6E44]" />
                 <span>{lunchTimeRange}</span>
@@ -270,7 +302,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-stone-200/60 flex items-center justify-between text-xs">
+            <div className="mt-4 flex flex-col gap-1 border-t border-stone-200/60 pt-3 text-xs sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-1.5 text-stone-600 font-semibold">
                 <Clock className="w-3.5 h-3.5 text-[#0D6E44]" />
                 <span>{dinnerTimeRange}</span>
@@ -292,7 +324,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
             </div>
             <div className="space-y-1">
               <h4 className="text-base font-black text-amber-950">
-                Ordering Window Closed for {selectedMealSlot === 'lunch' ? 'Lunch' : 'Dinner'} on {formattedSelectedDate}
+                Ordering Window Closed for {selectedMealSlot[0].toUpperCase() + selectedMealSlot.slice(1)} on {formattedSelectedDate}
               </h4>
               <p className="text-xs sm:text-sm text-amber-900 leading-relaxed">
                 {availability.message}
@@ -306,7 +338,7 @@ export const Step1DateMealSlot: React.FC<Step1DateMealSlotProps> = ({
               <div className="text-xs text-amber-900 font-medium">
                 Next fresh batch:{' '}
                 <strong className="font-black text-stone-900">
-                  {availability.nextAvailable.dateLabel} ({availability.nextAvailable.mealSlot === 'lunch' ? 'Lunch' : 'Dinner'})
+                  {availability.nextAvailable.dateLabel} ({availability.nextAvailable.mealSlot[0].toUpperCase() + availability.nextAvailable.mealSlot.slice(1)})
                 </strong>
               </div>
 

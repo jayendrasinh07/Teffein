@@ -7,13 +7,13 @@ import {
   AlertCircle,
   ShieldCheck
 } from 'lucide-react';
-import { DeliverySlot } from '../../types';
+import { DeliverySlot, ServiceMealType } from '../../types';
 
 interface Step5DeliverySlotProps {
   slots: DeliverySlot[];
   selectedSlotId: string;
   onSelectSlot: (slotId: string) => void;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   quantity: number;
 }
 
@@ -37,7 +37,7 @@ export const Step5DeliverySlot: React.FC<Step5DeliverySlotProps> = ({
             </h2>
           </div>
           <span className="text-xs font-semibold text-stone-500">
-            {mealSlot === 'lunch' ? 'Lunch Service' : 'Dinner Service'}
+            {mealSlot[0].toUpperCase() + mealSlot.slice(1)} Service
           </span>
         </div>
 

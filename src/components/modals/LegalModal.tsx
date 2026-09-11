@@ -166,7 +166,7 @@ export const LegalModal: React.FC = () => {
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">1. Kitchen Cutoff & Batch Timings</h4>
                 <p className="text-stone-600">
-                  Our meals are freshly prepared daily in scheduled batches. Same-day lunch orders must be placed before <strong>10:30 AM</strong>, and same-day dinner orders before <strong>5:30 PM</strong>. Orders received after cutoff must use a later orderable date.
+                  Our meals are freshly prepared daily in scheduled batches. Breakfast orders close at <strong>10:00 PM on the previous night</strong>, same-day lunch at <strong>10:30 AM</strong>, and same-day dinner at <strong>5:30 PM</strong>. Orders received after cutoff must use a later orderable date.
                 </p>
               </div>
 
@@ -213,7 +213,7 @@ export const LegalModal: React.FC = () => {
               <div>
                 <h4 className="font-bold text-stone-900 text-sm mb-1">1. One-Time Meal Orders</h4>
                 <p className="text-stone-600">
-                  You may cancel a confirmed order before the Kitchen cutoff: 10:30 AM IST for lunch and 5:30 PM IST for dinner. If the order was paid, the full order amount will be eligible for refund to the original payment method. Customer cancellation is unavailable after the cutoff or after preparation begins because ingredients and kitchen capacity have already been committed.
+                  You may cancel a confirmed order before the Kitchen cutoff: 10:00 PM IST on the previous night for breakfast, 10:30 AM IST for lunch, and 5:30 PM IST for dinner. If the order was paid, the full order amount will be eligible for refund to the original payment method. Customer cancellation is unavailable after the cutoff or after preparation begins because ingredients and kitchen capacity have already been committed.
                 </p>
               </div>
 

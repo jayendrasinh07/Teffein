@@ -3,7 +3,7 @@ import { getSupabaseClient } from './supabaseClient';
 export interface ManagedDeliverySlot {
   id: string;
   name: string;
-  meal_type: 'lunch' | 'dinner';
+  meal_type: 'breakfast' | 'lunch' | 'dinner';
   start_time: string;
   end_time: string;
   cutoff_time: string;
@@ -22,7 +22,7 @@ export interface KitchenStaffMember {
 
 export interface KitchenManagementDocument {
   payment_mode: 'manual';
-  cutoffs: { lunch: string; dinner: string };
+  cutoffs: { breakfast: string; lunch: string; dinner: string };
   slots: ManagedDeliverySlot[];
   staff: KitchenStaffMember[];
 }
@@ -42,7 +42,7 @@ export class KitchenManagementError extends Error {
 export function parseKitchenManagement(value: unknown): KitchenManagementDocument {
   const document = value as KitchenManagementDocument;
   if (!document || document.payment_mode !== 'manual' || !document.cutoffs
-    || document.cutoffs.lunch !== '10:30:00' || document.cutoffs.dinner !== '17:30:00'
+    || document.cutoffs.breakfast !== '22:00:00' || document.cutoffs.lunch !== '10:30:00' || document.cutoffs.dinner !== '17:30:00'
     || !Array.isArray(document.slots) || !Array.isArray(document.staff)) {
     throw new KitchenManagementError('INVALID_RESPONSE');
   }
@@ -51,7 +51,7 @@ export function parseKitchenManagement(value: unknown): KitchenManagementDocumen
     const today = Number(slot?.booked_today);
     const peak = Number(slot?.peak_booked_portions);
     if (!slot || typeof slot.id !== 'string' || typeof slot.name !== 'string'
-      || !['lunch', 'dinner'].includes(slot.meal_type)
+      || !['breakfast', 'lunch', 'dinner'].includes(slot.meal_type)
       || typeof slot.start_time !== 'string' || typeof slot.end_time !== 'string'
       || typeof slot.cutoff_time !== 'string' || typeof slot.is_active !== 'boolean'
       || !Number.isInteger(max) || max < 0 || max > 5000
@@ -98,4 +98,3 @@ export const kitchenManagementService = {
     return rpc('revoke_kitchen_access', { p_user_id: userId });
   },
 };
-

@@ -46,12 +46,13 @@ export const KitchenOverview = ({ onOpenCatalog, onOpenMenu, onOpenOrders }: Kit
 
     setError(null);
     try {
-      const [menu, lunchOrders, dinnerOrders] = await Promise.all([
+      const [menu, breakfastOrders, lunchOrders, dinnerOrders] = await Promise.all([
         kitchenMenuService.get(today),
+        kitchenService.list(today, 'breakfast'),
         kitchenService.list(today, 'lunch'),
         kitchenService.list(today, 'dinner'),
       ]);
-      setData({ menu, orders: [...lunchOrders, ...dinnerOrders] });
+      setData({ menu, orders: [...breakfastOrders, ...lunchOrders, ...dinnerOrders] });
       setLastUpdated(new Date());
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load kitchen overview.');
@@ -68,8 +69,9 @@ export const KitchenOverview = ({ onOpenCatalog, onOpenMenu, onOpenOrders }: Kit
   }, [load]);
 
   const selectedMeals = data?.menu.meals.filter((meal) => meal.selected) ?? [];
-  const lunchMeals = selectedMeals.filter((meal) => meal.mealType === 'lunch');
-  const dinnerMeals = selectedMeals.filter((meal) => meal.mealType === 'dinner');
+  const breakfastMeals = selectedMeals.filter((meal) => meal.mealType === 'breakfast');
+  const lunchMeals = selectedMeals.filter((meal) => meal.mealType === 'lunch' || meal.mealType === 'both');
+  const dinnerMeals = selectedMeals.filter((meal) => meal.mealType === 'dinner' || meal.mealType === 'both');
   const orders = data?.orders ?? [];
   const activeOrders = orders;
   const confirmed = activeOrders.filter((order) => order.status === 'confirmed').length;
@@ -132,7 +134,8 @@ export const KitchenOverview = ({ onOpenCatalog, onOpenMenu, onOpenOrders }: Kit
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <MealShift title="Breakfast" cutoff="Previous night 10:00 PM" meals={breakfastMeals.map((meal) => meal.name)} />
             <MealShift title="Lunch" cutoff="Cutoff 10:30 AM" meals={lunchMeals.map((meal) => meal.name)} />
             <MealShift title="Dinner" cutoff="Cutoff 5:30 PM" meals={dinnerMeals.map((meal) => meal.name)} />
           </div>

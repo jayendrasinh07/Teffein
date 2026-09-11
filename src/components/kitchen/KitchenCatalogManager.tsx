@@ -195,7 +195,7 @@ export const KitchenCatalogManager = () => {
                 </label>
                 <label className="text-sm font-bold text-stone-700">Service
                   <select value={editor.mealType} onChange={event => setEditor({ ...editor, mealType: event.target.value as KitchenCatalogMealType })} className="mt-2 min-h-11 w-full rounded-xl border border-stone-200 bg-white px-3 font-normal">
-                    <option value="lunch">Lunch</option><option value="dinner">Dinner</option><option value="both">Lunch & dinner</option>
+                    <option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option><option value="both">Lunch & dinner</option>
                   </select>
                 </label>
                 <label className="text-sm font-bold text-stone-700">Meal style

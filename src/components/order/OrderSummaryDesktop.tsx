@@ -10,12 +10,12 @@ import {
   Lock
 } from 'lucide-react';
 import { OrderPricingBreakdown, DayMealDetails } from '../../services/orderCustomizationEngine';
-import { CustomerAddress, DeliverySlot } from '../../types';
+import { CustomerAddress, DeliverySlot, ServiceMealType } from '../../types';
 
 interface OrderSummaryDesktopProps {
   mealDetails: DayMealDetails;
   dateLabel: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   pricing: OrderPricingBreakdown;
   selectedSlot?: DeliverySlot;
   selectedAddress?: CustomerAddress;
@@ -54,7 +54,7 @@ export const OrderSummaryDesktop: React.FC<OrderSummaryDesktopProps> = ({
             Order Summary
           </span>
           <span className="text-xs font-bold text-stone-500">
-            {dateLabel} • {mealSlot === 'lunch' ? 'Lunch' : 'Dinner'}
+            {dateLabel} • {mealSlot[0].toUpperCase() + mealSlot.slice(1)}
           </span>
         </div>
         <h3 className="text-lg font-black text-stone-900 mt-2">

@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AlertCircle, ArrowRight, CalendarDays, CheckCircle2, Clock3, Leaf, Loader2, Moon, RefreshCw, Sun, UtensilsCrossed } from 'lucide-react';
+import { AlertCircle, ArrowRight, CalendarDays, CheckCircle2, Clock3, Coffee, Leaf, Loader2, Moon, RefreshCw, Sun, UtensilsCrossed } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { IMAGES } from '../../data/images';
 import { checkMealAvailability, getOrderableDates } from '../../services/availabilityEngine';
 import { DatabaseDayMenu, DatabaseMeal, dietLabel, formatSlotTime, menuService } from '../../services/menuService';
-import { DeliverySlot } from '../../types';
+import { DeliverySlot, ServiceMealType } from '../../types';
 import { SmartImage } from '../common/SmartImage';
 
-type ServiceSlot = 'lunch' | 'dinner';
+type ServiceSlot = ServiceMealType;
+const services: ServiceSlot[] = ['breakfast', 'lunch', 'dinner'];
 
 const formatDate = (date: string, long = false) => new Date(`${date}T12:00:00`).toLocaleDateString('en-IN', {
   weekday: long ? 'long' : 'short', day: 'numeric', month: long ? 'long' : 'short',
@@ -16,9 +17,9 @@ const formatDate = (date: string, long = false) => new Date(`${date}T12:00:00`).
 const getInitialSelection = () => {
   const dates = getOrderableDates();
   const today = dates[0]?.dateStr ?? '';
-  if (today && checkMealAvailability({ date: today, mealSlot: 'lunch' }).isAvailable) return { date: today, slot: 'lunch' as ServiceSlot };
-  if (today && checkMealAvailability({ date: today, mealSlot: 'dinner' }).isAvailable) return { date: today, slot: 'dinner' as ServiceSlot };
-  return { date: dates[1]?.dateStr ?? today, slot: 'lunch' as ServiceSlot };
+  const candidate = dates.flatMap(item => services.map(slot => ({ date: item.dateStr, slot })))
+    .find(({ date, slot }) => checkMealAvailability({ date, mealSlot: slot }).isAvailable);
+  return candidate ?? { date: dates[1]?.dateStr ?? today, slot: 'breakfast' as ServiceSlot };
 };
 
 export const HomeMealSelector = () => {
@@ -51,9 +52,9 @@ export const HomeMealSelector = () => {
         setMenus(result);
         if (!selectionTouched.current) {
           const candidate = dates
-            .flatMap(item => (['lunch', 'dinner'] as ServiceSlot[]).map(slot => ({ date: item.dateStr, slot })))
+            .flatMap(item => services.map(slot => ({ date: item.dateStr, slot })))
             .find(({ date, slot }) => {
-              const hasMeal = (result[date]?.meals ?? []).some(meal => meal.mealType === slot || meal.mealType === 'both');
+              const hasMeal = (result[date]?.meals ?? []).some(meal => meal.mealType === slot || (slot !== 'breakfast' && meal.mealType === 'both'));
               return hasMeal && checkMealAvailability({ date, mealSlot: slot }).isAvailable;
             });
           if (candidate) {
@@ -77,14 +78,14 @@ export const HomeMealSelector = () => {
     return () => { active = false; };
   }, [selectedDate, selectedSlot, reloadKey]);
 
-  const meals = (menus[selectedDate]?.meals ?? []).filter(meal => meal.mealType === selectedSlot || meal.mealType === 'both');
+  const meals = (menus[selectedDate]?.meals ?? []).filter(meal => meal.mealType === selectedSlot || (selectedSlot !== 'breakfast' && meal.mealType === 'both'));
   const availability = checkMealAvailability({ date: selectedDate, mealSlot: selectedSlot, currentTime: clock });
   const availableSlots = slots.filter(slot => slot.maxCapacity > slot.bookedCount);
   const sortedSlots = [...slots].sort((a, b) => a.startTime.localeCompare(b.startTime));
   const serviceWindow = sortedSlots.length
     ? `${formatSlotTime(sortedSlots[0].startTime)} – ${formatSlotTime(sortedSlots[sortedSlots.length - 1].endTime)}`
-    : selectedSlot === 'lunch' ? '12:00 PM – 1:30 PM' : '7:30 PM – 9:00 PM';
-  const cutoff = selectedSlot === 'lunch' ? '10:30 AM' : '5:30 PM';
+    : selectedSlot === 'breakfast' ? '7:30 AM – 9:00 AM' : selectedSlot === 'lunch' ? '12:00 PM – 1:30 PM' : '7:30 PM – 9:00 PM';
+  const cutoff = selectedSlot === 'breakfast' ? 'previous night, 10:00 PM' : selectedSlot === 'lunch' ? '10:30 AM' : '5:30 PM';
   const canOrder = availability.isAvailable && !loadingSlots && !slotError && availableSlots.length > 0;
   const hasAnyPublishedMeal = dates.some(item => (menus[item.dateStr]?.meals?.length ?? 0) > 0);
   const selectedDateIndex = dates.findIndex(item => item.dateStr === selectedDate);
@@ -117,7 +118,7 @@ export const HomeMealSelector = () => {
             <p className="mt-2 text-sm leading-relaxed text-stone-600 sm:text-base">
               {!loadingMenus && !menuError && !hasAnyPublishedMeal
                 ? 'The first Kitchen-published menu, exact prices and delivery times will appear here when ordering opens.'
-                : <><span className="sm:hidden">Date aur Lunch/Dinner choose karke exact menu aur price dekhiye.</span><span className="hidden sm:inline">Choose a date and Lunch or Dinner to see the Kitchen-published menu, exact price and delivery time.</span></>}
+                : <><span className="sm:hidden">Date aur Breakfast/Lunch/Dinner choose karke exact menu aur price dekhiye.</span><span className="hidden sm:inline">Choose a date and service to see the Kitchen-published menu, exact price and delivery time.</span></>}
             </p>
           </div>
           {hasAnyPublishedMeal && <button id="preview-view-full-menu-btn" type="button" onClick={openFullMenu} className="group inline-flex min-h-11 items-center gap-1.5 self-start text-sm font-black text-[#0D6E44] hover:underline sm:self-auto">
@@ -156,15 +157,15 @@ export const HomeMealSelector = () => {
             </div>
             <div>
               <div className="mb-3"><StepNumber number="2" label="Select service" /></div>
-              <div className="grid grid-cols-2 gap-2 rounded-2xl border border-stone-200 bg-stone-100 p-1.5">
-                {(['lunch', 'dinner'] as ServiceSlot[]).map(slot => {
+              <div className="grid grid-cols-3 gap-2 rounded-2xl border border-stone-200 bg-stone-100 p-1.5">
+                {services.map(slot => {
                   const selected = selectedSlot === slot;
-                  const Icon = slot === 'lunch' ? Sun : Moon;
+                  const Icon = slot === 'breakfast' ? Coffee : slot === 'lunch' ? Sun : Moon;
                   return (
                     <button key={slot} id={`home-menu-slot-${slot}`} type="button" onClick={() => { selectionTouched.current = true; setSelectedSlot(slot); }} aria-pressed={selected}
                       className={`rounded-xl px-3 py-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${selected ? 'bg-white text-stone-950 shadow-sm' : 'text-stone-600 hover:text-stone-900'}`}>
-                      <span className="flex items-center gap-2 text-sm font-black capitalize"><Icon className={`h-4 w-4 ${slot === 'lunch' ? 'text-amber-500' : 'text-indigo-500'}`} />{slot}</span>
-                      <span className="mt-0.5 block pl-6 text-[10px] font-semibold text-stone-500">{slot === 'lunch' ? '12:00–1:30 PM' : '7:30–9:00 PM'}</span>
+                      <span className="flex items-center gap-2 text-sm font-black capitalize"><Icon className={`h-4 w-4 ${slot === 'dinner' ? 'text-indigo-500' : 'text-amber-500'}`} />{slot}</span>
+                      <span className="mt-0.5 block pl-6 text-[10px] font-semibold text-stone-500">{slot === 'breakfast' ? '7:30–9:00 AM' : slot === 'lunch' ? '12:00–1:30 PM' : '7:30–9:00 PM'}</span>
                     </button>
                   );
                 })}
@@ -182,7 +183,7 @@ export const HomeMealSelector = () => {
             </div>
 
             {loadingMenus ? <StateCard icon={<Loader2 className="h-8 w-8 animate-spin text-[#0D6E44]" />} title="Loading the Kitchen menu…" />
-              : meals.length === 0 ? <StateCard icon={<CalendarDays className="h-9 w-9 text-stone-400" />} title={`${selectedSlot === 'lunch' ? 'Lunch' : 'Dinner'} menu is being prepared`} detail="Nothing appears until the Kitchen publishes this service. Select another day or check again later." />
+              : meals.length === 0 ? <StateCard icon={<CalendarDays className="h-9 w-9 text-stone-400" />} title={`${selectedSlot[0].toUpperCase() + selectedSlot.slice(1)} menu is being prepared`} detail="Nothing appears until the Kitchen publishes this service. Select another day or check again later." />
               : <div className="grid gap-4 lg:grid-cols-2">{meals.map(meal => <div key={meal.id}><MealCard meal={meal} canOrder={canOrder} loadingSlots={loadingSlots} availabilityMessage={!availability.isAvailable ? availability.message : slotError ? 'Delivery availability could not be checked.' : !loadingSlots && availableSlots.length === 0 ? 'This service is currently full.' : ''} onStart={() => startOrder(meal)} /></div>)}</div>}
           </div>
         </div>}

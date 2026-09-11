@@ -72,7 +72,7 @@ BEGIN
  BEGIN UPDATE public.orders SET payment_status='paid' WHERE id=(f->>'id')::uuid; RAISE EXCEPTION 'Direct payment write'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  BEGIN SELECT count(*) INTO rows FROM private.kitchen_status_events; RAISE EXCEPTION 'Private audit exposed'; EXCEPTION WHEN insufficient_privilege THEN NULL; END;
  BEGIN PERFORM public.get_kitchen_orders(NULL,'lunch'); RAISE EXCEPTION 'Missing date accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
- BEGIN PERFORM public.get_kitchen_orders((f->>'date')::date,'breakfast'); RAISE EXCEPTION 'Invalid shift accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
+ BEGIN PERFORM public.get_kitchen_orders((f->>'date')::date,'snack'); RAISE EXCEPTION 'Invalid shift accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
  FOREACH args SLICE 1 IN ARRAY ARRAY[['confirmed','ready'],['preparing','confirmed'],['ready','delivered'],['confirmed','cancelled']] LOOP
   BEGIN PERFORM public.update_kitchen_order_status((f->>'id')::uuid,args[1],args[2]); RAISE EXCEPTION 'Invalid transition accepted'; EXCEPTION WHEN invalid_parameter_value THEN NULL; END;
  END LOOP;

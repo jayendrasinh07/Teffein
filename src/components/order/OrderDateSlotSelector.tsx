@@ -9,16 +9,16 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react';
-import { AvailabilityCheckResult } from '../../types';
+import { AvailabilityCheckResult, ServiceMealType } from '../../types';
 import { getOrderableDates, THALIMITRA_OPERATIONAL_CONFIG } from '../../services/availabilityEngine';
 
 interface OrderDateSlotSelectorProps {
   selectedDate: string; // YYYY-MM-DD
   onDateChange: (dateStr: string) => void;
-  selectedMealSlot: 'lunch' | 'dinner';
-  onMealSlotChange: (slot: 'lunch' | 'dinner') => void;
+  selectedMealSlot: ServiceMealType;
+  onMealSlotChange: (slot: ServiceMealType) => void;
   availability: AvailabilityCheckResult;
-  onSelectNextAvailable?: (date: string, slot: 'lunch' | 'dinner') => void;
+  onSelectNextAvailable?: (date: string, slot: ServiceMealType) => void;
 }
 
 export const OrderDateSlotSelector: React.FC<OrderDateSlotSelectorProps> = ({

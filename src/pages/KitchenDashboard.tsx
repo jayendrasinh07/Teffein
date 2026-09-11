@@ -43,7 +43,7 @@ type KitchenSort = 'delivery' | 'oldest' | 'newest';
 const pageCopy: Record<KitchenWorkspace, { eyebrow: string; title: string; description: string }> = {
   overview: { eyebrow: 'Control centre', title: 'Kitchen overview', description: "Today's menu, production load, and order progress in one place." },
   catalog: { eyebrow: 'Menu administration', title: 'Meal catalog', description: 'Add meals, update prices and details, or pause availability.' },
-  menu: { eyebrow: 'Daily planning', title: 'Daily menu', description: 'Choose catalog meals and publish the full lunch and dinner menu.' },
+  menu: { eyebrow: 'Daily planning', title: 'Daily menu', description: 'Choose catalog meals and publish breakfast, lunch and dinner.' },
   orders: { eyebrow: 'Live operations', title: 'Live orders', description: 'See who ordered what and move meals through preparing and ready.' },
   management: { eyebrow: 'Admin controls', title: 'Management', description: 'Control capacity, Kitchen staff access, and customer support requests.' },
   reports: { eyebrow: 'Business intelligence', title: 'Reports', description: 'Understand order demand, portions, booked value, cancellations and popular meals.' },
@@ -309,7 +309,7 @@ export const KitchenDashboard: React.FC = () => {
             <>
               <div className="mb-4 hidden print:block">
                 <p className="text-xs font-black uppercase tracking-widest">Thalimitra Kitchen · Packing list</p>
-                <h1 className="mt-1 text-2xl font-black">{fullDate(date)} · {shift === 'lunch' ? 'Lunch' : 'Dinner'}</h1>
+                <h1 className="mt-1 text-2xl font-black">{fullDate(date)} · {shift[0].toUpperCase() + shift.slice(1)}</h1>
               </div>
               <section className="flex flex-col gap-4 rounded-3xl border border-stone-200 bg-white p-4 shadow-sm print:hidden sm:p-5 xl:flex-row xl:items-end xl:justify-between">
                 <div className="flex flex-wrap items-end gap-4">
@@ -318,7 +318,7 @@ export const KitchenDashboard: React.FC = () => {
                     <span className="mt-2 block text-sm font-black text-stone-900">{fullDate(date)}</span>
                   </label>
                   <div role="group" aria-label="Meal service" className="flex rounded-xl bg-stone-100 p-1">
-                    {(['lunch', 'dinner'] as const).map(option => (
+                    {(['breakfast', 'lunch', 'dinner'] as KitchenShift[]).map(option => (
                       <button key={option} type="button" aria-pressed={shift === option} onClick={() => setShift(option)} className={`min-h-11 rounded-lg px-6 text-sm font-bold capitalize ${shift === option ? 'bg-[#0D6E44] text-white shadow-sm' : 'text-stone-600'}`}>{option}</button>
                     ))}
                   </div>
@@ -401,4 +401,3 @@ export const KitchenDashboard: React.FC = () => {
     </div>
   );
 };
-

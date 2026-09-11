@@ -1,8 +1,8 @@
 import { getSupabaseClient } from './supabaseClient';
-import { CancellationReason, OneTimeOrder, PaymentStatus, OrderStatus } from '../types';
+import { CancellationReason, OneTimeOrder, PaymentStatus, OrderStatus, ServiceMealType } from '../types';
 import { mapAddress } from './addressService';
 import { dietLabel } from './menuService';
-export interface CreateOrderPayload {userId:string;addressId:string;orderDate:string;mealType:'lunch'|'dinner';deliverySlotId:string;mealId:string;quantity:number;selectedAddons:Record<string,number>;notes?:string;preferences:{spiceLevel:string;oilLevel:string};}
+export interface CreateOrderPayload {userId:string;addressId:string;orderDate:string;mealType:ServiceMealType;deliverySlotId:string;mealId:string;quantity:number;selectedAddons:Record<string,number>;notes?:string;preferences:{spiceLevel:string;oilLevel:string};}
 const pending=new Map<string,Promise<{order:OneTimeOrder|null;error:Error|null}>>();
 let customerOrderChannelSequence=0;
 export const toCustomerOrder=(r:any):OneTimeOrder=>{

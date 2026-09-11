@@ -1,6 +1,6 @@
 import { getSupabaseClient } from './supabaseClient';
 
-export type KitchenMenuMealType = 'lunch' | 'dinner' | 'both';
+export type KitchenMenuMealType = 'breakfast' | 'lunch' | 'dinner' | 'both';
 
 export interface KitchenMenuMeal {
   id: string;
@@ -36,7 +36,7 @@ export class KitchenMenuError extends Error {
 }
 
 const isMealType = (value: unknown): value is KitchenMenuMealType =>
-  value === 'lunch' || value === 'dinner' || value === 'both';
+  value === 'breakfast' || value === 'lunch' || value === 'dinner' || value === 'both';
 
 export function parseKitchenMenu(value: unknown): KitchenMenuPlan {
   const plan = value as any;

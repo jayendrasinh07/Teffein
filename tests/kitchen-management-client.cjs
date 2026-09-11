@@ -14,7 +14,7 @@ const api = vm.runInNewContext(
 );
 
 const document = {
-  payment_mode: 'manual', cutoffs: { lunch: '10:30:00', dinner: '17:30:00' },
+  payment_mode: 'manual', cutoffs: { breakfast: '22:00:00', lunch: '10:30:00', dinner: '17:30:00' },
   slots: [{ id: 'slot', name: 'Lunch 1', meal_type: 'lunch', start_time: '12:00:00', end_time: '12:45:00', cutoff_time: '10:30:00', max_portions: '200', is_active: true, booked_today: '12', peak_booked_portions: 20 }],
   staff: [{ user_id: 'user', full_name: 'Kitchen Lead', email: 'lead@example.com', added_at: '2026-09-06T10:00:00Z' }],
 };
@@ -23,7 +23,7 @@ const document = {
   const parsed = api.parseKitchenManagement(document);
   assert.equal(parsed.slots[0].max_portions, 200);
   assert.equal(parsed.slots[0].booked_today, 12);
-  for (const invalid of [null, { ...document, payment_mode: 'online' }, { ...document, cutoffs: { lunch: '11:15:00', dinner: '17:30:00' } }, { ...document, slots: [{ ...document.slots[0], peak_booked_portions: -1 }] }]) {
+  for (const invalid of [null, { ...document, payment_mode: 'online' }, { ...document, cutoffs: { breakfast: '22:00:00', lunch: '11:15:00', dinner: '17:30:00' } }, { ...document, slots: [{ ...document.slots[0], peak_booked_portions: -1 }] }]) {
     assert.throws(() => api.parseKitchenManagement(invalid));
   }
 

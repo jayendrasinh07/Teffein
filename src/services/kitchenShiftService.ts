@@ -32,7 +32,7 @@ export class KitchenShiftError extends Error {
 
 export function parseKitchenShiftBrief(value: unknown): KitchenShiftBrief {
   const brief = value as KitchenShiftBrief;
-  if (!brief || typeof brief.service_date !== 'string' || !['lunch', 'dinner'].includes(brief.meal_type)
+  if (!brief || typeof brief.service_date !== 'string' || !['breakfast', 'lunch', 'dinner'].includes(brief.meal_type)
     || !Array.isArray(brief.slots) || !brief.handover || typeof brief.handover.note !== 'string'
     || brief.handover.note.length > 2000
     || !(brief.handover.updated_at === null || typeof brief.handover.updated_at === 'string')

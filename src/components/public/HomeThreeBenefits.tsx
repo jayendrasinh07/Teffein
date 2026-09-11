@@ -55,7 +55,7 @@ export const HomeThreeBenefits: React.FC = () => {
               Know the cutoff
             </h3>
             <p className="text-stone-600 text-xs sm:text-sm leading-relaxed">
-              Same-day lunch closes at 10:30 AM and dinner at 5:30 PM. Confirmed orders can be cancelled before cutoff.
+              Breakfast closes the previous night at 10:00 PM, lunch at 10:30 AM, and dinner at 5:30 PM. Confirmed orders can be cancelled before cutoff.
             </p>
           </div>
 

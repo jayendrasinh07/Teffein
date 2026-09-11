@@ -3,6 +3,7 @@ import {
   AlertCircle,
   ArrowRight,
   CalendarDays,
+  Coffee,
   Leaf,
   Loader2,
   Moon,
@@ -14,7 +15,7 @@ import { useApp } from '../../context/AppContext';
 import { IMAGES } from '../../data/images';
 import { addCalendarDays, istDate } from '../../services/availabilityEngine';
 import { DatabaseDayMenu, dietLabel, menuService } from '../../services/menuService';
-import { MealSlot } from '../../types';
+import { ServiceMealType } from '../../types';
 import { SmartImage } from '../common/SmartImage';
 
 const dateLabel = (date: string, long = false) =>
@@ -29,7 +30,7 @@ export const TodaysMenuSection = () => {
   const today = useMemo(() => istDate(), []);
   const dates = useMemo(() => Array.from({ length: 7 }, (_, index) => addCalendarDays(today, index)), [today]);
   const [selectedDate, setSelectedDate] = useState(today);
-  const [selectedSlot, setSelectedSlot] = useState<MealSlot>('lunch');
+  const [selectedSlot, setSelectedSlot] = useState<ServiceMealType>('breakfast');
   const [menus, setMenus] = useState<Record<string, DatabaseDayMenu | null>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +59,7 @@ export const TodaysMenuSection = () => {
 
   const selectedMenu = menus[selectedDate];
   const meals = (selectedMenu?.meals ?? []).filter(
-    meal => meal.mealType === selectedSlot || meal.mealType === 'both',
+    meal => meal.mealType === selectedSlot || (selectedSlot !== 'breakfast' && meal.mealType === 'both'),
   );
 
   const startOrder = () => {
@@ -75,7 +76,7 @@ export const TodaysMenuSection = () => {
               Live Kitchen Menu
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-stone-900 mt-3 tracking-tight">
-              {dateLabel(selectedDate, true)} {selectedSlot === 'lunch' ? 'Lunch' : 'Dinner'}
+              {dateLabel(selectedDate, true)} {selectedSlot[0].toUpperCase() + selectedSlot.slice(1)}
             </h2>
             <p className="text-stone-600 text-sm sm:text-base mt-2 max-w-xl">
               Every meal and price below is published directly by the Thalimitra kitchen.
@@ -83,8 +84,8 @@ export const TodaysMenuSection = () => {
           </div>
 
           <div className="flex items-center p-1.5 rounded-2xl bg-stone-100 border border-stone-200 self-start md:self-auto shrink-0">
-            {(['lunch', 'dinner'] as MealSlot[]).map(slot => {
-              const Icon = slot === 'lunch' ? Sun : Moon;
+            {(['breakfast', 'lunch', 'dinner'] as ServiceMealType[]).map(slot => {
+              const Icon = slot === 'breakfast' ? Coffee : slot === 'lunch' ? Sun : Moon;
               return (
                 <button
                   key={slot}
@@ -96,7 +97,7 @@ export const TodaysMenuSection = () => {
                       : 'text-stone-600 hover:text-stone-900'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${slot === 'lunch' ? 'text-amber-500' : 'text-indigo-500'}`} />
+                  <Icon className={`w-4 h-4 ${slot === 'dinner' ? 'text-indigo-500' : 'text-amber-500'}`} />
                   <span className="capitalize">{slot}</span>
                 </button>
               );
@@ -153,7 +154,7 @@ export const TodaysMenuSection = () => {
           <div className="min-h-64 rounded-3xl border border-stone-200 bg-[#FAF8F5] flex flex-col items-center justify-center text-center px-6">
             <CalendarDays className="w-9 h-9 text-stone-400" />
             <h3 className="mt-3 text-xl font-black text-stone-900">
-              {selectedSlot === 'lunch' ? 'Lunch' : 'Dinner'} menu is being prepared
+              {selectedSlot[0].toUpperCase() + selectedSlot.slice(1)} menu is being prepared
             </h3>
             <p className="mt-1 text-sm text-stone-600 max-w-md">
               The kitchen has not published meals for this service yet. Please check again soon or select another day.

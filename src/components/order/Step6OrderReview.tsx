@@ -11,7 +11,7 @@ import {
   LogIn
 } from 'lucide-react';
 import { DatabaseMeal, DatabaseMealCustomization } from '../../services/menuService';
-import { CustomerAddress, DeliverySlot } from '../../types';
+import { CustomerAddress, DeliverySlot, ServiceMealType } from '../../types';
 import { useApp } from '../../context/AppContext';
 
 interface Step6OrderReviewProps {
@@ -23,7 +23,7 @@ interface Step6OrderReviewProps {
   oilLevel: string;
   dietVariant: string;
   selectedDate: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   selectedSlot?: DeliverySlot;
   selectedAddress: CustomerAddress;
   notes: string;
@@ -96,7 +96,7 @@ export const Step6OrderReview: React.FC<Step6OrderReviewProps> = ({
             </h2>
           </div>
           <span className="text-xs font-semibold text-stone-500">
-            {dateDisplay} • {mealSlot === 'lunch' ? 'Lunch' : 'Dinner'}
+            {dateDisplay} • {mealSlot[0].toUpperCase() + mealSlot.slice(1)}
           </span>
         </div>
 

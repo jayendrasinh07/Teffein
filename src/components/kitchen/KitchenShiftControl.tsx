@@ -9,7 +9,8 @@ import {
   type KitchenShiftBrief,
 } from '../../services/kitchenShiftService';
 
-const shifts: KitchenShift[] = ['lunch', 'dinner'];
+const shifts: KitchenShift[] = ['breakfast', 'lunch', 'dinner'];
+const shiftLabel = (value: KitchenShift) => value[0].toUpperCase() + value.slice(1);
 const slotTime = (value: string) => {
   const [hour, minute] = value.split(':').map(Number);
   return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'}`;
@@ -35,11 +36,12 @@ export const KitchenShiftControl = () => {
 
   const load = useCallback(async () => {
     try {
-      const [lunch, dinner] = await Promise.all([
+      const [breakfast, lunch, dinner] = await Promise.all([
+        kitchenShiftService.get(today, 'breakfast'),
         kitchenShiftService.get(today, 'lunch'),
         kitchenShiftService.get(today, 'dinner'),
       ]);
-      setBriefs({ lunch, dinner });
+      setBriefs({ breakfast, lunch, dinner });
       setError(null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Shift controls could not be refreshed.');
@@ -69,7 +71,7 @@ export const KitchenShiftControl = () => {
       setBriefs(current => ({ ...current, [shift]: updated }));
       setDraft(updated.handover.note);
       setDirty(false);
-      setNotice(`${shift === 'lunch' ? 'Lunch' : 'Dinner'} handover saved.`);
+      setNotice(`${shiftLabel(shift)} handover saved.`);
     } catch (saveError) {
       const failure = saveError instanceof KitchenShiftError ? saveError : new KitchenShiftError('CONNECTION');
       setError(failure.message);

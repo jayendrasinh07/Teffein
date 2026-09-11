@@ -1,9 +1,9 @@
 import { getSupabaseClient } from './supabaseClient';
 import { MealType } from '../types/database.types';
-import { DeliverySlot } from '../types';
+import { DeliverySlot, ServiceMealType } from '../types';
 export interface DatabaseMeal { id:string; name:string; description:string; imageUrl?:string; mealType:MealType; dietType:string; basePrice:number; isActive:boolean; }
 export interface DatabaseMealCustomization { id:string; mealId?:string|null; name:string; description?:string; price:number; isActive:boolean; }
-export interface DatabaseDeliverySlot { id:string; name:string; mealType:'lunch'|'dinner'; startTime:string; endTime:string; maxOrders:number; cutoffTime?:string|null; isActive:boolean; }
+export interface DatabaseDeliverySlot { id:string; name:string; mealType:ServiceMealType; startTime:string; endTime:string; maxOrders:number; cutoffTime?:string|null; isActive:boolean; }
 export interface DatabaseDayMenu { id:string; menuDate:string; isPublished:boolean; meals:DatabaseMeal[]; }
 const meal = (r:any):DatabaseMeal => ({id:r.id,name:r.name,description:r.description??'',imageUrl:r.image_url??undefined,mealType:r.meal_type,dietType:r.diet_type,basePrice:Number(r.base_price),isActive:r.is_active});
 export const dietLabel = (value:string) => ({standard_gujarati:'Standard Gujarati',jain_satvik:'Jain Satvik',kathiyawadi:'Kathiyawadi',low_oil_fit:'Low Oil Fit',north_indian:'North Indian'}[value]??value);
@@ -16,7 +16,7 @@ export const menuService = {
   const {data,error}=await getSupabaseClient().from('meal_customizations').select('*').eq('is_active',true).or(`meal_id.is.null,meal_id.eq.${mealId}`).order('price');
   if(error)throw error; return (data??[]).map((r:any)=>({id:r.id,mealId:r.meal_id,name:r.name,description:r.description,price:Number(r.price),isActive:r.is_active}));
  },
- async getDeliverySlots(mealType:'lunch'|'dinner',date:string):Promise<DeliverySlot[]> {
+ async getDeliverySlots(mealType:ServiceMealType,date:string):Promise<DeliverySlot[]> {
   const {data,error}=await getSupabaseClient().rpc('get_delivery_slot_availability',{p_order_date:date,p_meal_type:mealType});
   if(error)throw error; return (data??[]).map(mapDeliverySlot);
  },

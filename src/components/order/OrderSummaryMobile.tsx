@@ -10,12 +10,12 @@ import {
   Utensils 
 } from 'lucide-react';
 import { OrderPricingBreakdown, DayMealDetails } from '../../services/orderCustomizationEngine';
-import { CustomerAddress, DeliverySlot } from '../../types';
+import { CustomerAddress, DeliverySlot, ServiceMealType } from '../../types';
 
 interface OrderSummaryMobileProps {
   mealDetails: DayMealDetails;
   dateLabel: string;
-  mealSlot: 'lunch' | 'dinner';
+  mealSlot: ServiceMealType;
   pricing: OrderPricingBreakdown;
   selectedSlot?: DeliverySlot;
   selectedAddress?: CustomerAddress;
@@ -67,7 +67,7 @@ export const OrderSummaryMobile: React.FC<OrderSummaryMobileProps> = ({
               </span>
             </div>
             <p className="text-[10px] text-stone-500 truncate max-w-[140px]">
-              {pricing.quantity}x {mealSlot === 'lunch' ? 'Lunch' : 'Dinner'} • Free Delivery
+              {pricing.quantity}x {mealSlot[0].toUpperCase() + mealSlot.slice(1)} • Free Delivery
             </p>
           </div>
 
@@ -93,7 +93,7 @@ export const OrderSummaryMobile: React.FC<OrderSummaryMobileProps> = ({
             <div className="flex items-center justify-between border-b border-stone-150 pb-3">
               <div>
                 <span className="text-[10px] font-black uppercase tracking-wider text-[#0D6E44] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                  {dateLabel} • {mealSlot === 'lunch' ? 'Lunch' : 'Dinner'}
+                  {dateLabel} • {mealSlot[0].toUpperCase() + mealSlot.slice(1)}
                 </span>
                 <h3 className="text-base font-black text-stone-900 mt-1">
                   {pricing.quantity}x {mealDetails.title}

@@ -111,7 +111,7 @@ export const OrderConfirmedView: React.FC<OrderConfirmedViewProps> = ({
             <div className="space-y-1">
               <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider">Item Details</span>
               <p className="font-black text-stone-900 text-sm">
-                {order.quantity}x {order.mealSlot === 'lunch' ? 'Lunch' : 'Dinner'} ({order.customizations.dietVariant})
+                {order.quantity}x {order.mealSlot[0].toUpperCase() + order.mealSlot.slice(1)} ({order.customizations.dietVariant})
               </p>
               <p className="text-stone-500 text-[11px]">
                 {order.customizations.spiceLevel} • {order.customizations.oilLevel} • 4+ Rotis & Rice

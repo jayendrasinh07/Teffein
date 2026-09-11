@@ -58,7 +58,7 @@ export const HeroSection: React.FC = () => {
             {/* Short supporting text */}
             <p className="max-w-lg text-base font-normal leading-relaxed text-stone-600 sm:text-lg">
               <span className="sm:hidden">Menu, exact price aur delivery time pehle dekhiye.</span>
-              <span className="hidden sm:inline">Choose a day and Lunch or Dinner. See the Kitchen-published meal, exact price and delivery time before you order.</span>
+              <span className="hidden sm:inline">Choose a day and Breakfast, Lunch or Dinner. See the Kitchen-published meal, exact price and delivery time before you order.</span>
             </p>
 
             {/* Action Buttons */}
